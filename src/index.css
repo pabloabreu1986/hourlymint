@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-forge-canvas text-forge-dark antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Evitar zoom en inputs iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition
+      active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-forge-orange text-white hover:bg-forge-orange-600 px-5 py-3;
+  }
+  .btn-dark {
+    @apply btn bg-forge-dark text-white hover:bg-forge-slate px-5 py-3;
+  }
+  .btn-ghost {
+    @apply btn border border-slate-200 bg-white text-forge-dark hover:bg-slate-50 px-5 py-3;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-card;
+  }
+  .field {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-forge-dark
+      placeholder:text-slate-400 outline-none focus:border-forge-orange focus:ring-2 focus:ring-forge-orange/20;
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+}
+
+/* Ocultar scrollbar en carruseles horizontales */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

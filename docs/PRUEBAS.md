@@ -1,0 +1,170 @@
+# Pruebas manuales · FORGEVIA
+
+Guía de pruebas por perfil de usuario, para verificar cada funcionalidad ya
+conectada a Supabase (base de datos + Storage de fotos).
+
+> Este documento **no lista contraseñas reales** a propósito: los usuarios
+> ya están dados de alta en Supabase con el equipo real, pero las
+> credenciales viven solo en la base de datos, nunca en un archivo que
+> pueda acabar en git. Inicia sesión con el nombre y contraseña reales que
+> ya tienes; aquí solo se describen los pasos, con nombres de rol
+> genéricos.
+
+## Antes de empezar
+
+- La app detecta Supabase por la presencia de `.env` (`VITE_SUPABASE_URL` +
+  `VITE_SUPABASE_ANON_KEY`). Si existe, **todo** lo que hagas en las pruebas
+  se guarda en la base de datos real, no en `localStorage`.
+- **"Admin → Configuración → Restablecer datos" NO restablece Supabase.**
+  Ese botón solo borra el `localStorage` del modo mock. Si quieres volver los
+  datos de Supabase a su estado inicial, pídemelo.
+- El GPS usa la ubicación real del navegador; si deniegas el permiso o el
+  dispositivo no lo soporta, la app no falla — ficha igualmente con una
+  coordenada simulada cerca de Madrid.
+- El mapa de "Trabajadores en tiempo real" ya es real (Leaflet + OpenStreetMap),
+  con la ubicación GPS de cada fichaje.
+- "Encargado" no es un rol aparte: es quien tenga `encargadoId` en la obra
+  ese día (se asigna desde **Admin → Obras**). Solo el encargado ve el botón
+  "Cerrar parte del día" en el detalle de su obra.
+
+## Paso 0 (Admin) — asignar el equipo antes de probar
+
+Las obras de ejemplo ya no tienen nadie asignado (se limpiaron al dar de
+alta al equipo real). Antes de poder probar los flujos de trabajador/
+encargado, entra como **admin** y en **Obras → editar una obra**:
+
+1. Marca 2–3 trabajadores en "Equipo asignado".
+2. Elige uno de ellos como "Encargado del día" en el desplegable.
+3. Guarda.
+
+Con eso ya puedes probar el resto de este documento usando cualquiera de
+esos trabajadores y el que hayas puesto como encargado.
+
+---
+
+## 1) Trabajador (cualquiera asignado a una obra hoy)
+
+1. **Login** con logo → entra directo a Home.
+2. **Fichar entrada**: pulsa "ENTRADA". No pide confirmación previa — ficha
+   al instante y captura GPS en segundo plano. Al terminar aparece un modal
+   "Fichaje registrado" con hora, coordenadas (o "Sin ubicación") y un pin en
+   el mapa. Cierra con "Hecho".
+3. Comprueba que el botón **SALIDA** estaba deshabilitado antes de fichar
+   entrada, y que **ENTRADA** ahora está deshabilitado (ya fichada).
+4. **Mis Obras** → debe listar la obra a la que le asignaste en el Paso 0.
+   Entra al detalle: equipo del día, encargado destacado, avance.
+5. **Parte diario** (desde el detalle de obra): escribe algo en "Trabajo
+   realizado", añade una línea de **material pendiente** (nombre + cantidad
+   + unidad), sube una foto (botón de cámara → selector de archivo/cámara).
+   Pulsa **"Guardar borrador"** y confirma que aparece "✓ Guardado".
+   - Nota: el botón **"Ir a cierre" no guarda el borrador automáticamente**
+     — si vas a probar el cierre por separado, guarda antes.
+   - Si este trabajador no es el encargado de la obra, **no verá** el botón
+     "Cerrar parte del día" en el detalle de obra — es esperado, no un bug.
+6. **Fotografías** (desde Home): confirma que la foto subida aparece
+   agrupada bajo el nombre de la obra.
+7. **Fichar salida**: pulsa "SALIDA", confirma el modal de registro.
+8. **Notificaciones** (pestaña "Avisos"): revisa que se ven avisos propios
+   y globales. Marca alguno como leído tocándolo, y prueba "Marcar leídas".
+9. **Perfil**: edita el teléfono y dejando la contraseña en blanco (no debe
+   cambiarla); guarda. Revisa la lista "Mis fichajes de hoy" (entrada y
+   salida con hora y GPS).
+
+### Aviso automático de "Fichaje pendiente"
+
+Cualquiera con sesión abierta después de las **09:30** dispara la revisión
+(se repite cada 5 min). Si un trabajador asignado hoy a una obra en curso no
+ha fichado entrada, recibe una notificación personal una sola vez al día.
+
+1. Entra con un trabajador asignado a una obra en curso que **no** haya
+   fichado entrada, después de las 09:30 hora local.
+2. Ve a **Notificaciones** → debería aparecer "Fichaje pendiente: No has
+   fichado la entrada hoy en {obra}...".
+3. Como **admin**, abre la campana del panel (arriba a la derecha) o
+   **Notificaciones** en el menú lateral → debe verse el mismo aviso,
+   identificado con el nombre del trabajador.
+4. Repite el login/recarga varias veces seguidas y confirma que **no se
+   duplica** el aviso (una sola vez por trabajador y día).
+
+---
+
+## 2) Encargado del día (quien hayas puesto como tal en el Paso 0)
+
+Mismo flujo de trabajador (fichar, parte diario, fotos, notificaciones,
+perfil) más el cierre del parte, que solo él puede hacer en su obra:
+
+1. **Mis Obras → (la obra asignada)** → debe verse el badge "ENCARGADO"
+   junto a su nombre en el equipo.
+2. Pulsa **"Cerrar parte del día"**.
+3. Ajusta el **% de avance** con el slider.
+4. Revisa el resumen de **materiales pendientes** (te lleva de vuelta al
+   parte diario si quieres editarlos; no se edita aquí).
+5. Escribe algo en **Observaciones**.
+6. En **Incidencias**, escribe algo distinto de "ninguna" (p. ej. "Falta
+   cemento") — **esto crea automáticamente una incidencia** visible luego
+   para el admin en Incidencias. Si escribes "ninguna"/"ninguno" (o lo
+   dejas vacío), no se crea nada.
+7. Intenta pulsar **"Cerrar parte" sin firmar** → debe salir una alerta
+   "Falta la firma del encargado." y bloquear el envío.
+8. Firma en el recuadro (con ratón o dedo/táctil). Prueba también **"Borrar"**
+   para limpiar el trazo y volver a firmar.
+9. Pulsa **"Cerrar parte"** → modal "¡Parte enviado!" con el avance final.
+10. Verifica que el parte queda bloqueado: vuelve a **Parte diario** y
+    **Cierre** de esa obra/día — todo debe verse de solo lectura (firma
+    como imagen fija, sin botones de edición).
+
+---
+
+## 3) Admin
+
+1. **Dashboard**: KPIs, resumen de obras, trabajadores en tiempo real (debe
+   reflejar los fichajes que hiciste en los apartados anteriores),
+   incidencias recientes, materiales pendientes, donut de fichajes del día.
+2. **Campana de notificaciones** (header): el número debe coincidir con las
+   notificaciones sin leer; al abrir lleva a **Notificaciones**, donde puedes
+   "Marcar todas leídas".
+3. **Obras**: crea una obra nueva (nombre obligatorio — si lo dejas vacío,
+   Guardar simplemente no hace nada, no hay mensaje de error). Edita una
+   existente: cambia el **encargado del día** con el desplegable y marca/
+   desmarca gente en "Equipo asignado" — si el encargado elegido no está
+   marcado en el equipo, se añade solo al guardar. Prueba eliminar una obra
+   de prueba (pide confirmación, es irreversible).
+4. **Trabajadores**: crea un usuario nuevo (contraseña por defecto `1234`),
+   edítalo, usa el icono de ojo para revelar/ocultar su contraseña en la
+   tabla, y dale de baja (Estado → Baja) en vez de borrarlo. Confirma que
+   **no puedes borrar** al usuario con rol Admin (botón deshabilitado).
+5. **Partes diarios**: haz clic en la fila del parte cerrado en el apartado
+   anterior → modal de detalle con trabajo realizado, fotos, materiales,
+   observaciones/incidencias y la firma. Es solo lectura, no hay edición
+   desde aquí.
+6. **Fotografías**: filtra por obra y confirma que se ve la foto subida,
+   cargada como URL firmada (no un enlace público).
+7. **Materiales**: lista agregada de material pendiente de todos los partes
+   (no solo hoy) — de solo lectura, sin acción de "marcar entregado" todavía.
+8. **Incidencias**: debe aparecer la incidencia creada automáticamente al
+   cerrar el parte (paso 6 del apartado de encargado) con estado "Nueva".
+   Cambia su estado con el desplegable (Nueva → En proceso → Resuelta).
+9. **Vehículos / Herramientas / Almacén**: son de solo lectura en esta
+   versión (sin botones de alta/edición) — no es un bug si no encuentras
+   cómo añadir un vehículo nuevo, esa pantalla es solo un listado por ahora.
+10. **Informes**: KPIs (avance medio, partes cerrados/totales, obras),
+    avance por obra, donut de estado de obras. No hay exportación a PDF/Excel
+    todavía (nota al pie de la propia pantalla).
+11. **Configuración**: revisa que el texto explica que "Restablecer datos"
+    es solo para el modo mock (ver nota al principio de este documento).
+
+---
+
+## Cosas a vigilar durante las pruebas
+
+- **Fotos**: confirma en el navegador (pestaña Red/Network) que las subidas
+  van contra `.../storage/v1/object/fotos-obra/...` y que la visualización
+  usa `.../storage/v1/object/sign/...` (URL firmada), no una URL pública.
+- **GPS denegado**: deniega el permiso de ubicación del navegador y ficha
+  entrada — debe registrar igualmente una coordenada simulada cerca de
+  Madrid, sin bloquear el fichaje.
+- **Concurrencia del aviso de fichaje**: recargar varias veces seguidas no
+  debe crear avisos duplicados para el mismo trabajador.
+- **Sesión persistente**: cierra el navegador y vuelve a abrirlo sin cerrar
+  sesión — debe seguir logueado (la sesión se guarda en `localStorage` y no
+  caduca).

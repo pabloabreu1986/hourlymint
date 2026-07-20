@@ -1,0 +1,165 @@
+// ─────────────────────────────────────────────────────────────
+// Modelo de dominio FORGEVIA
+// Todo se persiste hoy en localStorage (mock). La forma de estas
+// entidades es la que mañana replicará la base de datos real.
+// ─────────────────────────────────────────────────────────────
+
+export type Rol = "admin" | "trabajador";
+
+export type EstadoObra = "en_curso" | "pendiente" | "finalizada";
+
+export interface Usuario {
+  id: string;
+  /** Nombre de usuario = nombre del trabajador (lo usa para iniciar sesión) */
+  nombre: string;
+  /** Contraseña en claro. Mock: el admin la fija/edita a mano. */
+  password: string;
+  rol: Rol;
+  telefono?: string;
+  puesto?: string;
+  activo: boolean;
+  /** Color para el avatar/iniciales */
+  color: string;
+}
+
+export interface Obra {
+  id: string;
+  nombre: string;
+  direccion: string;
+  estado: EstadoObra;
+  /** Avance 0–100 */
+  avance: number;
+  /** Encargado asignado HOY (puede cambiar día a día) */
+  encargadoId: string | null;
+  /** Trabajadores asignados HOY */
+  trabajadorIds: string[];
+  color: string;
+  createdAt: string;
+}
+
+export type TipoFichaje = "entrada" | "salida";
+export type EstadoFichaje = "correcto" | "tarde" | "pendiente";
+
+export interface Coordenada {
+  lat: number;
+  lng: number;
+}
+
+export interface Fichaje {
+  id: string;
+  trabajadorId: string;
+  obraId: string | null;
+  tipo: TipoFichaje;
+  /** ISO timestamp */
+  timestamp: string;
+  gps: Coordenada | null;
+  estado: EstadoFichaje;
+}
+
+export interface MaterialPendiente {
+  id: string;
+  nombre: string;
+  cantidad: number;
+  unidad: string;
+}
+
+export type EstadoParte = "borrador" | "cerrado";
+
+export interface ParteDiario {
+  id: string;
+  obraId: string;
+  /** Fecha del parte YYYY-MM-DD */
+  fecha: string;
+  encargadoId: string | null;
+  trabajoRealizado: string;
+  materialesPendientes: MaterialPendiente[];
+  observaciones: string;
+  incidencias: string;
+  /** % de avance reportado al cerrar */
+  avance: number;
+  /** Firma del encargado como data URL */
+  firma: string | null;
+  estado: EstadoParte;
+  createdAt: string;
+  closedAt: string | null;
+}
+
+/**
+ * Foto de obra. En modo Supabase, `path` es la ruta dentro del bucket de
+ * Storage y `url` es una URL firmada temporal resuelta al mostrarla.
+ * En modo mock, `path` y `url` contienen el data URL comprimido.
+ */
+export interface Foto {
+  id: string;
+  obraId: string;
+  parteId: string | null;
+  /** Trabajador que subió la foto */
+  subidaPor: string | null;
+  path: string;
+  /** URL firmada/pública lista para <img src>. Se resuelve al listar. */
+  url?: string;
+  createdAt: string;
+}
+
+export type EstadoIncidencia = "nueva" | "en_proceso" | "resuelta";
+
+export interface Incidencia {
+  id: string;
+  obraId: string;
+  titulo: string;
+  descripcion: string;
+  fecha: string; // ISO
+  estado: EstadoIncidencia;
+  trabajadorId: string | null;
+}
+
+export type TipoNotificacion = "aviso" | "fichaje" | "incidencia" | "material";
+
+export interface Notificacion {
+  id: string;
+  /** null = global (todos) */
+  trabajadorId: string | null;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  fecha: string; // ISO
+  leida: boolean;
+}
+
+// ── Entidades de apoyo (páginas admin secundarias) ──
+
+export interface Vehiculo {
+  id: string;
+  matricula: string;
+  modelo: string;
+  asignadoA: string | null; // trabajadorId
+  estado: "disponible" | "en_uso" | "taller";
+}
+
+export interface Herramienta {
+  id: string;
+  nombre: string;
+  cantidad: number;
+  ubicacion: string; // obraId o "almacen"
+}
+
+export interface AlmacenItem {
+  id: string;
+  nombre: string;
+  stock: number;
+  unidad: string;
+  minimo: number;
+}
+
+export interface DBSchema {
+  usuarios: Usuario[];
+  obras: Obra[];
+  fichajes: Fichaje[];
+  partes: ParteDiario[];
+  fotos: Foto[];
+  incidencias: Incidencia[];
+  notificaciones: Notificacion[];
+  vehiculos: Vehiculo[];
+  herramientas: Herramienta[];
+  almacen: AlmacenItem[];
+}
