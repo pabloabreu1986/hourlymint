@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Logo } from "@/components/Logo";
 import { Spinner } from "@/components/ui";
+import { KineticGridBackground } from "@/components/KineticGridBackground";
 import { IconUser, IconEye, IconEyeOff, IconClock } from "@/components/icons";
 
 export default function Login() {
@@ -35,15 +36,18 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-12 bg-forge-dark px-6 py-16 text-white">
+    <div className="relative flex min-h-full flex-col items-center justify-center gap-12 overflow-hidden bg-forge-dark px-6 py-16 text-white">
+      <KineticGridBackground className="absolute inset-0" />
+      <div className="pointer-events-none absolute inset-0 bg-forge-dark/70" />
+
       {/* Logo */}
-      <div className="flex flex-col items-center justify-center">
+      <div className="relative z-10 flex flex-col items-center justify-center">
         <Logo variant="light" className="scale-125" />
         <h1 className="mt-10 text-lg font-semibold text-white/90">Iniciar sesión</h1>
       </div>
 
       {/* Formulario */}
-      <form onSubmit={onSubmit} className="mx-auto w-full max-w-sm space-y-4">
+      <form onSubmit={onSubmit} className="relative z-10 mx-auto w-full max-w-sm space-y-4">
         <div className="relative">
           <IconUser className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/40" />
           <input
