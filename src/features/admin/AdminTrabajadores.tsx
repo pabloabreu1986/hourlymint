@@ -6,6 +6,8 @@ import {
   formatDuracion,
   segundosDeEstadoActual,
   ESTILO_ESTADO_JORNADA,
+  type Jornada,
+  type ColorBadgeEstado,
 } from "@/lib/horas";
 import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import { Avatar, Badge, Cargando, Modal, Spinner } from "@/components/ui";
@@ -80,6 +82,15 @@ export default function AdminTrabajadores() {
 
   if (!usuarios) return <Cargando />;
 
+  const filas = usuarios.map((u) => {
+    const jornada =
+      u.rol === "trabajador" ? calcularJornada(fichajesPorTrabajador[u.id] ?? [], ahora) : null;
+    const info = jornada ? ESTILO_ESTADO_JORNADA[jornada.estado] : null;
+    const conCronometro =
+      !!jornada && ["trabajando", "descansando", "en_extra"].includes(jornada.estado);
+    return { u, jornada, info, conCronometro };
+  });
+
   return (
     <div>
       <div className="mb-5 flex items-center justify-between">
@@ -91,7 +102,25 @@ export default function AdminTrabajadores() {
         </button>
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Móvil: tarjetas */}
+      <div className="space-y-3 md:hidden">
+        {filas.map(({ u, jornada, info, conCronometro }) => (
+          <TrabajadorCard
+            key={u.id}
+            u={u}
+            jornada={jornada}
+            info={info}
+            conCronometro={conCronometro}
+            verPass={!!verPass[u.id]}
+            onTogglePass={() => setVerPass((v) => ({ ...v, [u.id]: !v[u.id] }))}
+            onEditar={() => setEditar(u)}
+            onBorrar={() => setBorrar(u)}
+          />
+        ))}
+      </div>
+
+      {/* Escritorio: tabla */}
+      <div className="card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -108,15 +137,7 @@ export default function AdminTrabajadores() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {usuarios.map((u) => {
-                const jornada =
-                  u.rol === "trabajador"
-                    ? calcularJornada(fichajesPorTrabajador[u.id] ?? [], ahora)
-                    : null;
-                const info = jornada ? ESTILO_ESTADO_JORNADA[jornada.estado] : null;
-                const conCronometro =
-                  jornada && ["trabajando", "descansando", "en_extra"].includes(jornada.estado);
-                return (
+              {filas.map(({ u, jornada, info, conCronometro }) => (
                 <tr key={u.id} className="hover:bg-slate-50/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -183,8 +204,7 @@ export default function AdminTrabajadores() {
                     </div>
                   </td>
                 </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
@@ -230,6 +250,94 @@ export default function AdminTrabajadores() {
           </div>
         )}
       </Modal>
+    </div>
+  );
+}
+
+/** Tarjeta de un trabajador para pantallas pequeñas: mismo contenido que
+ * la fila de la tabla de escritorio, en formato apilado. */
+function TrabajadorCard({
+  u,
+  jornada,
+  info,
+  conCronometro,
+  verPass,
+  onTogglePass,
+  onEditar,
+  onBorrar,
+}: {
+  u: Usuario;
+  jornada: Jornada | null;
+  info: { label: string; badge: ColorBadgeEstado } | null;
+  conCronometro: boolean;
+  verPass: boolean;
+  onTogglePass: () => void;
+  onEditar: () => void;
+  onBorrar: () => void;
+}) {
+  return (
+    <div className="card p-4">
+      <div className="flex items-center gap-3">
+        <Avatar nombre={u.nombre} color={u.color} size={40} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold text-forge-dark">{u.nombre}</p>
+          <p className="truncate text-xs text-slate-400">{u.puesto ?? "—"}</p>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <button
+            onClick={onEditar}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-forge-dark"
+          >
+            <IconEdit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onBorrar}
+            disabled={u.rol === "admin"}
+            className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30"
+          >
+            <IconTrash className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+        {info ? <Badge color={info.badge}>{info.label}</Badge> : <span className="text-xs text-slate-400">—</span>}
+        {conCronometro && jornada ? (
+          <span className="font-mono text-sm font-semibold text-forge-dark">
+            {formatDuracion(segundosDeEstadoActual(jornada))}
+          </span>
+        ) : (
+          <span className="text-xs text-slate-400">Sin fichar hoy</span>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs">
+        <div>
+          <p className="text-slate-400">Teléfono</p>
+          <p className="font-medium text-forge-dark">{u.telefono ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-slate-400">Rol</p>
+          <Badge color={u.rol === "admin" ? "blue" : "slate"}>
+            {u.rol === "admin" ? "Admin" : "Trabajador"}
+          </Badge>
+        </div>
+        <div>
+          <p className="text-slate-400">Contraseña</p>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <code className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
+              {verPass ? u.password : "••••••"}
+            </code>
+            <button onClick={onTogglePass} className="text-slate-400 hover:text-forge-dark">
+              {verPass ? <IconEyeOff className="h-3.5 w-3.5" /> : <IconEye className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        </div>
+        <div>
+          <p className="text-slate-400">Estado</p>
+          <Badge color={u.activo ? "green" : "red"}>{u.activo ? "Activo" : "Baja"}</Badge>
+        </div>
+      </div>
     </div>
   );
 }
