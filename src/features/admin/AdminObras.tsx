@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { obrasApi, usuariosApi, adjuntosApi, dashboardApi } from "@/services";
-import type { Adjunto, EstadoObra, Obra, Usuario, Fichaje } from "@/lib/types";
+import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi } from "@/services";
+import type { Adjunto, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
 import { calcularJornada, formatHoras, ESTILO_ESTADO_JORNADA } from "@/lib/horas";
+import { fechaLarga } from "@/lib/format";
 import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import {
   Avatar,
@@ -36,6 +37,19 @@ const DIAS_SEMANA = [
   { valor: 6, letra: "S" },
   { valor: 7, letra: "D" },
 ];
+
+/** Agrupa fotos por día. Asume que ya vienen ordenadas de más reciente a
+ * más antigua (así las devuelve fotosApi.listFotosDeObra). */
+function agruparFotosPorFecha(fotos: Foto[]): Array<{ fecha: string; fotos: Foto[] }> {
+  const grupos: Array<{ fecha: string; fotos: Foto[] }> = [];
+  for (const f of fotos) {
+    const fecha = f.createdAt.slice(0, 10);
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.fecha === fecha) ultimo.fotos.push(f);
+    else grupos.push({ fecha, fotos: [f] });
+  }
+  return grupos;
+}
 
 export default function AdminObras() {
   const [obras, setObras] = useState<Obra[] | null>(null);
@@ -169,7 +183,18 @@ function ObraCard({
   onBorrar: () => void;
 }) {
   const [expandido, setExpandido] = useState(false);
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
+  const [fotos, setFotos] = useState<Foto[] | null>(null);
+  const [verFoto, setVerFoto] = useState<Foto | null>(null);
   const nombreDe = (id: string | null) => usuarios.find((u) => u.id === id)?.nombre ?? "Sin asignar";
+
+  async function toggleGaleria() {
+    const abrir = !galeriaAbierta;
+    setGaleriaAbierta(abrir);
+    if (abrir && fotos === null) {
+      setFotos(await fotosApi.listFotosDeObra(obra.id));
+    }
+  }
 
   const equipoIds = Array.from(
     new Set(obra.encargadoId ? [...obra.trabajadorIds, obra.encargadoId] : obra.trabajadorIds)
@@ -300,6 +325,52 @@ function ObraCard({
         </div>
       )}
 
+      {/* Galería de fotos: desplegable, agrupada por fecha (más reciente primero) */}
+      <button
+        onClick={toggleGaleria}
+        className="mt-4 flex w-full items-center justify-between border-t border-slate-100 pt-3 text-left"
+      >
+        <p className="text-xs font-semibold text-slate-400">
+          Galería de fotos{fotos ? ` (${fotos.length})` : ""}
+        </p>
+        {galeriaAbierta ? (
+          <IconChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+        ) : (
+          <IconChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+        )}
+      </button>
+
+      {galeriaAbierta && (
+        <div className="mt-3 space-y-3">
+          {fotos === null ? (
+            <div className="py-4 text-center">
+              <Spinner className="mx-auto h-5 w-5 text-slate-300" />
+            </div>
+          ) : fotos.length === 0 ? (
+            <p className="text-xs text-slate-400">Todavía no hay fotos de esta obra.</p>
+          ) : (
+            agruparFotosPorFecha(fotos).map((grupo) => (
+              <div key={grupo.fecha}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {fechaLarga(grupo.fecha)}
+                </p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {grupo.fotos.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setVerFoto(f)}
+                      className="aspect-square overflow-hidden rounded-lg bg-slate-100"
+                    >
+                      <img src={f.url} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       <div className="mt-4 flex gap-2">
         <button onClick={onEditar} className="btn-ghost flex-1 px-3 py-2 text-sm">
           <IconEdit className="h-4 w-4" /> Editar
@@ -311,6 +382,10 @@ function ObraCard({
           <IconTrash className="h-4 w-4" />
         </button>
       </div>
+
+      <Modal open={!!verFoto} onClose={() => setVerFoto(null)} title="Foto">
+        {verFoto && <img src={verFoto.url} alt="" className="w-full rounded-xl" />}
+      </Modal>
     </div>
   );
 }
