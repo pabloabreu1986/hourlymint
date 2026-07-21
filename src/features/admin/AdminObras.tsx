@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { obrasApi, usuariosApi, adjuntosApi } from "@/services";
-import type { Adjunto, EstadoObra, Obra, Usuario } from "@/lib/types";
+import { obrasApi, usuariosApi, adjuntosApi, dashboardApi } from "@/services";
+import type { Adjunto, EstadoObra, Obra, Usuario, Fichaje } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
+import { calcularJornada, formatHoras } from "@/lib/horas";
+import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import {
   Avatar,
   Cargando,
@@ -19,6 +21,7 @@ import {
   IconMapPin,
   IconVideo,
   IconCamera,
+  IconClock,
 } from "@/components/icons";
 
 const DIAS_SEMANA = [
@@ -37,18 +40,58 @@ export default function AdminObras() {
   const [editar, setEditar] = useState<Obra | null>(null);
   const [nuevo, setNuevo] = useState(false);
   const [borrar, setBorrar] = useState<Obra | null>(null);
+  const [fichajesPorTrabajador, setFichajesPorTrabajador] = useState<Record<string, Fichaje[]>>({});
+  const [ahora, setAhora] = useState(() => new Date());
 
   async function cargar() {
     const [os, us] = await Promise.all([obrasApi.listObras(), usuariosApi.listTrabajadores()]);
     setObras(os);
     setUsuarios(us);
   }
+  async function cargarFichajes() {
+    const data = await dashboardApi.getDashboard();
+    const mapa: Record<string, Fichaje[]> = {};
+    data.tiempoReal.forEach((t) => {
+      mapa[t.trabajador.id] = t.fichajesHoy;
+    });
+    setFichajesPorTrabajador(mapa);
+  }
   useEffect(() => {
     cargar();
+    cargarFichajes();
+  }, []);
+
+  // Tiempo hoy en vivo: recalcula cada segundo.
+  useEffect(() => {
+    const id = setInterval(() => setAhora(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // El estado se propaga por Realtime, no por polling.
+  useEffect(() => {
+    if (!isSupabaseEnabled) return;
+    const canal = sb()
+      .channel("obras-fichajes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "fichajes" }, cargarFichajes)
+      .subscribe();
+    return () => {
+      sb().removeChannel(canal);
+    };
   }, []);
 
   if (!obras) return <Cargando />;
   const nombreDe = (id: string | null) => usuarios.find((u) => u.id === id)?.nombre ?? "Sin asignar";
+
+  function tiempoHoyDeObra(o: Obra): number {
+    const equipo = new Set(o.trabajadorIds);
+    if (o.encargadoId) equipo.add(o.encargadoId);
+    let segundos = 0;
+    equipo.forEach((id) => {
+      const jornada = calcularJornada(fichajesPorTrabajador[id] ?? [], ahora);
+      segundos += jornada.segundosOrdinarios + jornada.segundosExtra;
+    });
+    return segundos;
+  }
 
   return (
     <div>
@@ -82,6 +125,14 @@ export default function AdminObras() {
                 <span className="font-semibold text-forge-dark">{o.avance}%</span>
               </div>
               <ProgressBar value={o.avance} />
+            </div>
+
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+              <IconClock className="h-3.5 w-3.5 text-forge-orange" />
+              <span>Tiempo hoy:</span>
+              <span className="font-semibold text-forge-dark">
+                {formatHoras(tiempoHoyDeObra(o))}
+              </span>
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
