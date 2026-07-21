@@ -35,9 +35,9 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-forge-dark px-6 pb-10 pt-16 text-white md:items-center md:justify-center md:gap-12 md:py-16">
-      {/* Logo / splash */}
-      <div className="flex flex-1 flex-col items-center justify-center md:flex-none">
+    <div className="flex min-h-full flex-col items-center justify-center gap-12 bg-forge-dark px-6 py-16 text-white">
+      {/* Logo */}
+      <div className="flex flex-col items-center justify-center">
         <Logo variant="light" className="scale-125" />
         <h1 className="mt-10 text-lg font-semibold text-white/90">Iniciar sesión</h1>
       </div>
