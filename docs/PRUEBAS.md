@@ -204,6 +204,28 @@ tras la hora de salida ya se cumplió y hoy es día laborable:
    salida automática.
 6. Recuerda devolver la obra a un horario normal después de probar esto.
 
+### Admin en móvil
+
+Abre el panel de admin desde un iPhone (o el emulador de Chrome DevTools):
+
+1. **Sin menú hamburguesa**: la cabecera muestra el logo y, a la derecha, el
+   avatar con la campana de notificaciones (badge con el número de sin leer).
+   Debajo, el saludo con el nombre del admin y la fecha — mismo estilo que la
+   Home del trabajador, con espacio respetado para el notch/isla del iPhone.
+2. **Barra inferior** con 4 pestañas: **Dashboard, Obras, Trabajadores,
+   Perfil**. El resto de secciones (Partes, Materiales, Incidencias,
+   Vehículos, Herramientas, Almacén, Informes, Configuración) no están en
+   móvil — solo se llega a ellas desde el sidebar de escritorio.
+3. **Dashboard**: los KPIs se ven en tarjetas 2×2 sin desbordar ni cortar
+   texto; "Resumen de obras" es una lista de tarjetas (no una tabla con
+   scroll horizontal); "Ahora mismo" fluye con la página, sin scroll interno.
+4. **Obras**: cada tarjeta de obra muestra tiempo trabajado (ordinario/
+   extra), el desplegable de "Personal asignado" (chevron abajo/arriba) y la
+   galería de fotos agrupada por fecha.
+5. **Perfil** (pestaña nueva): avatar, nombre, puesto, editar teléfono/
+   contraseña y "Cerrar sesión" — confirma que el botón no queda tapado por
+   la barra inferior al hacer scroll hasta el final.
+
 ---
 
 ## Cosas a vigilar durante las pruebas

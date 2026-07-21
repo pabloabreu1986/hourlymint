@@ -179,6 +179,159 @@ create policy forgevia_fotos_insert on storage.objects
 create policy forgevia_fotos_delete on storage.objects
   for delete to anon, authenticated using (bucket_id = 'fotos-obra');
 
+-- ── Realtime: cambios en `fichajes` se propagan a los admins ─
+-- (contadores en vivo del Dashboard vía canal `postgres_changes`).
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'fichajes'
+  ) then
+    alter publication supabase_realtime add table fichajes;
+  end if;
+end $$;
+
+-- ── Salida automática por cuadrante (pg_cron, cada minuto) ──
+-- 1) Si una obra ya pasó su hora_salida + margen y el trabajador tiene
+--    entrada sin salida hoy, se le inserta una salida (y se cierra
+--    cualquier pausa abierta) con estado 'automatica'.
+-- 2) A las 23:59 se cierran también las horas extra/pausas que
+--    hayan quedado abiertas, sea cual sea la obra.
+create extension if not exists pg_cron;
+
+create or replace function public.cron_cierre_automatico_fichajes()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  ahora_madrid timestamp := (now() at time zone 'Europe/Madrid');
+  hoy date := ahora_madrid::date;
+  hora_actual time := ahora_madrid::time;
+  inicio_hoy timestamptz := (hoy::text || ' 00:00:00')::timestamp at time zone 'Europe/Madrid';
+  dow_hoy int := extract(isodow from ahora_madrid)::int;
+  r_obra record;
+  r_trab text;
+  instante_salida timestamptz;
+  instante_2359 timestamptz;
+  instante_ahora timestamptz := now();
+  tiene_entrada boolean;
+  tiene_salida boolean;
+  pausa_abierta_id text;
+  r_abierto record;
+begin
+  -----------------------------------------------------------------
+  -- 1) Salida automática por obra, cuando se cumple el margen tras
+  --    la hora de salida del cuadrante y hoy es día laborable.
+  -----------------------------------------------------------------
+  for r_obra in
+    select id, nombre, hora_salida, trabajador_ids, encargado_id
+    from obras
+    where estado = 'en_curso'
+      and dow_hoy = any(dias_laborables)
+      and hora_actual >= (hora_salida + (margen_salida_automatica_min || ' minutes')::interval)
+  loop
+    instante_salida := ((hoy::text || ' ' || r_obra.hora_salida::text)::timestamp
+                          at time zone 'Europe/Madrid');
+
+    foreach r_trab in array (
+      select array_agg(distinct t) from unnest(
+        r_obra.trabajador_ids ||
+        case when r_obra.encargado_id is not null
+             then array[r_obra.encargado_id] else array[]::text[] end
+      ) as t
+    )
+    loop
+      select exists(
+        select 1 from fichajes
+        where trabajador_id = r_trab and obra_id = r_obra.id
+          and tipo = 'entrada' and timestamp >= inicio_hoy
+      ) into tiene_entrada;
+
+      select exists(
+        select 1 from fichajes
+        where trabajador_id = r_trab and obra_id = r_obra.id
+          and tipo = 'salida' and timestamp >= inicio_hoy
+      ) into tiene_salida;
+
+      if tiene_entrada and not tiene_salida then
+        select f1.id into pausa_abierta_id
+        from fichajes f1
+        where f1.trabajador_id = r_trab and f1.obra_id = r_obra.id
+          and f1.tipo = 'pausa_inicio' and f1.timestamp >= inicio_hoy
+          and not exists (
+            select 1 from fichajes f2
+            where f2.trabajador_id = f1.trabajador_id and f2.tipo = 'pausa_fin'
+              and f2.timestamp > f1.timestamp
+          )
+        order by f1.timestamp desc limit 1;
+
+        if pausa_abierta_id is not null then
+          insert into fichajes (id, trabajador_id, obra_id, tipo, timestamp, estado, creado_en)
+          values ('f_' || substr(md5(random()::text), 1, 8), r_trab, r_obra.id,
+                  'pausa_fin', instante_salida, 'automatica', instante_ahora);
+        end if;
+
+        insert into fichajes (id, trabajador_id, obra_id, tipo, timestamp, estado, creado_en)
+        values ('f_' || substr(md5(random()::text), 1, 8), r_trab, r_obra.id,
+                'salida', instante_salida, 'automatica', instante_ahora);
+
+        insert into notificaciones (id, trabajador_id, tipo, titulo, mensaje, fecha, leida)
+        values (
+          'n_' || substr(md5(random()::text), 1, 8), r_trab, 'fichaje',
+          'Salida automática registrada',
+          'Se ha registrado tu salida automática a las ' || to_char(instante_salida at time zone 'Europe/Madrid', 'HH24:MI') ||
+            ' en ' || r_obra.nombre || '. A partir de ahora, ficha cualquier trabajo como horas extra.',
+          instante_ahora, false
+        );
+      end if;
+    end loop;
+  end loop;
+
+  -----------------------------------------------------------------
+  -- 2) A las 23:59: cierra cualquier pausa/hora extra que siga
+  --    abierta, sea cual sea la obra.
+  -----------------------------------------------------------------
+  if hora_actual >= '23:59:00'::time then
+    instante_2359 := ((hoy::text || ' 23:59:00')::timestamp at time zone 'Europe/Madrid');
+
+    for r_abierto in
+      select f.trabajador_id, f.obra_id, f.tipo
+      from fichajes f
+      where f.tipo in ('pausa_inicio', 'extra_inicio')
+        and f.timestamp >= inicio_hoy
+        and not exists (
+          select 1 from fichajes f2
+          where f2.trabajador_id = f.trabajador_id
+            and f2.tipo = (case f.tipo when 'pausa_inicio' then 'pausa_fin' else 'extra_fin' end)
+            and f2.timestamp > f.timestamp
+        )
+    loop
+      insert into fichajes (id, trabajador_id, obra_id, tipo, timestamp, estado, creado_en)
+      values (
+        'f_' || substr(md5(random()::text), 1, 8), r_abierto.trabajador_id, r_abierto.obra_id,
+        case r_abierto.tipo when 'pausa_inicio' then 'pausa_fin' else 'extra_fin' end,
+        instante_2359, 'automatica', instante_ahora
+      );
+    end loop;
+  end if;
+end;
+$fn$;
+
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'cierre-automatico-fichajes') then
+    perform cron.unschedule('cierre-automatico-fichajes');
+  end if;
+end $$;
+
+select cron.schedule(
+  'cierre-automatico-fichajes',
+  '* * * * *',
+  $cron$select public.cron_cierre_automatico_fichajes();$cron$
+);
+
 -- ── Datos de ejemplo (mismos que el modo mock) ──────────────
 insert into usuarios (id, nombre, password, rol, telefono, puesto, activo, color) values
   ('u_admin','Antonio Manzanares','admin1234','admin','600 000 000','Administrador',true,'#3B4756'),
