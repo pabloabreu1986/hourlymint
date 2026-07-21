@@ -30,6 +30,7 @@ import AdminMateriales from "@/features/admin/AdminMateriales";
 import AdminIncidencias from "@/features/admin/AdminIncidencias";
 import AdminRecursos from "@/features/admin/AdminRecursos";
 import AdminInformes from "@/features/admin/AdminInformes";
+import AdminHoras from "@/features/admin/AdminHoras";
 import AdminConfiguracion from "@/features/admin/AdminConfiguracion";
 import AdminNotificaciones from "@/features/admin/AdminNotificaciones";
 
@@ -108,6 +109,7 @@ export default function App() {
         <Route path="/admin/herramientas" element={<AdminRecursos tab="herramientas" />} />
         <Route path="/admin/almacen" element={<AdminRecursos tab="almacen" />} />
         <Route path="/admin/informes" element={<AdminInformes />} />
+        <Route path="/admin/horas" element={<AdminHoras />} />
         <Route path="/admin/notificaciones" element={<AdminNotificaciones />} />
         <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
       </Route>

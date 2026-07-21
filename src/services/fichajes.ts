@@ -2,11 +2,12 @@ import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { hoyISO } from "@/lib/seed";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { capturarGPS } from "@/lib/geo";
+import { calcularJornada, type Jornada } from "@/lib/horas";
 import type { Fichaje, TipoFichaje } from "@/lib/types";
 import * as sb from "./supabase/fichajes";
 
-/** Hora límite de entrada. Después se marca "tarde". */
-export const HORA_LIMITE_ENTRADA = 9; // 09:00
+/** Hora de entrada por defecto cuando no se indica la de la obra. */
+export const HORA_ENTRADA_POR_DEFECTO = "09:00";
 
 function esDeHoy(iso: string): boolean {
   return iso.slice(0, 10) === hoyISO();
@@ -31,40 +32,79 @@ export async function fichajesDeTrabajadorHoy(trabajadorId: string): Promise<Fic
   );
 }
 
-export interface EstadoFichajeTrabajador {
-  entrada: Fichaje | null;
-  salida: Fichaje | null;
-}
-
-export async function estadoFichaje(trabajadorId: string): Promise<EstadoFichajeTrabajador> {
-  if (isSupabaseEnabled) return sb.estadoFichaje(trabajadorId);
-  const hoy = loadDB().fichajes.filter(
-    (f) => f.trabajadorId === trabajadorId && esDeHoy(f.timestamp)
+export async function fichajesDeTrabajadorEnFecha(
+  trabajadorId: string,
+  fecha: string
+): Promise<Fichaje[]> {
+  if (isSupabaseEnabled) return sb.fichajesDeTrabajadorEnFecha(trabajadorId, fecha);
+  return delay(
+    loadDB().fichajes.filter(
+      (f) => f.trabajadorId === trabajadorId && f.timestamp.slice(0, 10) === fecha
+    )
   );
-  return delay({
-    entrada: hoy.find((f) => f.tipo === "entrada") ?? null,
-    salida: hoy.find((f) => f.tipo === "salida") ?? null,
-  });
 }
 
-/** Registra un fichaje capturando GPS automáticamente. */
+/** Fichajes de un trabajador entre dos fechas YYYY-MM-DD, ambas incluidas. */
+export async function fichajesDeTrabajadorEnRango(
+  trabajadorId: string,
+  desde: string,
+  hasta: string
+): Promise<Fichaje[]> {
+  if (isSupabaseEnabled) return sb.fichajesDeTrabajadorEnRango(trabajadorId, desde, hasta);
+  return delay(
+    loadDB().fichajes.filter(
+      (f) =>
+        f.trabajadorId === trabajadorId &&
+        f.timestamp.slice(0, 10) >= desde &&
+        f.timestamp.slice(0, 10) <= hasta
+    )
+  );
+}
+
+/**
+ * Jornada de hoy de un trabajador: incluye `entrada`/`salida` (igual que
+ * antes, para no romper a quien ya lee esos dos campos) más pausas, horas
+ * extra y el estado actual (sin_fichar/trabajando/descansando/en_extra/cerrado).
+ */
+export async function estadoFichaje(trabajadorId: string): Promise<Jornada> {
+  const hoy = await fichajesDeTrabajadorHoy(trabajadorId);
+  return calcularJornada(hoy);
+}
+
+function esTarde(tipo: TipoFichaje, horaEntradaObra: string): boolean {
+  if (tipo !== "entrada") return false;
+  const [h, m] = horaEntradaObra.split(":").map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() > h * 60 + m;
+}
+
+export interface FicharOpts {
+  /** Hora de entrada del cuadrante de la obra ("HH:MM"), para saber si es "tarde". */
+  horaEntradaObra?: string;
+}
+
+/** Registra un fichaje (entrada/salida/pausa/hora extra) capturando GPS. */
 export async function fichar(
   trabajadorId: string,
   tipo: TipoFichaje,
-  obraId: string | null
+  obraId: string | null,
+  opts: FicharOpts = {}
 ): Promise<Fichaje> {
-  if (isSupabaseEnabled) return sb.fichar(trabajadorId, tipo, obraId);
+  if (isSupabaseEnabled) return sb.fichar(trabajadorId, tipo, obraId, opts);
   const gps = await capturarGPS();
   const now = new Date();
-  const tarde = tipo === "entrada" && now.getHours() >= HORA_LIMITE_ENTRADA;
+  const tarde = esTarde(tipo, opts.horaEntradaObra ?? HORA_ENTRADA_POR_DEFECTO);
+  const nowIso = now.toISOString();
   const fichaje: Fichaje = {
     id: uid("f"),
     trabajadorId,
     obraId,
     tipo,
-    timestamp: now.toISOString(),
+    timestamp: nowIso,
     gps,
     estado: tarde ? "tarde" : "correcto",
+    creadoEn: nowIso,
+    corrigeA: null,
   };
   updateDB((db) => db.fichajes.push(fichaje));
   return fichaje;

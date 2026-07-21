@@ -79,6 +79,10 @@ export function seedDB(): DBSchema {
       trabajadorIds: ["u_juan", "u_antonio", "u_carlos", "u_javier"],
       color: PAL[0],
       createdAt: hoy,
+      diasLaborables: [1, 2, 3, 4, 5],
+      horaEntrada: "09:00",
+      horaSalida: "18:00",
+      margenSalidaAutomaticaMin: 5,
     },
     {
       id: "o_parla",
@@ -90,6 +94,10 @@ export function seedDB(): DBSchema {
       trabajadorIds: ["u_luis", "u_david"],
       color: PAL[1],
       createdAt: hoy,
+      diasLaborables: [1, 2, 3, 4, 5],
+      horaEntrada: "09:00",
+      horaSalida: "18:00",
+      margenSalidaAutomaticaMin: 5,
     },
     {
       id: "o_climatizacion",
@@ -101,6 +109,10 @@ export function seedDB(): DBSchema {
       trabajadorIds: ["u_pedro", "u_javier"],
       color: PAL[2],
       createdAt: hoy,
+      diasLaborables: [1, 2, 3, 4, 5],
+      horaEntrada: "09:00",
+      horaSalida: "18:00",
+      margenSalidaAutomaticaMin: 5,
     },
     {
       id: "o_oficina",
@@ -112,6 +124,10 @@ export function seedDB(): DBSchema {
       trabajadorIds: ["u_manuel"],
       color: PAL[3],
       createdAt: hoy,
+      diasLaborables: [1, 2, 3, 4, 5],
+      horaEntrada: "09:00",
+      horaSalida: "18:00",
+      margenSalidaAutomaticaMin: 5,
     },
   ];
 
@@ -137,6 +153,8 @@ export function seedDB(): DBSchema {
     timestamp: hoyA(hora),
     gps: gps(),
     estado: (i === 1 ? "tarde" : "correcto") as "correcto" | "tarde",
+    creadoEn: hoyA(hora),
+    corrigeA: null,
   }));
 
   // ── Incidencias ──

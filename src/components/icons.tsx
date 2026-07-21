@@ -28,6 +28,17 @@ export const IconSalida = (p: P) => (
     <path d="M21 12H9" />
   </svg>
 );
+export const IconPausa = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="6" y="4" width="4" height="16" rx="1" />
+    <rect x="14" y="4" width="4" height="16" rx="1" />
+  </svg>
+);
+export const IconExtra = (p: P) => (
+  <svg {...base(p)}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
 export const IconCamera = (p: P) => (
   <svg {...base(p)}>
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />

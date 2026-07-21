@@ -28,6 +28,12 @@ export function fechaCompleta(iso: string): string {
   return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
+/** "Lun 24" */
+export function diaCorto(iso: string): string {
+  const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
+  return `${cap(DIAS[d.getDay()].slice(0, 3))} ${d.getDate()}`;
+}
+
 /** "08:03" */
 export function hora(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-ES", {

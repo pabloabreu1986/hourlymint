@@ -33,6 +33,10 @@ export async function crearObra(input: NuevaObra): Promise<Obra> {
     id: uid("o"),
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     createdAt: new Date().toISOString().slice(0, 10),
+    diasLaborables: [1, 2, 3, 4, 5],
+    horaEntrada: "09:00",
+    horaSalida: "18:00",
+    margenSalidaAutomaticaMin: 5,
     ...input,
   };
   check(await sb().from("obras").insert(fromObra(nueva)));

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { fichajesApi, obrasApi } from "@/services";
 import type { Fichaje, Obra, TipoFichaje } from "@/lib/types";
+import { calcularJornada, type Jornada } from "@/lib/horas";
 import { Logo } from "@/components/Logo";
 import { Modal, Spinner, Avatar } from "@/components/ui";
 import { WorkerMap } from "@/components/WorkerMap";
@@ -12,52 +13,98 @@ import { coordText } from "@/lib/geo";
 import {
   IconEntrada,
   IconSalida,
+  IconPausa,
+  IconExtra,
   IconCamera,
   IconClipboard,
   IconCheck,
   IconMapPin,
 } from "@/components/icons";
 
+const JORNADA_VACIA: Jornada = calcularJornada([]);
+
+const TITULOS_CONFIRMACION: Record<TipoFichaje, string> = {
+  entrada: "Entrada",
+  salida: "Salida",
+  pausa_inicio: "Pausa iniciada",
+  pausa_fin: "Trabajo reanudado",
+  extra_inicio: "Horas extra iniciadas",
+  extra_fin: "Horas extra cerradas",
+};
+
+const RESUMEN: Record<Jornada["estado"], string> = {
+  sin_fichar: "Aún no has fichado",
+  trabajando: "Jornada en curso",
+  descansando: "En pausa para descanso",
+  en_extra: "En horas extra",
+  cerrado: "Jornada cerrada",
+};
+
 export default function Home() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [estado, setEstado] = useState<{ entrada: Fichaje | null; salida: Fichaje | null }>({
-    entrada: null,
-    salida: null,
-  });
+  const [estado, setEstado] = useState<Jornada>(JORNADA_VACIA);
   const [obras, setObras] = useState<Obra[]>([]);
   const [fichando, setFichando] = useState<TipoFichaje | null>(null);
   const [confirmacion, setConfirmacion] = useState<Fichaje | null>(null);
 
+  async function refrescar() {
+    if (!usuario) return;
+    setEstado(await fichajesApi.estadoFichaje(usuario.id));
+  }
+
   useEffect(() => {
     if (!usuario) return;
-    fichajesApi.estadoFichaje(usuario.id).then(setEstado);
+    refrescar();
     obrasApi.listObrasDeTrabajador(usuario.id).then(setObras);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario]);
 
   if (!usuario) return null;
 
+  const obraActual = obras[0];
+  const pausaAbierta = estado.pausas.some((p) => !p.fin);
+  const extraAbierta = estado.extras.some((e) => !e.fin);
+  const yaEntrada = !!estado.entrada;
+  const yaSalida = !!estado.salida;
+
+  /** Fichaje simple: registra el tipo y refresca el estado. */
   async function fichar(tipo: TipoFichaje) {
     if (!usuario) return;
     setFichando(tipo);
     try {
-      // Obra por defecto: la primera asignada hoy.
-      const obraId = obras[0]?.id ?? null;
-      const f = await fichajesApi.fichar(usuario.id, tipo, obraId);
-      const nuevo = await fichajesApi.estadoFichaje(usuario.id);
-      setEstado(nuevo);
+      const obraId = obraActual?.id ?? null;
+      const f = await fichajesApi.fichar(usuario.id, tipo, obraId, {
+        horaEntradaObra: obraActual?.horaEntrada,
+      });
+      await refrescar();
       setConfirmacion(f);
     } finally {
       setFichando(null);
     }
   }
 
-  const yaEntrada = !!estado.entrada;
-  const yaSalida = !!estado.salida;
+  /** Cierra un tramo (salida u horas extra) cerrando antes, en silencio,
+   * cualquier pausa que haya quedado abierta. */
+  async function ficharCerrandoTramo(tipo: TipoFichaje) {
+    if (!usuario) return;
+    setFichando(tipo);
+    try {
+      const obraId = obraActual?.id ?? null;
+      if (pausaAbierta) {
+        await fichajesApi.fichar(usuario.id, "pausa_fin", obraId);
+      }
+      const f = await fichajesApi.fichar(usuario.id, tipo, obraId);
+      await refrescar();
+      setConfirmacion(f);
+    } finally {
+      setFichando(null);
+    }
+  }
 
   const acciones = [
     {
-      key: "entrada",
+      key: "entrada" as const,
       label: "ENTRADA",
       sub: yaEntrada ? `Fichada · ${hora(estado.entrada!.timestamp)}` : "Fichar entrada",
       icon: IconEntrada,
@@ -67,19 +114,47 @@ export default function Home() {
       disabled: yaEntrada,
     },
     {
-      key: "salida",
+      key: "salida" as const,
       label: "SALIDA",
       sub: yaSalida
-        ? `Fichada · ${hora(estado.salida!.timestamp)}`
+        ? `Fichada · ${hora(estado.salida!.timestamp)}${estado.salidaAutomatica ? " · Automática" : ""}`
         : yaEntrada
           ? "Fichar salida"
           : "Ficha primero la entrada",
       icon: IconSalida,
       color: "#DC2626",
       bg: "bg-red-50",
-      onClick: () => fichar("salida"),
+      onClick: () => ficharCerrandoTramo("salida"),
       disabled: !yaEntrada || yaSalida,
     },
+    {
+      key: pausaAbierta ? ("pausa_fin" as const) : ("pausa_inicio" as const),
+      label: pausaAbierta ? "REANUDAR" : "PAUSA",
+      sub: pausaAbierta ? "Reanudar trabajo" : "Pausa para descanso",
+      icon: IconPausa,
+      color: "#D97706",
+      bg: "bg-amber-50",
+      onClick: () => fichar(pausaAbierta ? "pausa_fin" : "pausa_inicio"),
+      disabled: !pausaAbierta && !((yaEntrada && !yaSalida) || extraAbierta),
+    },
+    {
+      key: extraAbierta ? ("extra_fin" as const) : ("extra_inicio" as const),
+      label: extraAbierta ? "CERRAR EXTRA" : "HORAS EXTRA",
+      sub: extraAbierta
+        ? "Cerrar horas extra"
+        : yaSalida
+          ? "Fichar horas extra"
+          : "Cierra tu turno primero",
+      icon: IconExtra,
+      color: "#7C3AED",
+      bg: "bg-violet-50",
+      onClick: () =>
+        extraAbierta ? ficharCerrandoTramo("extra_fin") : fichar("extra_inicio"),
+      disabled: extraAbierta ? false : !yaSalida || pausaAbierta,
+    },
+  ];
+
+  const atajos = [
     {
       key: "fotos",
       label: "FOTOGRAFÍAS",
@@ -88,7 +163,6 @@ export default function Home() {
       color: "#2E6F8E",
       bg: "bg-sky-50",
       onClick: () => navigate("/fotos"),
-      disabled: false,
     },
     {
       key: "obras",
@@ -98,7 +172,6 @@ export default function Home() {
       color: "#BE6B39",
       bg: "bg-orange-50",
       onClick: () => navigate("/obras"),
-      disabled: false,
     },
   ];
 
@@ -120,8 +193,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Acciones */}
-      <div className="grid grid-cols-2 gap-4 p-5">
+      {/* Fichaje: entrada/salida/pausa/extra */}
+      <div className="grid grid-cols-2 gap-4 p-5 pb-0">
         {acciones.map((a) => (
           <button
             key={a.key}
@@ -145,6 +218,26 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Atajos: fotos / mis obras */}
+      <div className="grid grid-cols-2 gap-4 p-5">
+        {atajos.map((a) => (
+          <button
+            key={a.key}
+            onClick={a.onClick}
+            className="card flex flex-col items-center gap-2 p-5 text-center transition active:scale-[.98]"
+          >
+            <span
+              className={`grid h-14 w-14 place-items-center rounded-full ${a.bg}`}
+              style={{ color: a.color }}
+            >
+              <a.icon className="h-7 w-7" />
+            </span>
+            <span className="text-sm font-bold text-forge-dark">{a.label}</span>
+            <span className="text-xs text-slate-400">{a.sub}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Resumen del día */}
       <div className="px-5">
         <div className="card flex items-center gap-3 p-4">
@@ -152,9 +245,7 @@ export default function Home() {
             <IconMapPin className="h-5 w-5" />
           </span>
           <div className="text-sm">
-            <p className="font-semibold text-forge-dark">
-              {yaEntrada ? "Jornada en curso" : "Aún no has fichado"}
-            </p>
+            <p className="font-semibold text-forge-dark">{RESUMEN[estado.estado]}</p>
             <p className="text-slate-400">
               {yaEntrada
                 ? `Entrada a las ${hora(estado.entrada!.timestamp)}${
@@ -180,8 +271,7 @@ export default function Home() {
               </span>
               <div>
                 <p className="text-lg font-bold text-forge-dark">
-                  {confirmacion.tipo === "entrada" ? "Entrada" : "Salida"} ·{" "}
-                  {hora(confirmacion.timestamp)}
+                  {TITULOS_CONFIRMACION[confirmacion.tipo]} · {hora(confirmacion.timestamp)}
                 </p>
                 <p className="text-sm text-slate-400">
                   Ubicación: {coordText(confirmacion.gps)}

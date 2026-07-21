@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { dashboardApi, incidenciasApi, partesApi, obrasApi } from "@/services";
 import type { DashboardData } from "@/services/dashboard";
-import type { Incidencia, ParteDiario, Obra } from "@/lib/types";
+import type { Incidencia, ParteDiario, Obra, Usuario } from "@/lib/types";
+import { calcularJornada, formatDuracion, type Jornada } from "@/lib/horas";
+import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import {
   Avatar,
   Badge,
@@ -20,12 +22,36 @@ export default function Dashboard() {
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [partes, setPartes] = useState<ParteDiario[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
+  const [ahora, setAhora] = useState(() => new Date());
 
   useEffect(() => {
     dashboardApi.getDashboard().then(setData);
     incidenciasApi.listIncidencias().then((i) => setIncidencias(i.slice(0, 3)));
     partesApi.listPartes().then(setPartes);
     obrasApi.listObras().then(setObras);
+  }, []);
+
+  // Cronómetros en vivo: recalculan cada segundo con la hora actual.
+  useEffect(() => {
+    const id = setInterval(() => setAhora(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // El estado (quién ficha qué) se propaga por Realtime, no por polling:
+  // cualquier cambio en `fichajes` vuelve a pedir el dashboard completo.
+  useEffect(() => {
+    if (!isSupabaseEnabled) return;
+    const canal = sb()
+      .channel("dashboard-fichajes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fichajes" },
+        () => dashboardApi.getDashboard().then(setData)
+      )
+      .subscribe();
+    return () => {
+      sb().removeChannel(canal);
+    };
   }, []);
 
   if (!data) return <Cargando />;
@@ -73,20 +99,31 @@ export default function Dashboard() {
     },
   ];
 
-  const estadoLabel: Record<string, { t: string; c: "green" | "amber" | "red" }> = {
-    en_obra: { t: "En obra", c: "green" },
-    salido: { t: "Salido", c: "amber" },
-    sin_fichar: { t: "Sin fichar", c: "red" },
-  };
+  const jornadas = data.tiempoReal.map((t) => ({
+    trabajador: t.trabajador,
+    jornada: calcularJornada(t.fichajesHoy, ahora),
+  }));
+  const activos = jornadas.filter((j) =>
+    ["trabajando", "en_extra"].includes(j.jornada.estado)
+  ).length;
+  const descansando = jornadas.filter((j) => j.jornada.estado === "descansando").length;
 
   const mapPins = data.tiempoReal
-    .filter((t) => t.ultima?.gps)
-    .map((t) => ({
-      id: t.trabajador.id,
-      coord: t.ultima!.gps!,
-      color: t.trabajador.color,
-      label: t.trabajador.nombre,
-    }));
+    .flatMap((t) => t.fichajesHoy)
+    .filter((f) => f.gps)
+    .reduce((acc: typeof data.tiempoReal[number]["fichajesHoy"], f) => {
+      // Última coordenada por trabajador.
+      const i = acc.findIndex((x) => x.trabajadorId === f.trabajadorId);
+      if (i === -1 || f.timestamp > acc[i].timestamp) {
+        if (i !== -1) acc.splice(i, 1);
+        acc.push(f);
+      }
+      return acc;
+    }, [])
+    .map((f) => {
+      const trabajador = data.tiempoReal.find((t) => t.trabajador.id === f.trabajadorId)!.trabajador;
+      return { id: trabajador.id, coord: f.gps!, color: trabajador.color, label: trabajador.nombre };
+    });
 
   return (
     <div className="space-y-6">
@@ -159,31 +196,23 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Trabajadores en tiempo real */}
+        {/* Ahora mismo: cronómetros en vivo por trabajador */}
         <section className="card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-bold text-forge-dark">Trabajadores en tiempo real</h2>
-            <Link to="/admin/trabajadores" className="text-sm font-semibold text-forge-orange">
-              Ver todos →
-            </Link>
+            <h2 className="font-bold text-forge-dark">Ahora mismo</h2>
+            <div className="flex gap-3 text-xs font-bold">
+              <span className="text-green-600">{activos} activos</span>
+              <span className="text-amber-600">{descansando} descansando</span>
+            </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              {data.tiempoReal.slice(0, 8).map((t) => {
-                const e = estadoLabel[t.estado];
-                return (
-                  <div key={t.trabajador.id} className="flex items-center gap-2.5">
-                    <Avatar nombre={t.trabajador.nombre} color={t.trabajador.color} size={30} />
-                    <span className="flex-1 truncate text-sm font-medium text-forge-dark">
-                      {t.trabajador.nombre}
-                    </span>
-                    <Badge color={e.c}>{e.t}</Badge>
-                    <span className="w-10 text-right text-xs text-slate-400">
-                      {t.ultima ? hora(t.ultima.timestamp) : "–"}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="max-h-[280px] space-y-1.5 overflow-y-auto">
+              {jornadas.map(({ trabajador, jornada }) => (
+                <FilaAhoraMismo key={trabajador.id} trabajador={trabajador} jornada={jornada} />
+              ))}
+              {jornadas.length === 0 && (
+                <p className="text-sm text-slate-400">Sin trabajadores.</p>
+              )}
             </div>
             <WorkerMap pins={mapPins} height={230} />
           </div>
@@ -273,6 +302,54 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+      </div>
+    </div>
+  );
+}
+
+const ESTILO_ESTADO: Record<
+  Jornada["estado"],
+  { label: string; badge: "green" | "amber" | "violet" | "slate"; fondo: string }
+> = {
+  sin_fichar: { label: "Sin fichar", badge: "slate", fondo: "" },
+  trabajando: { label: "Trabajando", badge: "green", fondo: "bg-green-50/60" },
+  descansando: { label: "Descansando", badge: "amber", fondo: "bg-amber-50/60" },
+  en_extra: { label: "Horas extra", badge: "violet", fondo: "bg-violet-50/60" },
+  cerrado: { label: "Jornada cerrada", badge: "slate", fondo: "" },
+};
+
+function segundosDe(jornada: Jornada): number {
+  switch (jornada.estado) {
+    case "trabajando":
+      return jornada.segundosOrdinarios;
+    case "descansando":
+      return jornada.segundosPausa;
+    case "en_extra":
+      return jornada.segundosExtra;
+    default:
+      return 0;
+  }
+}
+
+function FilaAhoraMismo({ trabajador, jornada }: { trabajador: Usuario; jornada: Jornada }) {
+  const info = ESTILO_ESTADO[jornada.estado];
+  const conCronometro = ["trabajando", "descansando", "en_extra"].includes(jornada.estado);
+  return (
+    <div className={`flex items-center gap-2.5 rounded-xl p-2 ${info.fondo}`}>
+      <Avatar nombre={trabajador.nombre} color={trabajador.color} size={30} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-forge-dark">{trabajador.nombre}</p>
+        <p className="text-xs text-slate-400">
+          {jornada.entrada ? `Entrada ${hora(jornada.entrada.timestamp)}` : "—"}
+        </p>
+      </div>
+      <div className="text-right">
+        <Badge color={info.badge}>{info.label}</Badge>
+        {conCronometro && (
+          <p className="mt-1 font-mono text-sm font-bold text-forge-dark">
+            {formatDuracion(segundosDe(jornada))}
+          </p>
+        )}
       </div>
     </div>
   );

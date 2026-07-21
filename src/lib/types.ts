@@ -35,10 +35,25 @@ export interface Obra {
   trabajadorIds: string[];
   color: string;
   createdAt: string;
+  /** Cuadrante: días laborables (ISO: 1=lunes..7=domingo). Compartido por
+   * todo el equipo asignado a la obra. */
+  diasLaborables: number[];
+  /** Hora de entrada del turno, "HH:MM". */
+  horaEntrada: string;
+  /** Hora de salida del turno, "HH:MM". */
+  horaSalida: string;
+  /** Minutos tras `horaSalida` antes de fichar la salida automática. */
+  margenSalidaAutomaticaMin: number;
 }
 
-export type TipoFichaje = "entrada" | "salida";
-export type EstadoFichaje = "correcto" | "tarde" | "pendiente";
+export type TipoFichaje =
+  | "entrada"
+  | "salida"
+  | "pausa_inicio"
+  | "pausa_fin"
+  | "extra_inicio"
+  | "extra_fin";
+export type EstadoFichaje = "correcto" | "tarde" | "pendiente" | "automatica";
 
 export interface Coordenada {
   lat: number;
@@ -50,10 +65,16 @@ export interface Fichaje {
   trabajadorId: string;
   obraId: string | null;
   tipo: TipoFichaje;
-  /** ISO timestamp */
+  /** ISO timestamp: hora efectiva del evento (para una salida automática,
+   * la hora del cuadrante, no la hora real de ejecución del cron). */
   timestamp: string;
   gps: Coordenada | null;
   estado: EstadoFichaje;
+  /** ISO timestamp: cuándo se insertó la fila. */
+  creadoEn: string;
+  /** Si esta fila corrige a otra, el id de la original. Las filas nunca se
+   * editan ni se borran — una corrección futura será siempre una fila nueva. */
+  corrigeA: string | null;
 }
 
 export interface MaterialPendiente {

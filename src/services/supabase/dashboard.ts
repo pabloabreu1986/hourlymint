@@ -1,4 +1,5 @@
 import { sb } from "@/lib/supabase";
+import { calcularJornada } from "@/lib/horas";
 import type { DashboardData, FichajeHoyTrabajador } from "../dashboard";
 import { toUsuario, toFichaje, toObra, check } from "./_map";
 
@@ -28,19 +29,19 @@ export async function getDashboard(): Promise<DashboardData> {
 
   const trabajadores = usuarios.filter((u) => u.rol === "trabajador");
 
-  const tiempoReal: FichajeHoyTrabajador[] = trabajadores.map((t) => {
-    const suyos = fichajes
+  const tiempoReal: FichajeHoyTrabajador[] = trabajadores.map((t) => ({
+    trabajador: t,
+    fichajesHoy: fichajes
       .filter((f) => f.trabajadorId === t.id)
-      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-    const entrada = suyos.find((f) => f.tipo === "entrada") ?? null;
-    const salida = suyos.find((f) => f.tipo === "salida") ?? null;
-    const ultima = suyos[suyos.length - 1] ?? null;
-    const estado = salida ? "salido" : entrada ? "en_obra" : "sin_fichar";
-    return { trabajador: t, estado, ultima };
-  });
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
+  }));
 
-  const activos = tiempoReal.filter((t) => t.estado === "en_obra").length;
-  const correctos = tiempoReal.filter((t) => t.estado !== "sin_fichar").length;
+  const activos = tiempoReal.filter((t) =>
+    ["trabajando", "en_extra"].includes(calcularJornada(t.fichajesHoy).estado)
+  ).length;
+  const correctos = tiempoReal.filter(
+    (t) => calcularJornada(t.fichajesHoy).estado !== "sin_fichar"
+  ).length;
   const pendientes = trabajadores.length - correctos;
 
   const materiales = (partes ?? []).reduce(

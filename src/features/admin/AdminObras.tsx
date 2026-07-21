@@ -21,6 +21,16 @@ import {
   IconCamera,
 } from "@/components/icons";
 
+const DIAS_SEMANA = [
+  { valor: 1, letra: "L" },
+  { valor: 2, letra: "M" },
+  { valor: 3, letra: "X" },
+  { valor: 4, letra: "J" },
+  { valor: 5, letra: "V" },
+  { valor: 6, letra: "S" },
+  { valor: 7, letra: "D" },
+];
+
 export default function AdminObras() {
   const [obras, setObras] = useState<Obra[] | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -167,10 +177,19 @@ function ObraForm({
   const [avance, setAvance] = useState(obra?.avance ?? 0);
   const [encargadoId, setEncargadoId] = useState<string | null>(obra?.encargadoId ?? null);
   const [equipo, setEquipo] = useState<string[]>(obra?.trabajadorIds ?? []);
+  const [diasLaborables, setDiasLaborables] = useState<number[]>(
+    obra?.diasLaborables ?? [1, 2, 3, 4, 5]
+  );
+  const [horaEntrada, setHoraEntrada] = useState(obra?.horaEntrada ?? "09:00");
+  const [horaSalida, setHoraSalida] = useState(obra?.horaSalida ?? "18:00");
+  const [margen, setMargen] = useState(obra?.margenSalidaAutomaticaMin ?? 5);
   const [guardando, setGuardando] = useState(false);
 
   function toggle(id: string) {
     setEquipo((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]));
+  }
+  function toggleDia(dia: number) {
+    setDiasLaborables((d) => (d.includes(dia) ? d.filter((x) => x !== dia) : [...d, dia].sort()));
   }
 
   async function guardar() {
@@ -179,7 +198,18 @@ function ObraForm({
     // El encargado siempre forma parte del equipo asignado.
     const trabajadorIds = encargadoId && !equipo.includes(encargadoId) ? [encargadoId, ...equipo] : equipo;
     try {
-      const payload = { nombre, direccion, estado, avance, encargadoId, trabajadorIds };
+      const payload = {
+        nombre,
+        direccion,
+        estado,
+        avance,
+        encargadoId,
+        trabajadorIds,
+        diasLaborables,
+        horaEntrada,
+        horaSalida,
+        margenSalidaAutomaticaMin: margen,
+      };
       if (obra) await obrasApi.actualizarObra(obra.id, payload);
       else await obrasApi.crearObra(payload);
       onSaved();
@@ -225,6 +255,62 @@ function ObraForm({
             />
           </div>
         </div>
+
+        <div>
+          <label className="label">Cuadrante: días laborables</label>
+          <div className="mt-1.5 flex gap-1.5">
+            {DIAS_SEMANA.map((d) => (
+              <button
+                key={d.valor}
+                type="button"
+                onClick={() => toggleDia(d.valor)}
+                className={`h-9 flex-1 rounded-lg text-xs font-bold transition ${
+                  diasLaborables.includes(d.valor)
+                    ? "bg-forge-orange text-white"
+                    : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                {d.letra}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="label">Hora entrada</label>
+            <input
+              type="time"
+              className="field mt-1.5"
+              value={horaEntrada}
+              onChange={(e) => setHoraEntrada(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Hora salida</label>
+            <input
+              type="time"
+              className="field mt-1.5"
+              value={horaSalida}
+              onChange={(e) => setHoraSalida(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Margen salida auto. (min)</label>
+            <input
+              type="number"
+              min={0}
+              max={120}
+              className="field mt-1.5"
+              value={margen}
+              onChange={(e) => setMargen(Number(e.target.value))}
+            />
+          </div>
+        </div>
+        <p className="-mt-2 text-xs text-slate-400">
+          Si pasado ese margen tras la hora de salida alguien no ha fichado, el sistema le ficha la
+          salida automáticamente a la hora de salida del cuadrante.
+        </p>
 
         <div>
           <label className="label">Encargado del día</label>

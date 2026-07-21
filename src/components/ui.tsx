@@ -45,7 +45,7 @@ export function Badge({
   color = "slate",
 }: {
   children: ReactNode;
-  color?: "slate" | "green" | "amber" | "red" | "orange" | "blue";
+  color?: "slate" | "green" | "amber" | "red" | "orange" | "blue" | "violet";
 }) {
   const map: Record<string, string> = {
     slate: "bg-slate-100 text-slate-700",
@@ -54,6 +54,7 @@ export function Badge({
     red: "bg-red-100 text-red-700",
     orange: "bg-orange-100 text-forge-orange-600",
     blue: "bg-blue-100 text-blue-700",
+    violet: "bg-violet-100 text-violet-700",
   };
   return <span className={`badge ${map[color]}`}>{children}</span>;
 }

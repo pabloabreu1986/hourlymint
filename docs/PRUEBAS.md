@@ -70,6 +70,23 @@ esos trabajadores y el que hayas puesto como encargado.
    cambiarla); guarda. Revisa la lista "Mis fichajes de hoy" (entrada y
    salida con hora y GPS).
 
+### Pausa para descanso y horas extra
+
+1. Ficha entrada. El botón **"PAUSA"** debe estar habilitado ("Pausa para
+   descanso") y **"HORAS EXTRA"** deshabilitado ("Cierra tu turno primero").
+2. Pulsa **PAUSA** → el botón cambia a **"REANUDAR"** ("Reanudar trabajo").
+   Puedes repetir esto varias veces en el mismo día (varias pausas).
+3. Ficha **salida**. Si te queda una pausa abierta, se cierra sola en ese
+   mismo instante (sin modal aparte) y luego aparece el modal de salida.
+4. Con la salida ya fichada, **HORAS EXTRA** pasa a "Fichar horas extra".
+   Pulsa para abrirlas → el botón cambia a "Cerrar horas extra".
+5. Prueba pausar **dentro** de las horas extra: el botón de horas extra
+   sigue activo ("Cerrar horas extra") aunque estés en pausa; al cerrarlas
+   se cierra también la pausa abierta, igual que con la salida.
+6. En **Perfil → Mis fichajes de hoy** deben verse todos los eventos por
+   separado (Inicio/Fin de pausa, Inicio/Fin horas extra) con su icono y
+   color propios (ámbar para pausas, morado para horas extra).
+
 ### Aviso automático de "Fichaje pendiente"
 
 Cualquiera con sesión abierta después de las **09:30** dispara la revisión
@@ -117,9 +134,14 @@ perfil) más el cierre del parte, que solo él puede hacer en su obra:
 
 ## 3) Admin
 
-1. **Dashboard**: KPIs, resumen de obras, trabajadores en tiempo real (debe
-   reflejar los fichajes que hiciste en los apartados anteriores),
-   incidencias recientes, materiales pendientes, donut de fichajes del día.
+1. **Dashboard**: KPIs, resumen de obras, bloque **"Ahora mismo"** con un
+   cronómetro en vivo por trabajador (segundo a segundo, sin recargar la
+   página) que cambia de color según su estado — verde "Trabajando", ámbar
+   "Descansando", morado "Horas extra" — más el recuento de activos/
+   descansando arriba. Prueba abrir dos sesiones (una admin, otra
+   trabajador): al fichar desde el móvil, el dashboard del admin debe
+   actualizarse solo, sin recargar (va por Realtime, no por polling).
+   También: incidencias recientes, materiales pendientes, donut de fichajes.
 2. **Campana de notificaciones** (header): el número debe coincidir con las
    notificaciones sin leer; al abrir lleva a **Notificaciones**, donde puedes
    "Marcar todas leídas".
@@ -129,6 +151,9 @@ perfil) más el cierre del parte, que solo él puede hacer en su obra:
    desmarca gente en "Equipo asignado" — si el encargado elegido no está
    marcado en el equipo, se añade solo al guardar. Prueba eliminar una obra
    de prueba (pide confirmación, es irreversible).
+   - **Cuadrante**: marca/desmarca días de la semana (L-D), cambia hora de
+     entrada/salida y el margen de salida automática (minutos). Guarda y
+     confirma que se mantiene al reabrir la obra para editar.
 4. **Trabajadores**: crea un usuario nuevo (contraseña por defecto `1234`),
    edítalo, usa el icono de ojo para revelar/ocultar su contraseña en la
    tabla, y dale de baja (Estado → Baja) en vez de borrarlo. Confirma que
@@ -152,6 +177,32 @@ perfil) más el cierre del parte, que solo él puede hacer en su obra:
     todavía (nota al pie de la propia pantalla).
 11. **Configuración**: revisa que el texto explica que "Restablecer datos"
     es solo para el modo mock (ver nota al principio de este documento).
+12. **Horas**: elige un trabajador y navega semana anterior/siguiente con
+    las flechas. La tabla debe mostrar, por día, entrada/salida (con
+    etiqueta "AUTOMÁTICA" si la salida la puso el sistema), ordinarias,
+    descanso y horas extra por separado, con el total de la semana al pie
+    y los totales del mes debajo. Si el trabajador tiene el turno todavía
+    abierto hoy, las horas ordinarias de ese día deben verse creciendo
+    conforme pasa el tiempo (recalculan contra la hora actual).
+
+### Salida automática (requiere esperar o revisar el cron)
+
+Cada minuto, un job en Supabase (`pg_cron`) revisa las obras cuyo margen
+tras la hora de salida ya se cumplió y hoy es día laborable:
+
+1. Configura una obra con **hora de salida próxima** (p. ej. dentro de 2
+   minutos) y margen 0-1 min, para no esperar mucho.
+2. Ficha entrada con un trabajador de esa obra y no la salida.
+3. Espera a que pase la hora de salida + margen. Al cabo de un minuto (el
+   cron corre cada minuto), debe aparecer una **salida marcada
+   "Automática"** con la hora exacta del cuadrante (no la hora en que se
+   detectó), visible en Perfil, en "Ahora mismo" (pasa a "Jornada
+   cerrada") y en Horas.
+4. El trabajador debe recibir una notificación explicando que a partir de
+   ahora cualquier trabajo se ficha como horas extra.
+5. Si había una pausa abierta, debe cerrarse en el mismo instante que la
+   salida automática.
+6. Recuerda devolver la obra a un horario normal después de probar esto.
 
 ---
 
@@ -168,3 +219,7 @@ perfil) más el cierre del parte, que solo él puede hacer en su obra:
 - **Sesión persistente**: cierra el navegador y vuelve a abrirlo sin cerrar
   sesión — debe seguir logueado (la sesión se guarda en `localStorage` y no
   caduca).
+- **Registro horario**: ningún fichaje se edita ni se borra desde la app
+  (ni siquiera el admin puede hacerlo hoy). La tabla ya tiene una columna
+  `corrige_a` preparada para cuando se construya una pantalla de
+  corrección manual — de momento no hay ninguna, es solo el diseño.

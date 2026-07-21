@@ -34,9 +34,17 @@ create table if not exists obras (
   encargado_id   text references usuarios(id) on delete set null,
   trabajador_ids text[] not null default '{}',
   color          text not null default '#BE6B39',
-  created_at     date not null default current_date
+  created_at     date not null default current_date,
+  -- Cuadrante: días laborables (ISO: 1=lunes..7=domingo), horario del turno
+  -- y margen para la salida automática. Todo el equipo de la obra lo comparte.
+  dias_laborables int[] not null default '{1,2,3,4,5}',
+  hora_entrada     time not null default '09:00',
+  hora_salida      time not null default '18:00',
+  margen_salida_automatica_min int not null default 5
 );
 
+-- tipo: 'entrada' | 'salida' | 'pausa_inicio' | 'pausa_fin' | 'extra_inicio' | 'extra_fin'
+-- estado: 'correcto' | 'tarde' | 'pendiente' | 'automatica'
 create table if not exists fichajes (
   id           text primary key,
   trabajador_id text references usuarios(id) on delete cascade,
@@ -44,7 +52,13 @@ create table if not exists fichajes (
   tipo         text not null,
   timestamp    timestamptz not null default now(),
   gps          jsonb,
-  estado       text not null default 'correcto'
+  estado       text not null default 'correcto',
+  -- Cuándo se insertó la fila (distinto de `timestamp`, la hora efectiva del
+  -- evento: una salida automática lleva `timestamp` = hora del cuadrante).
+  creado_en    timestamptz not null default now(),
+  -- Si esta fila corrige a otra, referencia a la original. Las filas nunca
+  -- se editan ni se borran; una corrección es siempre una fila nueva.
+  corrige_a    text references fichajes(id)
 );
 
 create table if not exists partes (

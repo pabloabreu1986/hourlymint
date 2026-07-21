@@ -23,6 +23,7 @@ import {
   IconMenu,
   IconX,
   IconBell,
+  IconClock,
 } from "@/components/icons";
 
 const NAV = [
@@ -37,6 +38,7 @@ const NAV = [
   { to: "/admin/herramientas", label: "Herramientas", icon: IconWrench },
   { to: "/admin/almacen", label: "Almacén", icon: IconWarehouse },
   { to: "/admin/informes", label: "Informes", icon: IconChart },
+  { to: "/admin/horas", label: "Horas", icon: IconClock },
   { to: "/admin/notificaciones", label: "Notificaciones", icon: IconBell },
   { to: "/admin/configuracion", label: "Configuración", icon: IconSettings },
 ];

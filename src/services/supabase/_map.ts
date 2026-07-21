@@ -48,6 +48,10 @@ export const toObra = (r: any): Obra => ({
   trabajadorIds: r.trabajador_ids ?? [],
   color: r.color,
   createdAt: r.created_at,
+  diasLaborables: r.dias_laborables ?? [1, 2, 3, 4, 5],
+  horaEntrada: (r.hora_entrada ?? "09:00").slice(0, 5),
+  horaSalida: (r.hora_salida ?? "18:00").slice(0, 5),
+  margenSalidaAutomaticaMin: r.margen_salida_automatica_min ?? 5,
 });
 export const fromObra = (o: Partial<Obra>): any => ({
   ...(o.id !== undefined && { id: o.id }),
@@ -59,6 +63,12 @@ export const fromObra = (o: Partial<Obra>): any => ({
   ...(o.trabajadorIds !== undefined && { trabajador_ids: o.trabajadorIds }),
   ...(o.color !== undefined && { color: o.color }),
   ...(o.createdAt !== undefined && { created_at: o.createdAt }),
+  ...(o.diasLaborables !== undefined && { dias_laborables: o.diasLaborables }),
+  ...(o.horaEntrada !== undefined && { hora_entrada: o.horaEntrada }),
+  ...(o.horaSalida !== undefined && { hora_salida: o.horaSalida }),
+  ...(o.margenSalidaAutomaticaMin !== undefined && {
+    margen_salida_automatica_min: o.margenSalidaAutomaticaMin,
+  }),
 });
 
 // ── Fichaje ──
@@ -70,6 +80,8 @@ export const toFichaje = (r: any): Fichaje => ({
   timestamp: r.timestamp,
   gps: r.gps ?? null,
   estado: r.estado,
+  creadoEn: r.creado_en ?? r.timestamp,
+  corrigeA: r.corrige_a ?? null,
 });
 export const fromFichaje = (f: Partial<Fichaje>): any => ({
   ...(f.id !== undefined && { id: f.id }),
@@ -79,6 +91,8 @@ export const fromFichaje = (f: Partial<Fichaje>): any => ({
   ...(f.timestamp !== undefined && { timestamp: f.timestamp }),
   ...(f.gps !== undefined && { gps: f.gps }),
   ...(f.estado !== undefined && { estado: f.estado }),
+  ...(f.creadoEn !== undefined && { creado_en: f.creadoEn }),
+  ...(f.corrigeA !== undefined && { corrige_a: f.corrigeA }),
 });
 
 // ── Parte ──

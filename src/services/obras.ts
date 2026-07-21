@@ -25,7 +25,14 @@ export async function listObrasDeTrabajador(trabajadorId: string): Promise<Obra[
   );
 }
 
-export type NuevaObra = Omit<Obra, "id" | "color" | "createdAt">;
+type CamposCuadrante =
+  | "diasLaborables"
+  | "horaEntrada"
+  | "horaSalida"
+  | "margenSalidaAutomaticaMin";
+
+export type NuevaObra = Omit<Obra, "id" | "color" | "createdAt" | CamposCuadrante> &
+  Partial<Pick<Obra, CamposCuadrante>>;
 
 export async function crearObra(data: NuevaObra): Promise<Obra> {
   if (isSupabaseEnabled) return sb.crearObra(data);
@@ -33,6 +40,10 @@ export async function crearObra(data: NuevaObra): Promise<Obra> {
     id: uid("o"),
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     createdAt: new Date().toISOString().slice(0, 10),
+    diasLaborables: [1, 2, 3, 4, 5],
+    horaEntrada: "09:00",
+    horaSalida: "18:00",
+    margenSalidaAutomaticaMin: 5,
     ...data,
   };
   updateDB((db) => db.obras.push(nueva));

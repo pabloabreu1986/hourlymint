@@ -1,11 +1,29 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { fichajesApi, usuariosApi } from "@/services";
-import type { Fichaje } from "@/lib/types";
+import type { Fichaje, TipoFichaje } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Avatar, Modal, Spinner } from "@/components/ui";
 import { hora } from "@/lib/format";
 import { IconLogout, IconClock, IconUser, IconMapPin } from "@/components/icons";
+
+const ETIQUETA_TIPO: Record<TipoFichaje, string> = {
+  entrada: "Entrada",
+  salida: "Salida",
+  pausa_inicio: "Inicio de pausa",
+  pausa_fin: "Fin de pausa",
+  extra_inicio: "Inicio horas extra",
+  extra_fin: "Fin horas extra",
+};
+
+const COLOR_TIPO: Record<TipoFichaje, string> = {
+  entrada: "bg-green-100 text-green-600",
+  salida: "bg-red-100 text-red-600",
+  pausa_inicio: "bg-amber-100 text-amber-600",
+  pausa_fin: "bg-amber-100 text-amber-600",
+  extra_inicio: "bg-violet-100 text-violet-600",
+  extra_fin: "bg-violet-100 text-violet-600",
+};
 
 export default function Perfil() {
   const { usuario, logout, refrescar } = useAuth();
@@ -73,14 +91,12 @@ export default function Perfil() {
               {fichajes.map((f) => (
                 <div key={f.id} className="flex items-center gap-3">
                   <span
-                    className={`grid h-9 w-9 place-items-center rounded-full ${
-                      f.tipo === "entrada" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                    }`}
+                    className={`grid h-9 w-9 place-items-center rounded-full ${COLOR_TIPO[f.tipo]}`}
                   >
                     <IconClock className="h-4 w-4" />
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold capitalize text-forge-dark">{f.tipo}</p>
+                    <p className="text-sm font-semibold text-forge-dark">{ETIQUETA_TIPO[f.tipo]}</p>
                     <p className="flex items-center gap-1 text-xs text-slate-400">
                       <IconMapPin className="h-3 w-3" />
                       {f.gps ? `${f.gps.lat.toFixed(4)}, ${f.gps.lng.toFixed(4)}` : "Sin GPS"}
@@ -90,6 +106,9 @@ export default function Perfil() {
                     <p className="font-bold text-forge-dark">{hora(f.timestamp)}</p>
                     {f.estado === "tarde" && (
                       <p className="text-xs font-semibold text-amber-600">Con retraso</p>
+                    )}
+                    {f.estado === "automatica" && (
+                      <p className="text-xs font-semibold text-violet-600">Automática</p>
                     )}
                   </div>
                 </div>
