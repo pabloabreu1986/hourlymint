@@ -23,7 +23,8 @@ import {
   IconVideo,
   IconCamera,
   IconClock,
-  IconChevronRight,
+  IconChevronDown,
+  IconChevronUp,
 } from "@/components/icons";
 
 const DIAS_SEMANA = [
@@ -177,10 +178,17 @@ function ObraCard({
     .map((id) => usuarios.find((u) => u.id === id))
     .filter((u): u is Usuario => !!u);
 
-  const porPersona = equipo.map((u) => ({
-    usuario: u,
-    jornada: calcularJornada(fichajesPorTrabajador[u.id] ?? [], ahora),
-  }));
+  // Más tiempo trabajado hoy primero; los que no han fichado (0 segundos) quedan al final.
+  const porPersona = equipo
+    .map((u) => ({
+      usuario: u,
+      jornada: calcularJornada(fichajesPorTrabajador[u.id] ?? [], ahora),
+    }))
+    .sort((a, b) => {
+      const totalA = a.jornada.segundosOrdinarios + a.jornada.segundosExtra;
+      const totalB = b.jornada.segundosOrdinarios + b.jornada.segundosExtra;
+      return totalB - totalA;
+    });
 
   const totalOrdinarias = porPersona.reduce((acc, p) => acc + p.jornada.segundosOrdinarios, 0);
   const totalExtra = porPersona.reduce((acc, p) => acc + p.jornada.segundosExtra, 0);
@@ -249,11 +257,11 @@ function ObraCard({
               </span>
             ))}
           </div>
-          <IconChevronRight
-            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
-              expandido ? "rotate-90" : ""
-            }`}
-          />
+          {expandido ? (
+            <IconChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+          ) : (
+            <IconChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+          )}
         </div>
       </button>
 
