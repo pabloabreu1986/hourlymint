@@ -14,9 +14,17 @@ export interface SubirFotoInput {
   subidaPor: string | null;
 }
 
-export async function subirFoto(file: File, input: SubirFotoInput): Promise<Foto> {
-  if (isSupabaseEnabled) return sb.subirFoto(file, input);
+export type FaseSubida = "preparando" | "subiendo";
+
+export async function subirFoto(
+  file: File,
+  input: SubirFotoInput,
+  onFase?: (fase: FaseSubida) => void
+): Promise<Foto> {
+  if (isSupabaseEnabled) return sb.subirFoto(file, input, onFase);
+  onFase?.("preparando");
   const dataUrl = await fileToThumbDataURL(file);
+  onFase?.("subiendo");
   const foto: Foto = {
     id: uid("ft"),
     obraId: input.obraId,

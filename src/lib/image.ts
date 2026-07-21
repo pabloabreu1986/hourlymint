@@ -1,7 +1,7 @@
 // Comprime una imagen a un data URL pequeño para poder guardarla en
 // localStorage sin agotar la cuota. Mock: en producción subiríamos el
 // fichero a un bucket y guardaríamos la URL.
-export function fileToThumbDataURL(file: File, maxSize = 720): Promise<string> {
+export function fileToThumbDataURL(file: File, maxSize = 720, calidad = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -16,7 +16,7 @@ export function fileToThumbDataURL(file: File, maxSize = 720): Promise<string> {
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject(new Error("No canvas context"));
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
+        resolve(canvas.toDataURL("image/jpeg", calidad));
       };
       img.onerror = reject;
       img.src = reader.result as string;

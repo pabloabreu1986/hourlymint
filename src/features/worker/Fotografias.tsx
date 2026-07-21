@@ -16,7 +16,7 @@ export default function Fotografias() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [preview, setPreview] = useState<Foto | null>(null);
   const [elegirObra, setElegirObra] = useState(false);
-  const [subiendo, setSubiendo] = useState(false);
+  const [fase, setFase] = useState<"preparando" | "subiendo" | null>(null);
   const pendientes = useRef<File[]>([]);
 
   async function cargar() {
@@ -48,22 +48,21 @@ export default function Fotografias() {
   async function subirA(obra: Obra) {
     if (!usuario) return;
     setElegirObra(false);
-    setSubiendo(true);
     try {
       const parte = await partesApi.getOrCreateParteDelDia(obra.id, obra.encargadoId ?? usuario.id);
       for (const file of pendientes.current) {
-        await fotosApi.subirFoto(file, {
-          obraId: obra.id,
-          parteId: parte.id,
-          subidaPor: usuario.id,
-        });
+        await fotosApi.subirFoto(
+          file,
+          { obraId: obra.id, parteId: parte.id, subidaPor: usuario.id },
+          setFase
+        );
       }
       pendientes.current = [];
       await cargar();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al subir la foto");
     } finally {
-      setSubiendo(false);
+      setFase(null);
     }
   }
 
@@ -93,10 +92,11 @@ export default function Fotografias() {
         action={
           <button
             onClick={() => fileRef.current?.click()}
-            disabled={subiendo}
+            disabled={!!fase}
             className="btn-primary px-3 py-2 text-sm"
           >
-            {subiendo ? <Spinner className="h-4 w-4" /> : <IconPlus className="h-4 w-4" />} Subir
+            {fase ? <Spinner className="h-4 w-4" /> : <IconPlus className="h-4 w-4" />}
+            {fase === "preparando" ? "Preparando…" : fase === "subiendo" ? "Subiendo…" : "Subir"}
           </button>
         }
       />

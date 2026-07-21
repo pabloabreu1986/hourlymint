@@ -295,7 +295,7 @@ function AdjuntosObra({ obraId }: { obraId: string }) {
   const { usuario } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Adjunto[] | null>(null);
-  const [subiendo, setSubiendo] = useState(false);
+  const [fase, setFase] = useState<"preparando" | "subiendo" | null>(null);
 
   async function cargar() {
     setItems(await adjuntosApi.listAdjuntosDeObra(obraId));
@@ -313,21 +313,16 @@ function AdjuntosObra({ obraId }: { obraId: string }) {
       if (fileRef.current) fileRef.current.value = "";
       return;
     }
-    setSubiendo(true);
     try {
       for (const file of Array.from(files)) {
         const tipo = file.type.startsWith("video/") ? "video" : "imagen";
-        await adjuntosApi.subirAdjunto(file, {
-          obraId,
-          tipo,
-          subidoPor: usuario?.id ?? null,
-        });
+        await adjuntosApi.subirAdjunto(file, { obraId, tipo, subidoPor: usuario?.id ?? null }, setFase);
       }
       await cargar();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al subir el archivo");
     } finally {
-      setSubiendo(false);
+      setFase(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -344,10 +339,11 @@ function AdjuntosObra({ obraId }: { obraId: string }) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          disabled={subiendo}
-          className="text-sm font-semibold text-forge-orange"
+          disabled={!!fase}
+          className="flex items-center gap-1.5 text-sm font-semibold text-forge-orange"
         >
-          {subiendo ? <Spinner className="h-4 w-4" /> : "+ Subir"}
+          {fase && <Spinner className="h-4 w-4" />}
+          {fase === "preparando" ? "Preparando…" : fase === "subiendo" ? "Subiendo…" : "+ Subir"}
         </button>
         <input
           ref={fileRef}

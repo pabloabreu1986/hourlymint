@@ -21,7 +21,7 @@ export default function ParteDiario() {
   const [trabajo, setTrabajo] = useState("");
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [materiales, setMateriales] = useState<MaterialPendiente[]>([]);
-  const [subiendo, setSubiendo] = useState(false);
+  const [fase, setFase] = useState<"preparando" | "subiendo" | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
 
@@ -44,20 +44,19 @@ export default function ParteDiario() {
     if (!files || !parte || !obra || !usuario) return;
     const errores = Array.from(files).map(errorDeTamano).filter(Boolean);
     if (errores.length) return alert(errores.join("\n"));
-    setSubiendo(true);
     try {
       for (const file of Array.from(files)) {
-        await fotosApi.subirFoto(file, {
-          obraId: obra.id,
-          parteId: parte.id,
-          subidaPor: usuario.id,
-        });
+        await fotosApi.subirFoto(
+          file,
+          { obraId: obra.id, parteId: parte.id, subidaPor: usuario.id },
+          setFase
+        );
       }
       setFotos(await fotosApi.listFotosDeParte(parte.id));
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al subir la foto");
     } finally {
-      setSubiendo(false);
+      setFase(null);
     }
   }
 
@@ -146,10 +145,19 @@ export default function ParteDiario() {
             {!cerrado && (
               <button
                 onClick={() => fileRef.current?.click()}
-                disabled={subiendo}
-                className="grid aspect-square place-items-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-forge-orange hover:text-forge-orange disabled:opacity-50"
+                disabled={!!fase}
+                className="grid aspect-square place-items-center gap-1 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-forge-orange hover:text-forge-orange disabled:opacity-50"
               >
-                {subiendo ? <Spinner className="h-5 w-5" /> : <IconCamera className="h-6 w-6" />}
+                {fase ? (
+                  <>
+                    <Spinner className="h-5 w-5" />
+                    <span className="text-[9px] leading-none">
+                      {fase === "preparando" ? "Preparando…" : "Subiendo…"}
+                    </span>
+                  </>
+                ) : (
+                  <IconCamera className="h-6 w-6" />
+                )}
               </button>
             )}
           </div>

@@ -4,8 +4,14 @@
 // archivos pequeños: es la capa mock/demo).
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { fileToThumbDataURL } from "@/lib/image";
 import type { Adjunto, TipoAdjunto } from "@/lib/types";
 import * as sb from "./supabase/adjuntos";
+
+const ADJUNTO_MAX_SIZE = 1600;
+const ADJUNTO_CALIDAD = 0.82;
+
+export type FaseSubida = "preparando" | "subiendo";
 
 export interface SubirAdjuntoInput {
   obraId: string;
@@ -13,14 +19,23 @@ export interface SubirAdjuntoInput {
   subidoPor: string | null;
 }
 
-export async function subirAdjunto(file: File, input: SubirAdjuntoInput): Promise<Adjunto> {
-  if (isSupabaseEnabled) return sb.subirAdjunto(file, input);
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+export async function subirAdjunto(
+  file: File,
+  input: SubirAdjuntoInput,
+  onFase?: (fase: FaseSubida) => void
+): Promise<Adjunto> {
+  if (isSupabaseEnabled) return sb.subirAdjunto(file, input, onFase);
+  onFase?.("preparando");
+  const dataUrl =
+    input.tipo === "imagen"
+      ? await fileToThumbDataURL(file, ADJUNTO_MAX_SIZE, ADJUNTO_CALIDAD)
+      : await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+  onFase?.("subiendo");
   const adjunto: Adjunto = {
     id: uid("adj"),
     obraId: input.obraId,

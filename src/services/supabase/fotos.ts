@@ -19,12 +19,20 @@ async function withUrls(fotos: Foto[]): Promise<Foto[]> {
   return fotos.map((f) => ({ ...f, url: map.get(f.path) ?? undefined }));
 }
 
-export async function subirFoto(file: File, input: SubirFotoInput): Promise<Foto> {
+export type FaseSubida = "preparando" | "subiendo";
+
+export async function subirFoto(
+  file: File,
+  input: SubirFotoInput,
+  onFase?: (fase: FaseSubida) => void
+): Promise<Foto> {
+  onFase?.("preparando");
   const dataUrl = await fileToThumbDataURL(file);
   const blob = dataURLtoBlob(dataUrl);
   const id = uid("ft");
   const path = `${input.obraId}/${id}.jpg`;
 
+  onFase?.("subiendo");
   const up = await sb()
     .storage.from(FOTOS_BUCKET)
     .upload(path, blob, { contentType: "image/jpeg", upsert: false });
