@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { notificacionesApi } from "@/services";
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/ui";
-import { fechaCompleta } from "@/lib/format";
+import { fechaCompleta, saludo } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import {
   IconGrid,
@@ -111,15 +111,42 @@ export default function AdminLayout() {
 
       {/* Contenido */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button className="lg:hidden" onClick={() => setOpen(true)}>
+        {/* Header móvil: mismo look & feel que la vista de trabajador
+            (logo + avatar arriba, saludo con nombre debajo), respetando
+            el notch/isla dinámica del iPhone. */}
+        <header
+          className="rounded-b-3xl bg-white px-5 pb-5 shadow-card lg:hidden"
+          style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}
+        >
+          <div className="flex items-center justify-between">
+            <button onClick={() => setOpen(true)} aria-label="Abrir menú">
               <IconMenu className="h-6 w-6 text-forge-dark" />
             </button>
-            <h1 className="text-xl font-bold text-forge-dark">{titulo}</h1>
+            <Logo />
+            <NavLink to="/admin/notificaciones" className="relative text-forge-dark">
+              <Avatar nombre={usuario.nombre} color={usuario.color} size={38} />
+              {sinLeer > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-forge-orange px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                  {sinLeer}
+                </span>
+              )}
+            </NavLink>
           </div>
+          <div className="mt-5">
+            <h1 className="text-xl font-extrabold text-forge-dark">
+              Hola, {usuario.nombre.split(" ")[0]}
+            </h1>
+            <p className="text-sm text-slate-400">
+              {saludo()} · {titulo} · {fechaCompleta(hoyISO())}
+            </p>
+          </div>
+        </header>
+
+        {/* Header de escritorio (sin cambios) */}
+        <header className="sticky top-0 z-30 hidden items-center justify-between border-b border-slate-200 bg-white px-8 py-3 lg:flex">
+          <h1 className="text-xl font-bold text-forge-dark">{titulo}</h1>
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-slate-400 sm:block">{fechaCompleta(hoyISO())}</span>
+            <span className="text-sm text-slate-400">{fechaCompleta(hoyISO())}</span>
             <NavLink to="/admin/notificaciones" className="relative text-slate-400 hover:text-forge-dark">
               <IconBell className="h-6 w-6" />
               {sinLeer > 0 && (
@@ -130,7 +157,7 @@ export default function AdminLayout() {
             </NavLink>
             <div className="flex items-center gap-2">
               <Avatar nombre={usuario.nombre} color={usuario.color} size={36} />
-              <div className="hidden text-right sm:block">
+              <div className="text-right">
                 <p className="text-sm font-semibold leading-tight text-forge-dark">{usuario.nombre}</p>
                 <p className="text-xs text-slate-400">{usuario.puesto}</p>
               </div>

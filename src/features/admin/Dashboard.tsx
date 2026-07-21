@@ -165,7 +165,31 @@ export default function Dashboard() {
               Ver todas →
             </Link>
           </div>
-          <div className="-mx-2 overflow-x-auto">
+
+          {/* Móvil: tarjetas */}
+          <div className="space-y-2.5 md:hidden">
+            {data.resumenObras.map(({ obra, encargado, numTrabajadores }) => (
+              <div key={obra.id} className="rounded-xl bg-slate-50 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-forge-dark">{obra.nombre}</p>
+                  <EstadoObraBadge estado={obra.estado} />
+                </div>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Encargado: {encargado?.nombre.split(" ")[0] ?? "—"} · {numTrabajadores} trab.
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <ProgressBar value={obra.avance} className="flex-1" />
+                  <span className="text-xs font-semibold text-slate-500">{obra.avance}%</span>
+                </div>
+              </div>
+            ))}
+            {data.resumenObras.length === 0 && (
+              <p className="text-sm text-slate-400">Sin obras.</p>
+            )}
+          </div>
+
+          {/* Escritorio: tabla */}
+          <div className="-mx-2 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
@@ -212,7 +236,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="max-h-[280px] space-y-1.5 overflow-y-auto">
+            <div className="space-y-1.5 md:max-h-[280px] md:overflow-y-auto">
               {jornadas.map(({ trabajador, jornada }) => (
                 <FilaAhoraMismo key={trabajador.id} trabajador={trabajador} jornada={jornada} />
               ))}
