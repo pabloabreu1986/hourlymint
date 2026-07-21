@@ -5,6 +5,7 @@ import type { Foto, Obra, Usuario } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import { hora } from "@/lib/format";
+import { errorDeTamano } from "@/lib/files";
 import { IconCamera, IconPlus } from "@/components/icons";
 
 export default function Fotografias() {
@@ -37,6 +38,8 @@ export default function Fotografias() {
 
   function onFiles(files: FileList | null) {
     if (!files || !usuario) return;
+    const errores = Array.from(files).map(errorDeTamano).filter(Boolean);
+    if (errores.length) return alert(errores.join("\n"));
     pendientes.current = Array.from(files);
     if (obras.length === 1) subirA(obras[0]);
     else setElegirObra(true);

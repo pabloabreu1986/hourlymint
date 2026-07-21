@@ -7,6 +7,7 @@ import { WorkerHeader } from "./WorkerHeader";
 import { Cargando, Spinner } from "@/components/ui";
 import { uid } from "@/lib/db";
 import { fechaLarga } from "@/lib/format";
+import { errorDeTamano } from "@/lib/files";
 import { IconCamera, IconPlus, IconTrash, IconCheck } from "@/components/icons";
 
 export default function ParteDiario() {
@@ -41,6 +42,8 @@ export default function ParteDiario() {
 
   async function onFiles(files: FileList | null) {
     if (!files || !parte || !obra || !usuario) return;
+    const errores = Array.from(files).map(errorDeTamano).filter(Boolean);
+    if (errores.length) return alert(errores.join("\n"));
     setSubiendo(true);
     try {
       for (const file of Array.from(files)) {

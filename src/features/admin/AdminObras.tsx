@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { obrasApi, usuariosApi, adjuntosApi } from "@/services";
 import type { Adjunto, EstadoObra, Obra, Usuario } from "@/lib/types";
+import { errorDeTamano } from "@/lib/files";
 import {
   Avatar,
   Cargando,
@@ -306,6 +307,12 @@ function AdjuntosObra({ obraId }: { obraId: string }) {
 
   async function onFiles(files: FileList | null) {
     if (!files || !files.length) return;
+    const errores = Array.from(files).map(errorDeTamano).filter(Boolean);
+    if (errores.length) {
+      alert(errores.join("\n"));
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     setSubiendo(true);
     try {
       for (const file of Array.from(files)) {

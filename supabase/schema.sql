@@ -149,9 +149,10 @@ begin
 end $$;
 
 -- ── Storage: bucket privado de fotos ────────────────────────
-insert into storage.buckets (id, name, public)
-values ('fotos-obra', 'fotos-obra', false)
-on conflict (id) do nothing;
+-- Límite de 50MB por archivo (coincide con MAX_UPLOAD_MB en src/lib/files.ts).
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('fotos-obra', 'fotos-obra', false, 52428800)
+on conflict (id) do update set file_size_limit = excluded.file_size_limit;
 
 drop policy if exists forgevia_fotos_select on storage.objects;
 drop policy if exists forgevia_fotos_insert on storage.objects;
