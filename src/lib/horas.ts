@@ -146,6 +146,36 @@ export function formatHoras(segundosTotales: number): string {
   return `${h > 0 ? `${h}h ` : ""}${m}m`.trim();
 }
 
+/** Segundos "del momento" relevantes para el estado actual (para el
+ * cronómetro en vivo): trabajando cuenta lo ordinario, descansando la
+ * pausa, en_extra las horas extra; el resto no tiene cronómetro. */
+export function segundosDeEstadoActual(jornada: Jornada): number {
+  switch (jornada.estado) {
+    case "trabajando":
+      return jornada.segundosOrdinarios;
+    case "descansando":
+      return jornada.segundosPausa;
+    case "en_extra":
+      return jornada.segundosExtra;
+    default:
+      return 0;
+  }
+}
+
+export type ColorBadgeEstado = "green" | "amber" | "violet" | "slate";
+
+/** Etiqueta y color para mostrar el estado actual (badges, filas en vivo). */
+export const ESTILO_ESTADO_JORNADA: Record<
+  EstadoJornada,
+  { label: string; badge: ColorBadgeEstado; fondo: string }
+> = {
+  sin_fichar: { label: "Sin fichar", badge: "slate", fondo: "" },
+  trabajando: { label: "Trabajando", badge: "green", fondo: "bg-green-50/60" },
+  descansando: { label: "Descansando", badge: "amber", fondo: "bg-amber-50/60" },
+  en_extra: { label: "Horas extra", badge: "violet", fondo: "bg-violet-50/60" },
+  cerrado: { label: "Jornada cerrada", badge: "slate", fondo: "" },
+};
+
 /** Día ISO (1=lunes..7=domingo) de una fecha, para comparar con `diasLaborables`. */
 export function isoDiaSemana(fecha: Date): number {
   const d = fecha.getDay();

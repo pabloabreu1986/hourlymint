@@ -3,7 +3,13 @@ import { Link } from "react-router-dom";
 import { dashboardApi, incidenciasApi, partesApi, obrasApi } from "@/services";
 import type { DashboardData } from "@/services/dashboard";
 import type { Incidencia, ParteDiario, Obra, Usuario } from "@/lib/types";
-import { calcularJornada, formatDuracion, type Jornada } from "@/lib/horas";
+import {
+  calcularJornada,
+  formatDuracion,
+  segundosDeEstadoActual,
+  ESTILO_ESTADO_JORNADA,
+  type Jornada,
+} from "@/lib/horas";
 import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import {
   Avatar,
@@ -307,32 +313,8 @@ export default function Dashboard() {
   );
 }
 
-const ESTILO_ESTADO: Record<
-  Jornada["estado"],
-  { label: string; badge: "green" | "amber" | "violet" | "slate"; fondo: string }
-> = {
-  sin_fichar: { label: "Sin fichar", badge: "slate", fondo: "" },
-  trabajando: { label: "Trabajando", badge: "green", fondo: "bg-green-50/60" },
-  descansando: { label: "Descansando", badge: "amber", fondo: "bg-amber-50/60" },
-  en_extra: { label: "Horas extra", badge: "violet", fondo: "bg-violet-50/60" },
-  cerrado: { label: "Jornada cerrada", badge: "slate", fondo: "" },
-};
-
-function segundosDe(jornada: Jornada): number {
-  switch (jornada.estado) {
-    case "trabajando":
-      return jornada.segundosOrdinarios;
-    case "descansando":
-      return jornada.segundosPausa;
-    case "en_extra":
-      return jornada.segundosExtra;
-    default:
-      return 0;
-  }
-}
-
 function FilaAhoraMismo({ trabajador, jornada }: { trabajador: Usuario; jornada: Jornada }) {
-  const info = ESTILO_ESTADO[jornada.estado];
+  const info = ESTILO_ESTADO_JORNADA[jornada.estado];
   const conCronometro = ["trabajando", "descansando", "en_extra"].includes(jornada.estado);
   return (
     <div className={`flex items-center gap-2.5 rounded-xl p-2 ${info.fondo}`}>
@@ -347,7 +329,7 @@ function FilaAhoraMismo({ trabajador, jornada }: { trabajador: Usuario; jornada:
         <Badge color={info.badge}>{info.label}</Badge>
         {conCronometro && (
           <p className="mt-1 font-mono text-sm font-bold text-forge-dark">
-            {formatDuracion(segundosDe(jornada))}
+            {formatDuracion(segundosDeEstadoActual(jornada))}
           </p>
         )}
       </div>

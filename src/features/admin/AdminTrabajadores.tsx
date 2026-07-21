@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { usuariosApi } from "@/services";
-import type { Rol, Usuario } from "@/lib/types";
+import { usuariosApi, dashboardApi } from "@/services";
+import type { Rol, Usuario, Fichaje } from "@/lib/types";
+import {
+  calcularJornada,
+  formatDuracion,
+  segundosDeEstadoActual,
+  ESTILO_ESTADO_JORNADA,
+} from "@/lib/horas";
+import { sb, isSupabaseEnabled } from "@/lib/supabase";
 import { Avatar, Badge, Cargando, Modal, Spinner } from "@/components/ui";
 import {
   IconPlus,
@@ -34,12 +41,41 @@ export default function AdminTrabajadores() {
   const [nuevo, setNuevo] = useState(false);
   const [borrar, setBorrar] = useState<Usuario | null>(null);
   const [verPass, setVerPass] = useState<Record<string, boolean>>({});
+  const [fichajesPorTrabajador, setFichajesPorTrabajador] = useState<Record<string, Fichaje[]>>({});
+  const [ahora, setAhora] = useState(() => new Date());
 
   async function cargar() {
     setUsuarios(await usuariosApi.listUsuarios());
   }
+  async function cargarFichajes() {
+    const data = await dashboardApi.getDashboard();
+    const mapa: Record<string, Fichaje[]> = {};
+    data.tiempoReal.forEach((t) => {
+      mapa[t.trabajador.id] = t.fichajesHoy;
+    });
+    setFichajesPorTrabajador(mapa);
+  }
   useEffect(() => {
     cargar();
+    cargarFichajes();
+  }, []);
+
+  // Cronómetros en vivo: recalculan cada segundo.
+  useEffect(() => {
+    const id = setInterval(() => setAhora(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // El estado se propaga por Realtime, no por polling.
+  useEffect(() => {
+    if (!isSupabaseEnabled) return;
+    const canal = sb()
+      .channel("trabajadores-fichajes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "fichajes" }, cargarFichajes)
+      .subscribe();
+    return () => {
+      sb().removeChannel(canal);
+    };
   }, []);
 
   if (!usuarios) return <Cargando />;
@@ -61,6 +97,8 @@ export default function AdminTrabajadores() {
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
               <tr>
                 <th className="px-4 py-3 font-semibold">Usuario</th>
+                <th className="px-4 py-3 font-semibold">Ahora mismo</th>
+                <th className="px-4 py-3 font-semibold">Tiempo hoy</th>
                 <th className="px-4 py-3 font-semibold">Puesto</th>
                 <th className="px-4 py-3 font-semibold">Teléfono</th>
                 <th className="px-4 py-3 font-semibold">Contraseña</th>
@@ -70,13 +108,33 @@ export default function AdminTrabajadores() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {usuarios.map((u) => (
+              {usuarios.map((u) => {
+                const jornada =
+                  u.rol === "trabajador"
+                    ? calcularJornada(fichajesPorTrabajador[u.id] ?? [], ahora)
+                    : null;
+                const info = jornada ? ESTILO_ESTADO_JORNADA[jornada.estado] : null;
+                const conCronometro =
+                  jornada && ["trabajando", "descansando", "en_extra"].includes(jornada.estado);
+                return (
                 <tr key={u.id} className="hover:bg-slate-50/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Avatar nombre={u.nombre} color={u.color} size={34} />
                       <span className="font-semibold text-forge-dark">{u.nombre}</span>
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {info ? <Badge color={info.badge}>{info.label}</Badge> : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {conCronometro && jornada ? (
+                      <span className="font-mono font-semibold text-forge-dark">
+                        {formatDuracion(segundosDeEstadoActual(jornada))}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-slate-500">{u.puesto ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{u.telefono ?? "—"}</td>
@@ -125,7 +183,8 @@ export default function AdminTrabajadores() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
