@@ -20,10 +20,9 @@ import {
   IconChart,
   IconSettings,
   IconLogout,
-  IconMenu,
-  IconX,
   IconBell,
   IconClock,
+  IconUser,
 } from "@/components/icons";
 
 const NAV = [
@@ -43,17 +42,22 @@ const NAV = [
   { to: "/admin/configuracion", label: "Configuración", icon: IconSettings },
 ];
 
-// En móvil el menú lateral solo muestra los 3 accesos principales.
-const NAV_MOBILE = NAV.filter((n) =>
-  ["/admin", "/admin/obras", "/admin/trabajadores"].includes(n.to)
-);
+// Barra de navegación inferior en móvil: mismo patrón que la vista de trabajador.
+const TABS_MOBILE = [
+  { to: "/admin", label: "Dashboard", icon: IconGrid, end: true },
+  { to: "/admin/obras", label: "Obras", icon: IconObras, end: false },
+  { to: "/admin/trabajadores", label: "Trabajadores", icon: IconUsers, end: false },
+  { to: "/admin/perfil", label: "Perfil", icon: IconUser, end: false },
+];
 
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
-  const [open, setOpen] = useState(false);
   const [sinLeer, setSinLeer] = useState(0);
   const location = useLocation();
-  const titulo = NAV.find((n) => n.to === location.pathname)?.label ?? "Panel";
+  const titulo =
+    NAV.find((n) => n.to === location.pathname)?.label ??
+    TABS_MOBILE.find((n) => n.to === location.pathname)?.label ??
+    "Panel";
 
   useEffect(() => {
     if (!usuario) return;
@@ -64,21 +68,17 @@ export default function AdminLayout() {
 
   if (!usuario) return null;
 
-  const renderSidebar = (items: typeof NAV) => (
+  const Sidebar = (
     <aside className="flex h-full w-64 flex-col bg-forge-dark text-white">
-      <div className="flex items-center justify-between px-5 py-5">
+      <div className="px-5 py-5">
         <Logo variant="light" />
-        <button className="lg:hidden" onClick={() => setOpen(false)}>
-          <IconX className="h-5 w-5 text-white/60" />
-        </button>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {items.map(({ to, label, icon: Icon, end }) => (
+        {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
-            onClick={() => setOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                 isActive
@@ -104,15 +104,7 @@ export default function AdminLayout() {
   return (
     <div className="flex h-full bg-forge-canvas">
       {/* Sidebar escritorio */}
-      <div className="hidden lg:block">{renderSidebar(NAV)}</div>
-
-      {/* Sidebar móvil: solo los 3 accesos principales */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="relative">{renderSidebar(NAV_MOBILE)}</div>
-        </div>
-      )}
+      <div className="hidden lg:block">{Sidebar}</div>
 
       {/* Contenido */}
       <div className="flex min-w-0 flex-1 flex-col">
@@ -124,9 +116,6 @@ export default function AdminLayout() {
           style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}
         >
           <div className="flex items-center justify-between">
-            <button onClick={() => setOpen(true)} aria-label="Abrir menú">
-              <IconMenu className="h-6 w-6 text-forge-dark" />
-            </button>
             <Logo />
             <NavLink to="/admin/notificaciones" className="relative text-forge-dark">
               <Avatar nombre={usuario.nombre} color={usuario.color} size={38} />
@@ -170,10 +159,31 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-8">
           <Outlet />
         </main>
       </div>
+
+      {/* Barra de navegación inferior en móvil */}
+      <nav className="fixed bottom-0 left-0 z-40 w-full border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
+        <div className="grid grid-cols-4 pb-[env(safe-area-inset-bottom)]">
+          {TABS_MOBILE.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition ${
+                  isActive ? "text-forge-orange" : "text-slate-400"
+                }`
+              }
+            >
+              <Icon className="h-6 w-6" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

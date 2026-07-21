@@ -32,6 +32,7 @@ import AdminRecursos from "@/features/admin/AdminRecursos";
 import AdminInformes from "@/features/admin/AdminInformes";
 import AdminHoras from "@/features/admin/AdminHoras";
 import AdminConfiguracion from "@/features/admin/AdminConfiguracion";
+import AdminPerfil from "@/features/admin/AdminPerfil";
 import AdminNotificaciones from "@/features/admin/AdminNotificaciones";
 
 const INTERVALO_REVISION_FICHAJES = 5 * 60 * 1000; // 5 min
@@ -112,6 +113,7 @@ export default function App() {
         <Route path="/admin/horas" element={<AdminHoras />} />
         <Route path="/admin/notificaciones" element={<AdminNotificaciones />} />
         <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+        <Route path="/admin/perfil" element={<AdminPerfil />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
