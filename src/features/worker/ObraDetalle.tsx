@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { obrasApi, usuariosApi, partesApi } from "@/services";
-import type { Obra, ParteDiario, Usuario } from "@/lib/types";
+import { obrasApi, usuariosApi, partesApi, adjuntosApi } from "@/services";
+import type { Adjunto, Obra, ParteDiario, Usuario } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import {
   Cargando,
@@ -11,6 +11,7 @@ import {
   ProgressBar,
   Avatar,
   Badge,
+  Modal,
 } from "@/components/ui";
 import { hoyISO } from "@/lib/seed";
 import {
@@ -19,6 +20,8 @@ import {
   IconMapPin,
   IconObras,
   IconChevronRight,
+  IconVideo,
+  IconCamera,
 } from "@/components/icons";
 
 export default function ObraDetalle() {
@@ -28,6 +31,8 @@ export default function ObraDetalle() {
   const [obra, setObra] = useState<Obra | null>(null);
   const [equipo, setEquipo] = useState<Usuario[]>([]);
   const [parte, setParte] = useState<ParteDiario | null>(null);
+  const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
+  const [verAdjunto, setVerAdjunto] = useState<Adjunto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,8 +42,12 @@ export default function ObraDetalle() {
       setObra(o);
       if (o) {
         setEquipo(us.filter((u) => o.trabajadorIds.includes(u.id)));
-        const partes = await partesApi.partesDeObra(o.id);
+        const [partes, adj] = await Promise.all([
+          partesApi.partesDeObra(o.id),
+          adjuntosApi.listAdjuntosDeObra(o.id),
+        ]);
         setParte(partes.find((p) => p.fecha === hoyISO()) ?? null);
+        setAdjuntos(adj);
       }
       setLoading(false);
     })();
@@ -121,6 +130,37 @@ export default function ObraDetalle() {
         </div>
       </div>
 
+      {/* Fotos y vídeo de referencia */}
+      {adjuntos.length > 0 && (
+        <div className="px-4">
+          <div className="card p-5">
+            <p className="label mb-3">Fotos y vídeo de la obra</p>
+            <div className="grid grid-cols-3 gap-2">
+              {adjuntos.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setVerAdjunto(a)}
+                  className="relative aspect-square overflow-hidden rounded-lg bg-slate-100"
+                >
+                  {a.tipo === "video" ? (
+                    <video src={a.url} className="h-full w-full object-cover" muted />
+                  ) : (
+                    <img src={a.url} alt="" className="h-full w-full object-cover" />
+                  )}
+                  <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-black/50 text-white">
+                    {a.tipo === "video" ? (
+                      <IconVideo className="h-3 w-3" />
+                    ) : (
+                      <IconCamera className="h-3 w-3" />
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Acciones parte */}
       <div className="space-y-3 p-4">
         <button
@@ -159,6 +199,19 @@ export default function ObraDetalle() {
           </button>
         )}
       </div>
+
+      <Modal
+        open={!!verAdjunto}
+        onClose={() => setVerAdjunto(null)}
+        title={verAdjunto?.tipo === "video" ? "Vídeo" : "Foto"}
+      >
+        {verAdjunto &&
+          (verAdjunto.tipo === "video" ? (
+            <video src={verAdjunto.url} controls autoPlay className="w-full rounded-xl" />
+          ) : (
+            <img src={verAdjunto.url} alt="" className="w-full rounded-xl" />
+          ))}
+      </Modal>
     </div>
   );
 }

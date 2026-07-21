@@ -244,6 +244,7 @@ export function seedDB(): DBSchema {
     fichajes,
     partes,
     fotos: [],
+    adjuntos: [],
     incidencias,
     notificaciones,
     vehiculos,

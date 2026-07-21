@@ -75,6 +75,19 @@ create table if not exists fotos (
 create index if not exists fotos_obra_idx on fotos (obra_id);
 create index if not exists fotos_subida_por_idx on fotos (subida_por);
 
+-- Material de referencia de obra (fotos/vídeo) subido por el admin/encargado,
+-- para que lo vea el equipo asignado. Distinto de `fotos` (avance, sube cada
+-- trabajador). Comparte el mismo bucket `fotos-obra`, bajo el prefijo `adjuntos/`.
+create table if not exists obra_adjuntos (
+  id         text primary key,
+  obra_id    text references obras(id) on delete cascade,
+  tipo       text not null default 'imagen',
+  subido_por text references usuarios(id) on delete set null,
+  path       text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists obra_adjuntos_obra_idx on obra_adjuntos (obra_id);
+
 create table if not exists incidencias (
   id           text primary key,
   obra_id      text references obras(id) on delete cascade,
@@ -123,7 +136,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'usuarios','obras','fichajes','partes','fotos','incidencias',
+    'usuarios','obras','fichajes','partes','fotos','obra_adjuntos','incidencias',
     'notificaciones','vehiculos','herramientas','almacen'
   ] loop
     execute format('alter table %I enable row level security', t);

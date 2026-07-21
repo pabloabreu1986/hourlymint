@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { obrasApi, usuariosApi } from "@/services";
-import type { EstadoObra, Obra, Usuario } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { obrasApi, usuariosApi, adjuntosApi } from "@/services";
+import type { Adjunto, EstadoObra, Obra, Usuario } from "@/lib/types";
 import {
   Avatar,
   Cargando,
@@ -9,7 +10,15 @@ import {
   ProgressBar,
   Spinner,
 } from "@/components/ui";
-import { IconPlus, IconEdit, IconTrash, IconObras, IconMapPin } from "@/components/icons";
+import {
+  IconPlus,
+  IconEdit,
+  IconTrash,
+  IconObras,
+  IconMapPin,
+  IconVideo,
+  IconCamera,
+} from "@/components/icons";
 
 export default function AdminObras() {
   const [obras, setObras] = useState<Obra[] | null>(null);
@@ -259,6 +268,14 @@ function ObraForm({
           </div>
         </div>
 
+        {obra ? (
+          <AdjuntosObra obraId={obra.id} />
+        ) : (
+          <p className="text-xs text-slate-400">
+            Guarda la obra primero para poder subir fotos o vídeo de referencia.
+          </p>
+        )}
+
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="btn-ghost flex-1">
             Cancelar
@@ -269,5 +286,110 @@ function ObraForm({
         </div>
       </div>
     </Modal>
+  );
+}
+
+/** Fotos y vídeo de referencia de la obra, visibles luego para el equipo. */
+function AdjuntosObra({ obraId }: { obraId: string }) {
+  const { usuario } = useAuth();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [items, setItems] = useState<Adjunto[] | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
+
+  async function cargar() {
+    setItems(await adjuntosApi.listAdjuntosDeObra(obraId));
+  }
+  useEffect(() => {
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [obraId]);
+
+  async function onFiles(files: FileList | null) {
+    if (!files || !files.length) return;
+    setSubiendo(true);
+    try {
+      for (const file of Array.from(files)) {
+        const tipo = file.type.startsWith("video/") ? "video" : "imagen";
+        await adjuntosApi.subirAdjunto(file, {
+          obraId,
+          tipo,
+          subidoPor: usuario?.id ?? null,
+        });
+      }
+      await cargar();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error al subir el archivo");
+    } finally {
+      setSubiendo(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function eliminar(a: Adjunto) {
+    await adjuntosApi.eliminarAdjunto(a);
+    cargar();
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <label className="label">Fotos y vídeo de referencia</label>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={subiendo}
+          className="text-sm font-semibold text-forge-orange"
+        >
+          {subiendo ? <Spinner className="h-4 w-4" /> : "+ Subir"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          hidden
+          onChange={(e) => onFiles(e.target.files)}
+        />
+      </div>
+      <p className="mt-1 text-xs text-slate-400">
+        Lo verá el equipo asignado en el detalle de la obra (planos, fotos o vídeo explicando el
+        trabajo).
+      </p>
+
+      {items === null ? (
+        <div className="mt-2 py-4 text-center">
+          <Spinner className="mx-auto h-5 w-5 text-slate-300" />
+        </div>
+      ) : items.length === 0 ? (
+        <p className="mt-2 text-sm text-slate-400">Todavía no hay nada subido.</p>
+      ) : (
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {items.map((a) => (
+            <div key={a.id} className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100">
+              {a.tipo === "video" ? (
+                <video src={a.url} className="h-full w-full object-cover" muted />
+              ) : (
+                <img src={a.url} alt="" className="h-full w-full object-cover" />
+              )}
+              <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-black/50 text-white">
+                {a.tipo === "video" ? (
+                  <IconVideo className="h-3 w-3" />
+                ) : (
+                  <IconCamera className="h-3 w-3" />
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={() => eliminar(a)}
+                className="absolute bottom-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
+                aria-label="Eliminar"
+              >
+                <IconTrash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

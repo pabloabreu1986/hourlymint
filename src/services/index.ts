@@ -6,6 +6,7 @@ export * as obrasApi from "./obras";
 export * as fichajesApi from "./fichajes";
 export * as partesApi from "./partes";
 export * as fotosApi from "./fotos";
+export * as adjuntosApi from "./adjuntos";
 export * as incidenciasApi from "./incidencias";
 export * as notificacionesApi from "./notificaciones";
 export * as alertasApi from "./alertas";

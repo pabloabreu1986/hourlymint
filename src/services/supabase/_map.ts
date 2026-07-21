@@ -12,6 +12,7 @@ import type {
   Herramienta,
   AlmacenItem,
   Foto,
+  Adjunto,
 } from "@/lib/types";
 
 // ── Usuario ──
@@ -119,6 +120,16 @@ export const toFoto = (r: any): Foto => ({
   parteId: r.parte_id ?? null,
   subidaPor: r.subida_por ?? null,
   path: r.path,
+  createdAt: r.created_at,
+});
+
+// ── Adjunto (material de referencia de obra) ──
+export const toAdjunto = (r: any): Adjunto => ({
+  id: r.id,
+  obraId: r.obra_id,
+  tipo: r.tipo,
+  path: r.path,
+  subidoPor: r.subido_por ?? null,
   createdAt: r.created_at,
 });
 

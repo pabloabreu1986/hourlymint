@@ -101,6 +101,26 @@ export interface Foto {
   createdAt: string;
 }
 
+export type TipoAdjunto = "imagen" | "video";
+
+/**
+ * Material de referencia de una obra (fotos/planos/vídeo) que sube el
+ * admin/encargado al crearla o editarla, para que lo vea todo el equipo
+ * asignado. Distinto de `Foto`, que son las fotos de avance que sube
+ * cada trabajador desde su parte diario.
+ */
+export interface Adjunto {
+  id: string;
+  obraId: string;
+  tipo: TipoAdjunto;
+  /** Ruta en Storage (Supabase) o data URL (mock). */
+  path: string;
+  /** URL lista para <img>/<video> src. Se resuelve al listar. */
+  url?: string;
+  subidoPor: string | null;
+  createdAt: string;
+}
+
 export type EstadoIncidencia = "nueva" | "en_proceso" | "resuelta";
 
 export interface Incidencia {
@@ -157,6 +177,7 @@ export interface DBSchema {
   fichajes: Fichaje[];
   partes: ParteDiario[];
   fotos: Foto[];
+  adjuntos: Adjunto[];
   incidencias: Incidencia[];
   notificaciones: Notificacion[];
   vehiculos: Vehiculo[];

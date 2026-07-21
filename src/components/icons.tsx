@@ -34,6 +34,12 @@ export const IconCamera = (p: P) => (
     <circle cx="12" cy="13" r="4" />
   </svg>
 );
+export const IconVideo = (p: P) => (
+  <svg {...base(p)}>
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
 export const IconObras = (p: P) => (
   <svg {...base(p)}>
     <path d="M3 21h18" />
