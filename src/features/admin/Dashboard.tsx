@@ -134,22 +134,26 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
         {kpis.map((k) => (
-          <div key={k.label} className="card p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div key={k.label} className="card p-3.5 md:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-400 md:text-xs">
                   {k.label}
                 </p>
-                <p className="mt-2 text-3xl font-extrabold text-forge-dark">{k.value}</p>
-                <p className="mt-1 text-xs text-slate-400">{k.sub}</p>
+                <p className="mt-1.5 text-2xl font-extrabold text-forge-dark md:mt-2 md:text-3xl">
+                  {k.value}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] text-slate-400 md:mt-1 md:text-xs">
+                  {k.sub}
+                </p>
               </div>
               <span
-                className="grid h-11 w-11 place-items-center rounded-xl"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl md:h-11 md:w-11"
                 style={{ background: `${k.color}15`, color: k.color }}
               >
-                <k.icon className="h-6 w-6" />
+                <k.icon className="h-5 w-5 md:h-6 md:w-6" />
               </span>
             </div>
           </div>
