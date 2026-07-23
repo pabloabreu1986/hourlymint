@@ -37,8 +37,15 @@ export default function ObraDetalle() {
 
   useEffect(() => {
     if (!id) return;
+    let cancelado = false;
+    setLoading(true);
+    setObra(null);
+    setAdjuntos([]);
+    setParte(null);
+    setEquipo([]);
     (async () => {
       const [o, us] = await Promise.all([obrasApi.getObra(id), usuariosApi.listUsuarios()]);
+      if (cancelado) return;
       setObra(o);
       if (o) {
         setEquipo(us.filter((u) => o.trabajadorIds.includes(u.id)));
@@ -46,11 +53,15 @@ export default function ObraDetalle() {
           partesApi.partesDeObra(o.id),
           adjuntosApi.listAdjuntosDeObra(o.id),
         ]);
+        if (cancelado) return;
         setParte(partes.find((p) => p.fecha === hoyISO()) ?? null);
         setAdjuntos(adj);
       }
-      setLoading(false);
+      if (!cancelado) setLoading(false);
     })();
+    return () => {
+      cancelado = true;
+    };
   }, [id]);
 
   if (loading) return <Cargando />;
