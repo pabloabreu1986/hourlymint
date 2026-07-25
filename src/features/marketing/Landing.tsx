@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
 import { LoginForm } from "@/components/LoginForm";
-import logoDark from "@/assets/fichaloop_white.png";
-import logoLight from "@/assets/fichaloop_black.png";
+import logoDark from "@/assets/fichaloop_logo_dark_transparente.png";
 import {
   IconMapPin,
   IconClipboard,
@@ -34,11 +33,11 @@ export default function Landing() {
   );
 }
 
-function Marca({ oscuro = false, className = "h-8" }: { oscuro?: boolean; className?: string }) {
+function Marca({ className = "h-8" }: { className?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <img src={oscuro ? logoDark : logoLight} alt="fichaloop" className={`${className} w-auto`} />
-      <span className={`text-xl font-extrabold tracking-[-0.04em] ${oscuro ? "text-white" : "text-[#101418]"}`}>
+      <img src={logoDark} alt="" className={`${className} w-auto`} />
+      <span className="text-xl font-extrabold tracking-[-0.04em] text-[#101418]">
         ficha<span style={{ color: NARANJA }}>loop</span>
       </span>
     </div>
