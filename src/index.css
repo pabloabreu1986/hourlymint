@@ -3,6 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  /* Paleta por defecto (FORGEVIA) en canales RGB. src/lib/branding.ts
+     sobrescribe estas variables por tenant en runtime. Tenerlas aquí
+     evita el flash antes de que corra el JS. */
+  :root {
+    --brand-dark: 35 43 54;
+    --brand-slate: 46 56 70;
+    --brand-steel: 59 71 86;
+    --brand-orange: 190 107 57;
+    --brand-orange-600: 168 91 46;
+    --brand-orange-400: 208 136 83;
+    --brand-canvas: 244 245 247;
+  }
   html,
   body,
   #root {

@@ -13,7 +13,32 @@ import type {
   AlmacenItem,
   Foto,
   Adjunto,
+  Tenant,
 } from "@/lib/types";
+
+// ── Tenant (cliente white-label) ──
+export const toTenant = (r: any): Tenant => ({
+  id: r.id,
+  slug: r.slug,
+  nombre: r.nombre,
+  nombreCorto: r.nombre_corto,
+  eslogan: r.eslogan ?? "",
+  logotipo: r.logotipo ?? undefined,
+  logoUrl: r.logo_url ?? null,
+  colores: r.colores,
+  funciones: r.funciones ?? [],
+});
+export const fromTenant = (t: Partial<Tenant>): any => ({
+  ...(t.id !== undefined && { id: t.id }),
+  ...(t.slug !== undefined && { slug: t.slug }),
+  ...(t.nombre !== undefined && { nombre: t.nombre }),
+  ...(t.nombreCorto !== undefined && { nombre_corto: t.nombreCorto }),
+  ...(t.eslogan !== undefined && { eslogan: t.eslogan }),
+  ...(t.logotipo !== undefined && { logotipo: t.logotipo ?? null }),
+  ...(t.logoUrl !== undefined && { logo_url: t.logoUrl }),
+  ...(t.colores !== undefined && { colores: t.colores }),
+  ...(t.funciones !== undefined && { funciones: t.funciones }),
+});
 
 // ── Usuario ──
 export const toUsuario = (r: any): Usuario => ({

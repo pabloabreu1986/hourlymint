@@ -5,7 +5,7 @@ import { notificacionesApi } from "@/services";
 import { IconHome, IconObras, IconBell, IconUser } from "@/components/icons";
 
 const TABS = [
-  { to: "/", label: "Inicio", icon: IconHome, end: true },
+  { to: "/inicio", label: "Inicio", icon: IconHome, end: true },
   { to: "/obras", label: "Obras", icon: IconObras, end: false },
   { to: "/notificaciones", label: "Avisos", icon: IconBell, end: false },
   { to: "/perfil", label: "Perfil", icon: IconUser, end: false },
