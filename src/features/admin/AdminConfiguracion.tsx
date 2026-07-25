@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { resetDB } from "@/lib/db";
+import { tenantActual } from "@/lib/branding";
 import { useAuth } from "@/context/AuthContext";
 import { Modal } from "@/components/ui";
 import { IconSettings, IconTrash, IconBox } from "@/components/icons";
@@ -7,6 +8,7 @@ import { IconSettings, IconTrash, IconBox } from "@/components/icons";
 export default function AdminConfiguracion() {
   const { logout } = useAuth();
   const [confirmar, setConfirmar] = useState(false);
+  const tenant = tenantActual();
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -16,7 +18,7 @@ export default function AdminConfiguracion() {
             <IconSettings className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="font-bold text-forge-dark">FORGEVIA · Control de Obra</h2>
+            <h2 className="font-bold text-forge-dark">{tenant.nombre}</h2>
             <p className="text-sm text-slate-400">Versión 0.1.0 — Demo con datos mock (localStorage)</p>
           </div>
         </div>

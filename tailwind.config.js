@@ -4,18 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta de marca FORGEVIA (extraída del logo)
+        // Paleta de marca por cliente (white-label). Los valores viven en
+        // variables CSS (--brand-*) que inyecta src/lib/branding.ts en
+        // runtime; así cada tenant repinta la app sin rebuild. El formato
+        // `rgb(var(--x) / <alpha-value>)` preserva las opacidades (p.ej.
+        // bg-forge-orange/10). Valores por defecto (FORGEVIA) en index.css.
         forge: {
-          // Azul carbón / navy del logo y sidebars
-          dark: "#232B36",
-          slate: "#2E3846",
-          steel: "#3B4756",
-          // Naranja terracota (acento principal)
-          orange: "#BE6B39",
-          "orange-600": "#A85B2E",
-          "orange-400": "#D08853",
-          // Fondos
-          canvas: "#F4F5F7",
+          dark: "rgb(var(--brand-dark) / <alpha-value>)",
+          slate: "rgb(var(--brand-slate) / <alpha-value>)",
+          steel: "rgb(var(--brand-steel) / <alpha-value>)",
+          orange: "rgb(var(--brand-orange) / <alpha-value>)",
+          "orange-600": "rgb(var(--brand-orange-600) / <alpha-value>)",
+          "orange-400": "rgb(var(--brand-orange-400) / <alpha-value>)",
+          canvas: "rgb(var(--brand-canvas) / <alpha-value>)",
         },
         estado: {
           curso: "#16A34A",

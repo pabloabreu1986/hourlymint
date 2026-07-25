@@ -4,6 +4,8 @@
 // del día tengan sentido cada vez que se abre la app.
 // ─────────────────────────────────────────────────────────────
 import type { DBSchema } from "./types";
+import { FORGEVIA_TENANT } from "./tenant-default";
+import { FUNCIONES_DISPONIBLES } from "./funciones";
 
 const PAL = [
   "#BE6B39",
@@ -35,7 +37,28 @@ function hoyA(hora: string): string {
 export function seedDB(): DBSchema {
   const hoy = hoyISO();
 
+  // ── Tenants (clientes white-label) ──
+  // FORGEVIA arranca con todas las funciones activas.
+  const forgevia = {
+    ...FORGEVIA_TENANT,
+    funciones: FUNCIONES_DISPONIBLES.map((f) => f.clave),
+  };
+  const tenants = [forgevia];
+
   // ── Usuarios ──
+  // Super-admin de la plataforma (solo Pablo). No pertenece a ningún
+  // cliente; gestiona los tenants desde su panel.
+  const superadmin = {
+    id: "u_super",
+    nombre: "pablo",
+    password: "890p",
+    rol: "superadmin" as const,
+    puesto: "Operador de plataforma",
+    telefono: "",
+    activo: true,
+    color: PAL[0],
+  };
+
   const admin = {
     id: "u_admin",
     nombre: "Antonio Manzanares",
@@ -65,7 +88,7 @@ export function seedDB(): DBSchema {
     color: PAL[i % PAL.length],
   }));
 
-  const usuarios = [admin, ...trabajadores];
+  const usuarios = [superadmin, admin, ...trabajadores];
 
   // ── Obras ──
   const obras = [
@@ -257,6 +280,7 @@ export function seedDB(): DBSchema {
   ];
 
   return {
+    tenants,
     usuarios,
     obras,
     fichajes,

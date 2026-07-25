@@ -1,5 +1,8 @@
-// Marca FORGEVIA reconstruida en SVG para poder recolorearla en fondos
-// claros u oscuros. `variant` controla el color del texto/edificios.
+// Marca reconstruida en SVG para poder recolorearla en fondos claros u
+// oscuros. El texto y (más adelante) la imagen salen del tenant activo.
+// `variant` controla el color del texto/edificios.
+import { tenantActual } from "@/lib/branding";
+
 interface LogoProps {
   variant?: "dark" | "light";
   showText?: boolean;
@@ -19,23 +22,37 @@ export function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
 
 export function Logo({ variant = "dark", showText = true, className = "" }: LogoProps) {
   const textColor = variant === "light" ? "text-white" : "text-forge-dark";
+  const t = tenantActual();
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <span className={textColor}>
-        <LogoMark className="h-9 w-9" />
-      </span>
+      {t.logoUrl ? (
+        <img src={t.logoUrl} alt={t.nombreCorto} className="h-9 w-9 object-contain" />
+      ) : (
+        <span className={textColor}>
+          <LogoMark className="h-9 w-9" />
+        </span>
+      )}
       {showText && (
         <div className="leading-none">
           <div className={`text-xl font-extrabold tracking-tight ${textColor}`}>
-            FORGE<span className="text-forge-orange">VIA</span>
+            {t.logotipo ? (
+              <>
+                {t.logotipo.base}
+                <span className="text-forge-orange">{t.logotipo.acento}</span>
+              </>
+            ) : (
+              t.nombreCorto
+            )}
           </div>
-          <div
-            className={`mt-1 text-[9px] font-semibold tracking-[0.28em] ${
-              variant === "light" ? "text-white/60" : "text-slate-400"
-            }`}
-          >
-            PROYECTOS INTEGRALES
-          </div>
+          {t.eslogan && (
+            <div
+              className={`mt-1 text-[9px] font-semibold tracking-[0.28em] ${
+                variant === "light" ? "text-white/60" : "text-slate-400"
+              }`}
+            >
+              {t.eslogan}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -26,5 +26,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Permite abrir el dev server a través de túneles ngrok (pruebas desde
+    // el móvil fuera de la red local). Solo afecta al server de desarrollo.
+    allowedHosts: [".ngrok-free.app", ".ngrok.app", ".ngrok.io"],
   },
 });

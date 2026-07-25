@@ -35,7 +35,17 @@ import AdminConfiguracion from "@/features/admin/AdminConfiguracion";
 import AdminPerfil from "@/features/admin/AdminPerfil";
 import AdminNotificaciones from "@/features/admin/AdminNotificaciones";
 
+// Super-admin (consola de plataforma)
+import SuperLayout from "@/features/super/SuperLayout";
+import SuperClientes from "@/features/super/SuperClientes";
+import SuperTenantEditor from "@/features/super/SuperTenantEditor";
+
 const INTERVALO_REVISION_FICHAJES = 5 * 60 * 1000; // 5 min
+
+/** Ruta de inicio según el rol del usuario. */
+function inicioDe(rol: Rol): string {
+  return rol === "superadmin" ? "/super" : rol === "admin" ? "/admin" : "/";
+}
 
 function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
   const { usuario, cargando } = useAuth();
@@ -50,7 +60,7 @@ function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
   if (cargando) return <Cargando />;
   if (!usuario) return <Navigate to="/login" replace />;
   if (usuario.rol !== rol) {
-    return <Navigate to={usuario.rol === "admin" ? "/admin" : "/"} replace />;
+    return <Navigate to={inicioDe(usuario.rol)} replace />;
   }
   return <>{children}</>;
 }
@@ -66,7 +76,7 @@ export default function App() {
           cargando ? (
             <Cargando />
           ) : usuario ? (
-            <Navigate to={usuario.rol === "admin" ? "/admin" : "/"} replace />
+            <Navigate to={inicioDe(usuario.rol)} replace />
           ) : (
             <Login />
           )
@@ -114,6 +124,18 @@ export default function App() {
         <Route path="/admin/notificaciones" element={<AdminNotificaciones />} />
         <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
         <Route path="/admin/perfil" element={<AdminPerfil />} />
+      </Route>
+
+      {/* ── Super-admin (plataforma) ── */}
+      <Route
+        element={
+          <Guard rol="superadmin">
+            <SuperLayout />
+          </Guard>
+        }
+      >
+        <Route path="/super" element={<SuperClientes />} />
+        <Route path="/super/clientes/:id" element={<SuperTenantEditor />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

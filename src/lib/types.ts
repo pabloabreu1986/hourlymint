@@ -4,9 +4,46 @@
 // entidades es la que mañana replicará la base de datos real.
 // ─────────────────────────────────────────────────────────────
 
-export type Rol = "admin" | "trabajador";
+export type Rol = "superadmin" | "admin" | "trabajador";
 
 export type EstadoObra = "en_curso" | "pendiente" | "finalizada";
+
+// ─── White-label / multi-tenant ──────────────────────────────
+// Cada cliente (tenant) tiene su marca. Hoy la configuración vive en
+// código (src/lib/branding.ts) y la administra el operador de la
+// plataforma; mañana se resolverá por subdominio (p.ej.
+// forgevia.fichaloop.com) y se leerá de la BD. La UI la consume siempre
+// a través de `tenantApi`/`tenantActual()`, nunca hardcodeando la marca.
+
+/** Paleta de marca en HEX (fácil de editar a mano o desde un panel). */
+export interface TenantColores {
+  dark: string;
+  slate: string;
+  steel: string;
+  orange: string;
+  orange600: string;
+  orange400: string;
+  canvas: string;
+}
+
+export interface Tenant {
+  id: string;
+  /** Subdominio del cliente: `<slug>`.fichaloop.com */
+  slug: string;
+  /** Título completo (título de pestaña, cabeceras) */
+  nombre: string;
+  /** Marca corta para el logo */
+  nombreCorto: string;
+  /** Línea secundaria bajo el logo (puede ser "") */
+  eslogan: string;
+  /** Logotipo de dos tonos opcional; si no, se usa `nombreCorto` tal cual */
+  logotipo?: { base: string; acento: string };
+  /** URL a un logo subido; si es null se usa la marca SVG por defecto */
+  logoUrl: string | null;
+  colores: TenantColores;
+  /** Feature flags: módulos activos para este cliente (uso posterior) */
+  funciones: string[];
+}
 
 export interface Usuario {
   id: string;
@@ -193,6 +230,9 @@ export interface AlmacenItem {
 }
 
 export interface DBSchema {
+  /** Clientes de la plataforma (white-label). El operador (super-admin)
+   * los gestiona desde su panel. Hoy en mock; mañana en la BD. */
+  tenants: Tenant[];
   usuarios: Usuario[];
   obras: Obra[];
   fichajes: Fichaje[];
