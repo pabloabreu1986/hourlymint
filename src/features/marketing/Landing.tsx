@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { LoginForm } from "@/components/LoginForm";
-import logoDark from "@/assets/fichaloop_white.png"; // escudo claro → fondos oscuros
-import logoLight from "@/assets/fichaloop_black.png"; // escudo oscuro → fondos claros
+import logoDark from "@/assets/fichaloop_white.png";
+import logoLight from "@/assets/fichaloop_black.png";
 import {
   IconMapPin,
   IconClipboard,
@@ -15,57 +15,52 @@ import {
   IconCheck,
 } from "@/components/icons";
 
-// ─── Web pública de fichaloop.com (dominio raíz / apex). Enfocada a
-// dueños de pymes de obra y servicios de campo. El login del hero entra
-// a la app; en el subdominio de cada cliente se ve su login con su marca.
-
 const NARANJA = "#E8721C";
-const CARBON = "#0F1720";
 
 export default function Landing() {
   return (
-    <div className="min-h-full bg-white text-slate-800">
+    <div className="min-h-full bg-[#F5F3EE] text-[#101418] selection:bg-[#E8721C] selection:text-white">
       <Nav />
-      <Hero />
-      <Dolores />
-      <Funciones />
-      <ComoFunciona />
-      <WhiteLabel />
-      <CTA />
+      <main>
+        <Hero />
+        <Dolores />
+        <Funciones />
+        <ComoFunciona />
+        <WhiteLabel />
+        <CTA />
+      </main>
       <Footer />
     </div>
   );
 }
 
-function Marca({ oscuro = false, className = "h-9" }: { oscuro?: boolean; className?: string }) {
+function Marca({ oscuro = false, className = "h-8" }: { oscuro?: boolean; className?: string }) {
   return (
     <div className="flex items-center gap-2.5">
       <img src={oscuro ? logoDark : logoLight} alt="fichaloop" className={`${className} w-auto`} />
-      <span
-        className={`text-xl font-extrabold tracking-tight ${oscuro ? "text-white" : "text-slate-900"}`}
-      >
+      <span className={`text-xl font-extrabold tracking-[-0.04em] ${oscuro ? "text-white" : "text-[#101418]"}`}>
         ficha<span style={{ color: NARANJA }}>loop</span>
       </span>
     </div>
   );
 }
 
+function Flecha() {
+  return <span aria-hidden="true" className="text-lg leading-none">↗</span>;
+}
+
 function Nav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0F1720]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-        <Marca oscuro />
-        <nav className="hidden items-center gap-7 text-sm font-medium text-white/70 md:flex">
-          <a href="#dolores" className="transition hover:text-white">El problema</a>
-          <a href="#funciones" className="transition hover:text-white">Funciones</a>
-          <a href="#como" className="transition hover:text-white">Cómo funciona</a>
+    <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-4 sm:px-8">
+        <Marca />
+        <nav className="hidden items-center gap-8 text-[13px] font-semibold uppercase tracking-[0.12em] md:flex">
+          <a href="#dolores" className="transition-opacity hover:opacity-50">El problema</a>
+          <a href="#funciones" className="transition-opacity hover:opacity-50">Producto</a>
+          <a href="#como" className="transition-opacity hover:opacity-50">Proceso</a>
         </nav>
-        <a
-          href="#acceso"
-          className="rounded-lg px-4 py-2 text-sm font-bold text-white transition hover:brightness-110"
-          style={{ background: NARANJA }}
-        >
-          Acceder
+        <a href="#acceso" className="flex items-center gap-2 text-sm font-bold transition-opacity hover:opacity-50">
+          Acceso <Flecha />
         </a>
       </div>
     </header>
@@ -74,61 +69,68 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#0F1720] text-white">
-      {/* Glow decorativo */}
-      <div
-        className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 rounded-full opacity-20 blur-3xl"
-        style={{ background: NARANJA }}
-      />
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 md:grid-cols-[1.1fr_0.9fr] md:py-24">
-        {/* Copy */}
-        <div>
-          <span
-            className="inline-block rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/70"
-          >
-            Control de obra y equipo · sin papeles
-          </span>
-          <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
-            Sabe quién trabaja, dónde y cuánto —{" "}
-            <span style={{ color: NARANJA }}>en tiempo real</span>.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/70">
-            fichaloop reúne fichajes con GPS, partes diarios, fotos de obra y horas
-            reales en una sola app. Tus encargados y trabajadores la usan desde el
-            móvil; tú lo ves todo desde el panel.
-          </p>
-          <ul className="mt-7 grid gap-3 sm:grid-cols-2">
-            {[
-              "Fichajes con ubicación y hora exacta",
-              "Partes diarios firmados, sin papel",
-              "Horas listas para la nómina",
-              "Tu marca y tu dominio propio",
-            ].map((t) => (
-              <li key={t} className="flex items-center gap-2 text-sm text-white/80">
-                <span
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-white"
-                  style={{ background: NARANJA }}
-                >
-                  <IconCheck className="h-3 w-3" />
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
+    <section className="overflow-hidden">
+      <div className="mx-auto max-w-[1400px] px-5 pb-16 pt-12 sm:px-8 md:pb-24 md:pt-20">
+        <div className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-black/50">
+          <span className="h-2 w-2 rounded-full bg-[#E8721C]" />
+          Control de obra, sin papeles
         </div>
 
-        {/* Acceso / login */}
-        <div id="acceso" className="scroll-mt-24">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
-            <h2 className="text-lg font-bold text-white">Acceso clientes</h2>
-            <p className="mt-1 text-sm text-white/50">
-              Entra con tu usuario. ¿Tu empresa aún no está?{" "}
-              <a href="#contacto" className="underline decoration-white/30 hover:text-white">
-                Habla con nosotros
-              </a>
-              .
+        <h1 className="max-w-[1250px] text-[clamp(3.7rem,9.4vw,9rem)] font-black leading-[0.84] tracking-[-0.075em]">
+          Tu obra,
+          <br />
+          <span className="text-[#E8721C]">bajo control.</span>
+        </h1>
+
+        <div className="mt-12 grid gap-12 border-t border-black/20 pt-8 md:grid-cols-12 md:items-start">
+          <p className="max-w-2xl text-xl font-medium leading-snug tracking-[-0.02em] md:col-span-7 md:text-3xl">
+            Fichajes, partes, fotos y horas reales. Todo lo que pasa fuera,
+            visible desde tu oficina.
+          </p>
+          <div className="md:col-span-4 md:col-start-9">
+            <p className="mb-6 max-w-sm leading-relaxed text-black/60">
+              Una herramienta directa para empresas de obra y servicios de campo.
+              Tu equipo la usa desde el móvil. Tú recuperas el control.
             </p>
-            <div className="mt-5">
+            <a
+              href="mailto:hola@fichaloop.com"
+              className="inline-flex items-center gap-3 border-b-2 border-[#E8721C] pb-2 font-bold transition-all hover:gap-5"
+            >
+              Solicitar una demo <Flecha />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[#101418] text-white">
+        <div className="mx-auto grid max-w-[1400px] md:grid-cols-2">
+          <div className="flex min-h-[400px] flex-col justify-between border-white/15 p-5 sm:p-8 md:min-h-[570px] md:border-r md:p-12">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Lo esencial, cada día</p>
+            <div className="space-y-5">
+              {[
+                "Quién ha fichado",
+                "Dónde está tu equipo",
+                "Qué se ha hecho hoy",
+                "Cuántas horas son reales",
+              ].map((item, i) => (
+                <div key={item} className="flex items-baseline gap-5 border-b border-white/15 pb-5">
+                  <span className="text-xs text-[#E8721C]">0{i + 1}</span>
+                  <p className="text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div id="acceso" className="scroll-mt-24 p-5 sm:p-8 md:p-12">
+            <div className="mx-auto flex h-full max-w-md flex-col justify-center">
+              <span className="mb-10 text-xs font-bold uppercase tracking-[0.18em] text-white/45">Área de clientes</span>
+              <h2 className="mb-3 text-4xl font-black tracking-[-0.055em] sm:text-5xl">Bienvenido.</h2>
+              <p className="mb-9 text-white/50">
+                Entra en tu espacio de trabajo o{" "}
+                <a href="#contacto" className="text-white underline decoration-white/30 underline-offset-4">
+                  habla con nosotros
+                </a>.
+              </p>
               <LoginForm />
             </div>
           </div>
@@ -138,98 +140,36 @@ function Hero() {
   );
 }
 
-const DOLORES: Array<{ dolor: string; solucion: string }> = [
-  {
-    dolor: "«No sé si han fichado ni a qué hora llegaron de verdad.»",
-    solucion: "Fichaje con GPS y hora exacta. Ves entradas, salidas y retrasos al instante.",
-  },
-  {
-    dolor: "«Los partes llegan en papel, tarde, o directamente se pierden.»",
-    solucion: "Parte diario digital firmado por el encargado. Nada se traspapela.",
-  },
-  {
-    dolor: "«Las fotos de obra están desperdigadas en chats de WhatsApp.»",
-    solucion: "Todas las fotos ordenadas por obra y por día, en un solo sitio.",
-  },
-  {
-    dolor: "«A fin de mes no sé las horas reales para pagar la nómina.»",
-    solucion: "Horas calculadas automáticamente por trabajador y por obra.",
-  },
-  {
-    dolor: "«Materiales e incidencias los llevo de memoria y algo siempre falla.»",
-    solucion: "Registro de materiales pendientes e incidencias, visibles para todos.",
-  },
-  {
-    dolor: "«Tengo varias obras y no sé por dónde va cada una.»",
-    solucion: "Panel con el avance de cada obra, su equipo y su actividad del día.",
-  },
+const DOLORES = [
+  ["«No sé si han fichado.»", "Ubicación y hora exacta, al instante."],
+  ["«Los partes llegan tarde.»", "Parte digital, cerrado y firmado cada día."],
+  ["«Las fotos están en WhatsApp.»", "Cada imagen, en su obra y en su fecha."],
+  ["«No me cuadran las horas.»", "Horas reales listas para nómina y facturación."],
 ];
 
 function Dolores() {
   return (
-    <section id="dolores" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">¿Te suena?</h2>
-        <p className="mt-3 text-slate-500">
-          Los dueños de empresas de obra y servicios pierden horas cada semana persiguiendo
-          información. fichaloop lo resuelve.
-        </p>
-      </div>
-      <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {DOLORES.map((d) => (
-          <div key={d.dolor} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-            <p className="text-[15px] font-semibold italic text-slate-700">{d.dolor}</p>
-            <div className="mt-4 flex items-start gap-2">
-              <span
-                className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-white"
-                style={{ background: NARANJA }}
-              >
-                <IconCheck className="h-3 w-3" />
-              </span>
-              <p className="text-sm text-slate-600">{d.solucion}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-const FUNCIONES: Array<{ icon: (p: { className?: string }) => ReactNode; titulo: string; texto: string }> = [
-  { icon: IconMapPin, titulo: "Fichaje con GPS", texto: "Entrada y salida con ubicación y hora. Detecta retrasos y olvidos automáticamente." },
-  { icon: IconClipboard, titulo: "Partes diarios", texto: "Trabajo realizado, materiales e incidencias. Cierre con firma del encargado." },
-  { icon: IconCamera, titulo: "Fotos de obra", texto: "Documenta el avance con fotos ordenadas por obra y por día." },
-  { icon: IconChart, titulo: "Informes y horas", texto: "Horas reales por trabajador y obra, listas para nómina y para facturar." },
-  { icon: IconBox, titulo: "Materiales", texto: "Controla stock, material pendiente y almacén sin hojas de cálculo." },
-  { icon: IconAlert, titulo: "Incidencias", texto: "Registra y sigue problemas de obra antes de que se conviertan en retrasos." },
-  { icon: IconTruck, titulo: "Vehículos y herramientas", texto: "Sabe qué recurso está en cada obra y quién lo tiene asignado." },
-  { icon: IconClock, titulo: "En tiempo real", texto: "Todo lo que pasa en obra, visible desde tu panel al momento." },
-];
-
-function Funciones() {
-  return (
-    <section id="funciones" className="scroll-mt-20 bg-slate-50 py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Todo el control de tu obra, en una app
+    <section id="dolores" className="scroll-mt-20 border-b border-black/15">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/45">01 — El problema</p>
+        <div className="grid gap-12 md:grid-cols-12">
+          <h2 className="text-[clamp(3.2rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.07em] md:col-span-7">
+            Menos perseguir.
+            <br />
+            <span className="text-black/25">Más decidir.</span>
           </h2>
-          <p className="mt-3 text-slate-500">
-            Pensada para que la usen tus trabajadores desde el móvil, con la potencia que tú
-            necesitas en el escritorio.
+          <p className="max-w-md self-end text-lg leading-relaxed text-black/60 md:col-span-4 md:col-start-9">
+            La información ya existe. El problema es que llega tarde, repartida entre
+            papeles, llamadas y chats. Fichaloop la pone en orden.
           </p>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {FUNCIONES.map((f) => (
-            <div key={f.titulo} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span
-                className="grid h-11 w-11 place-items-center rounded-xl text-white"
-                style={{ background: CARBON }}
-              >
-                <f.icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 font-bold text-slate-900">{f.titulo}</h3>
-              <p className="mt-1.5 text-sm text-slate-500">{f.texto}</p>
+
+        <div className="mt-20 border-t border-black/20 md:mt-28">
+          {DOLORES.map(([dolor, solucion], i) => (
+            <div key={dolor} className="grid gap-3 border-b border-black/20 py-7 md:grid-cols-12 md:items-center">
+              <span className="text-xs text-black/35 md:col-span-1">0{i + 1}</span>
+              <p className="text-2xl font-semibold tracking-[-0.03em] md:col-span-5 md:text-3xl">{dolor}</p>
+              <p className="text-black/55 md:col-span-5 md:col-start-8">{solucion}</p>
             </div>
           ))}
         </div>
@@ -238,32 +178,70 @@ function Funciones() {
   );
 }
 
+const FUNCIONES: Array<{ icon: (p: { className?: string }) => ReactNode; titulo: string; texto: string }> = [
+  { icon: IconMapPin, titulo: "Fichaje con GPS", texto: "Entrada y salida con ubicación y hora. Retrasos y olvidos visibles al momento." },
+  { icon: IconClipboard, titulo: "Partes diarios", texto: "Trabajo, materiales e incidencias en un parte firmado por el encargado." },
+  { icon: IconCamera, titulo: "Fotos de obra", texto: "El avance documentado y ordenado automáticamente por obra y día." },
+  { icon: IconChart, titulo: "Horas e informes", texto: "Datos reales por trabajador y obra, listos para pagar y facturar." },
+  { icon: IconBox, titulo: "Materiales", texto: "Stock, pendientes y almacén sin memoria ni hojas de cálculo." },
+  { icon: IconAlert, titulo: "Incidencias", texto: "Los problemas quedan registrados antes de convertirse en retrasos." },
+  { icon: IconTruck, titulo: "Recursos", texto: "Vehículos y herramientas: dónde están y quién los tiene." },
+  { icon: IconClock, titulo: "Tiempo real", texto: "Una vista clara de lo que está ocurriendo ahora en cada obra." },
+];
+
+function Funciones() {
+  return (
+    <section id="funciones" className="scroll-mt-20 bg-white">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/45">02 — El producto</p>
+        <h2 className="max-w-5xl text-[clamp(3.2rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.07em]">
+          Todo conectado.
+          <br />
+          <span className="text-[#E8721C]">Nada de ruido.</span>
+        </h2>
+
+        <div className="mt-20 grid border-t border-black/15 sm:grid-cols-2 lg:grid-cols-4 md:mt-28">
+          {FUNCIONES.map((f, i) => (
+            <article
+              key={f.titulo}
+              className="group min-h-64 border-b border-black/15 py-7 sm:pr-7 sm:[&:nth-child(2n)]:pl-7 lg:min-h-72 lg:border-r lg:px-7 lg:first:pl-0 lg:[&:nth-child(4n)]:border-r-0 lg:[&:nth-child(4n+1)]:pl-0"
+            >
+              <div className="flex items-center justify-between">
+                <f.icon className="h-6 w-6 text-[#E8721C]" />
+                <span className="text-xs text-black/30">0{i + 1}</span>
+              </div>
+              <h3 className="mt-14 text-2xl font-bold tracking-[-0.035em]">{f.titulo}</h3>
+              <p className="mt-3 max-w-xs leading-relaxed text-black/50">{f.texto}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const PASOS = [
-  { n: 1, titulo: "Tu equipo ficha y reporta", texto: "Trabajadores y encargados fichan con GPS y suben el parte y las fotos desde el móvil." },
-  { n: 2, titulo: "El encargado cierra el día", texto: "Revisa el trabajo, añade materiales e incidencias y firma el parte diario." },
-  { n: 3, titulo: "Tú lo ves todo", texto: "Desde el panel controlas obras, horas, avance y recursos en tiempo real." },
+  ["Ficha", "Tu equipo registra entrada y salida desde el móvil, con GPS."],
+  ["Reporta", "El encargado añade trabajo, fotos, materiales e incidencias."],
+  ["Controla", "Tú ves obras, horas, avance y recursos desde un único panel."],
 ];
 
 function ComoFunciona() {
   return (
-    <section id="como" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Cómo funciona</h2>
-        <p className="mt-3 text-slate-500">Tres pasos. Cero papel.</p>
-      </div>
-      <div className="mt-12 grid gap-8 md:grid-cols-3">
-        {PASOS.map((p) => (
-          <div key={p.n} className="relative">
-            <span
-              className="grid h-12 w-12 place-items-center rounded-xl text-lg font-extrabold text-white"
-              style={{ background: NARANJA }}
-            >
-              {p.n}
-            </span>
-            <h3 className="mt-4 text-lg font-bold text-slate-900">{p.titulo}</h3>
-            <p className="mt-1.5 text-sm text-slate-500">{p.texto}</p>
-          </div>
-        ))}
+    <section id="como" className="scroll-mt-20 bg-[#E8721C] text-[#101418]">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/55">03 — Así de simple</p>
+        <div className="border-t border-black/30">
+          {PASOS.map(([titulo, texto], i) => (
+            <div key={titulo} className="grid gap-5 border-b border-black/30 py-9 md:grid-cols-12 md:items-center">
+              <span className="text-sm font-bold md:col-span-1">0{i + 1}</span>
+              <h3 className="text-[clamp(3rem,6.5vw,6.5rem)] font-black leading-none tracking-[-0.065em] md:col-span-6">
+                {titulo}
+              </h3>
+              <p className="max-w-md text-lg leading-relaxed text-black/65 md:col-span-4 md:col-start-9">{texto}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -271,45 +249,34 @@ function ComoFunciona() {
 
 function WhiteLabel() {
   return (
-    <section className="bg-[#0F1720] py-20 text-white">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 md:grid-cols-2">
-        <div>
-          <span
-            className="inline-block rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/70"
-          >
-            Marca blanca
-          </span>
-          <h2 className="mt-5 text-3xl font-extrabold tracking-tight">
-            Tu empresa, tu marca, tu dominio.
+    <section className="overflow-hidden bg-[#101418] text-white">
+      <div className="mx-auto grid max-w-[1400px] md:grid-cols-12">
+        <div className="px-5 py-20 sm:px-8 md:col-span-8 md:py-32 md:pr-12">
+          <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">04 — Tu identidad</p>
+          <h2 className="text-[clamp(3.3rem,7.5vw,8rem)] font-black leading-[0.86] tracking-[-0.075em]">
+            Parece tuya.
+            <br />
+            <span className="text-white/25">Porque lo es.</span>
           </h2>
-          <p className="mt-4 max-w-lg text-white/70">
-            Tus trabajadores no entran a «otra app más»: entran a la de tu empresa. Con tu
-            logo, tus colores y tu propia dirección web. Nosotros la configuramos para ti.
+          <p className="mt-12 max-w-2xl text-xl leading-relaxed text-white/55 md:text-2xl">
+            Tu logo, tus colores y tu propio dominio. Tus trabajadores entran en la
+            herramienta de tu empresa, no en «otra app más».
           </p>
-          <ul className="mt-6 space-y-3">
-            {[
-              "Tu logo y tus colores en toda la app",
-              "Dominio propio: tuempresa.fichaloop.com",
-              "Activa solo las funciones que necesitas",
-            ].map((t) => (
-              <li key={t} className="flex items-center gap-2 text-sm text-white/80">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-white" style={{ background: NARANJA }}>
-                  <IconCheck className="h-3 w-3" />
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
-          <div className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 font-mono text-sm text-white/80">
-            <IconObras className="h-5 w-5" style={{ color: NARANJA }} />
-            tuempresa<span className="text-white/40">.fichaloop.com</span>
+        <div className="flex flex-col justify-between border-t border-white/15 p-5 sm:p-8 md:col-span-4 md:border-l md:border-t-0 md:p-10">
+          <IconObras className="h-10 w-10 text-[#E8721C]" />
+          <div className="mt-24">
+            <p className="break-all font-mono text-xl sm:text-2xl">
+              tuempresa<span className="text-white/30">.fichaloop.com</span>
+            </p>
+            <ul className="mt-8 space-y-4 border-t border-white/15 pt-6 text-sm text-white/60">
+              {["Logo y colores propios", "Funciones a tu medida", "Configuración incluida"].map((item) => (
+                <li key={item} className="flex items-center gap-3">
+                  <IconCheck className="h-4 w-4 text-[#E8721C]" /> {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="mt-4 text-sm text-white/50">
-            Cada cliente accede a su espacio en su propio subdominio, con su identidad. Igual
-            que ves aquí, pero con tu marca.
-          </p>
         </div>
       </div>
     </section>
@@ -318,27 +285,23 @@ function WhiteLabel() {
 
 function CTA() {
   return (
-    <section id="contacto" className="scroll-mt-20 bg-slate-50 py-20">
-      <div className="mx-auto max-w-3xl px-5 text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Deja el papel atrás.
+    <section id="contacto" className="scroll-mt-20 bg-[#F5F3EE]">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/45">Hablemos</p>
+        <h2 className="max-w-6xl text-[clamp(3.5rem,8.5vw,8.5rem)] font-black leading-[0.86] tracking-[-0.075em]">
+          Menos papeleo.
+          <br />
+          <span className="text-[#E8721C]">Más obra.</span>
         </h2>
-        <p className="mt-3 text-slate-500">
-          Cuéntanos cómo trabajas y montamos fichaloop a la medida de tu empresa.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-14 flex flex-col gap-8 border-t border-black/20 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-lg text-lg text-black/55">
+            Cuéntanos cómo trabajas. Te enseñamos cómo fichaloop encaja en tu empresa.
+          </p>
           <a
             href="mailto:hola@fichaloop.com"
-            className="rounded-xl px-6 py-3.5 font-bold text-white transition hover:brightness-110"
-            style={{ background: NARANJA }}
+            className="inline-flex w-fit items-center gap-4 bg-[#101418] px-7 py-4 font-bold text-white transition-all hover:gap-6 hover:bg-[#E8721C]"
           >
-            Solicitar una demo
-          </a>
-          <a
-            href="#acceso"
-            className="rounded-xl border border-slate-300 px-6 py-3.5 font-bold text-slate-700 transition hover:bg-white"
-          >
-            Ya soy cliente
+            Solicitar una demo <Flecha />
           </a>
         </div>
       </div>
@@ -348,48 +311,25 @@ function CTA() {
 
 function Footer() {
   return (
-    <footer className="bg-[#0F1720] text-white">
-      <div className="mx-auto max-w-6xl px-5 py-14">
-        <div className="flex flex-col items-start justify-between gap-8 md:flex-row">
-          <div className="max-w-sm">
-            <Marca oscuro />
-            <p className="mt-4 text-sm text-white/50">
-              Control de fichajes, obras y partes diarios para empresas de obra y servicios de
-              campo. Sin papeles, en tiempo real.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-10 text-sm">
-            <div>
-              <p className="font-semibold text-white/90">Producto</p>
-              <ul className="mt-3 space-y-2 text-white/50">
-                <li><a href="#funciones" className="hover:text-white">Funciones</a></li>
-                <li><a href="#como" className="hover:text-white">Cómo funciona</a></li>
-                <li><a href="#acceso" className="hover:text-white">Acceso clientes</a></li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-white/90">Contacto</p>
-              <ul className="mt-3 space-y-2 text-white/50">
-                <li><a href="mailto:hola@fichaloop.com" className="hover:text-white">hola@fichaloop.com</a></li>
-                <li><a href="#contacto" className="hover:text-white">Solicitar demo</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-white/40 sm:flex-row">
-          <p>© {"2026"} fichaloop. Todos los derechos reservados.</p>
-          <p>
-            Desarrollado por{" "}
-            <a
-              href="https://ensodev.eu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white/70 underline decoration-white/20 underline-offset-2 hover:text-white"
-            >
-              ensodev.eu
-            </a>
+    <footer className="border-t border-black/15 bg-[#F5F3EE]">
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-10 px-5 py-10 sm:px-8 md:flex-row md:items-end md:justify-between">
+        <div>
+          <Marca />
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-black/45">
+            Control de fichajes, obras y partes diarios para empresas que trabajan fuera.
           </p>
+        </div>
+        <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm font-medium">
+          <a href="#funciones" className="hover:text-[#E8721C]">Producto</a>
+          <a href="#como" className="hover:text-[#E8721C]">Cómo funciona</a>
+          <a href="#acceso" className="hover:text-[#E8721C]">Acceso</a>
+          <a href="mailto:hola@fichaloop.com" className="hover:text-[#E8721C]">Contacto</a>
+        </div>
+        <div className="text-xs leading-relaxed text-black/40 md:text-right">
+          <p>© 2026 fichaloop.</p>
+          <a href="https://ensodev.eu" target="_blank" rel="noopener noreferrer" className="hover:text-black">
+            Desarrollado por ensodev.eu
+          </a>
         </div>
       </div>
     </footer>
