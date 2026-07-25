@@ -29,3 +29,25 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
 export const FUNCIONES_FIJAS = FUNCIONES_DISPONIBLES.filter((f) => f.fija).map(
   (f) => f.clave
 );
+
+/** Claves opcionales (las que el super-admin puede activar/desactivar). */
+const OPCIONALES = new Set(
+  FUNCIONES_DISPONIBLES.filter((f) => !f.fija).map((f) => f.clave)
+);
+
+/** Deriva la clave de función a partir de una ruta admin.
+ * `/admin` → "dashboard"; `/admin/almacen` → "almacen". */
+export function claveDeRutaAdmin(to: string): string {
+  if (to === "/admin") return "dashboard";
+  return to.split("/")[2] ?? "";
+}
+
+/**
+ * ¿El tenant tiene activa esta función? Las claves fijas y las que no
+ * están en el catálogo (notificaciones, configuración, perfil…) siempre
+ * están disponibles; solo se filtran las opcionales.
+ */
+export function tenantTieneFuncion(funciones: string[], clave: string): boolean {
+  if (!OPCIONALES.has(clave)) return true;
+  return funciones.includes(clave);
+}

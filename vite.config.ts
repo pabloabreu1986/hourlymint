@@ -15,6 +15,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        // Los logos de la web de marketing son grandes y solo se ven en el
+        // apex; no tiene sentido precachearlos en la app de cada cliente.
+        globIgnores: ["**/fichaloop_*"],
       },
     }),
   ],

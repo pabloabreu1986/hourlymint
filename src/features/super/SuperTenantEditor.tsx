@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { tenantApi } from "@/services";
-import { refrescarTenant, tenantActual } from "@/lib/branding";
+import { fijarTenant } from "@/lib/branding";
 import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
@@ -64,9 +64,9 @@ export default function SuperTenantEditor() {
     setGuardando(true);
     try {
       await tenantApi.guardarTenant(t);
-      // Si estamos editando el tenant activo (p. ej. FORGEVIA en local),
-      // repintamos la app al instante.
-      if (t.id === tenantActual().id) refrescarTenant();
+      // Actualiza caché local + re-aplica el tema si es el tenant activo
+      // (p. ej. FORGEVIA en local se repinta al instante).
+      fijarTenant(t);
       setGuardado(true);
     } finally {
       setGuardando(false);

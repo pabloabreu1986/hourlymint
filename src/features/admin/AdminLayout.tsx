@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { notificacionesApi } from "@/services";
+import { tenantActual } from "@/lib/branding";
+import { claveDeRutaAdmin, tenantTieneFuncion } from "@/lib/funciones";
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/ui";
 import { fechaCompleta, saludo } from "@/lib/format";
@@ -54,9 +56,17 @@ export default function AdminLayout() {
   const { usuario, logout } = useAuth();
   const [sinLeer, setSinLeer] = useState(0);
   const location = useLocation();
+
+  // Filtra el menú por las funciones activas del cliente (tenant).
+  const funciones = tenantActual().funciones;
+  const nav = NAV.filter((n) => tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to)));
+  const tabsMobile = TABS_MOBILE.filter((n) =>
+    tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to))
+  );
+
   const titulo =
-    NAV.find((n) => n.to === location.pathname)?.label ??
-    TABS_MOBILE.find((n) => n.to === location.pathname)?.label ??
+    nav.find((n) => n.to === location.pathname)?.label ??
+    tabsMobile.find((n) => n.to === location.pathname)?.label ??
     "Panel";
 
   useEffect(() => {
@@ -74,7 +84,7 @@ export default function AdminLayout() {
         <Logo variant="light" />
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -167,7 +177,7 @@ export default function AdminLayout() {
       {/* Barra de navegación inferior en móvil */}
       <nav className="fixed bottom-0 left-0 z-40 w-full border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
         <div className="grid grid-cols-4 pb-[env(safe-area-inset-bottom)]">
-          {TABS_MOBILE.map(({ to, label, icon: Icon, end }) => (
+          {tabsMobile.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

@@ -11,27 +11,50 @@
 // ─────────────────────────────────────────────────────────────
 import type { Tenant } from "./types";
 import { loadDB } from "./db";
+import { isSupabaseEnabled } from "./supabase";
 import { FORGEVIA_TENANT } from "./tenant-default";
+import { slugTenant, esApex } from "./host";
 
 export { FORGEVIA_TENANT } from "./tenant-default";
 
-/** Slug del subdominio actual, o null en localhost / dominio raíz.
- * `forgevia.fichaloop.com` → "forgevia"; `fichaloop.com` / `localhost` → null. */
-function slugDeSubdominio(): string | null {
-  if (typeof window === "undefined") return null;
-  const host = window.location.hostname;
-  if (host === "localhost" || /^[\d.]+$/.test(host)) return null;
-  const partes = host.split(".");
-  if (partes.length < 3) return null; // necesita sub.dominio.tld
-  const sub = partes[0];
-  return sub === "www" ? null : sub;
+// En modo Supabase el tenant llega de forma asíncrona (fetch por
+// subdominio). Para que `tenantActual()` siga siendo síncrono (lo usan
+// el logo y demás), cacheamos el último tenant conocido en localStorage,
+// por slug. Así el tema correcto se aplica al instante en visitas
+// siguientes; en la primera se ve el tema por defecto un instante.
+const CLAVE_CACHE = "fichaloop.tenant";
+
+function claveDe(slug: string | null): string {
+  return `${CLAVE_CACHE}.${slug ?? "_apex"}`;
 }
 
-/** Resuelve el tenant activo desde la DB por subdominio, con fallback al
- * cliente por defecto (así en local siempre se ve FORGEVIA). */
+function leerCache(slug: string | null): Tenant | null {
+  try {
+    const raw = localStorage.getItem(claveDe(slug));
+    return raw ? (JSON.parse(raw) as Tenant) : null;
+  } catch {
+    return null;
+  }
+}
+
+function escribirCache(t: Tenant): void {
+  try {
+    localStorage.setItem(claveDe(t.slug), JSON.stringify(t));
+  } catch {
+    /* cuota / modo privado: ignoramos */
+  }
+}
+
+/** Resuelve el tenant activo (síncrono). En Supabase, desde la caché
+ * local con fallback al cliente por defecto; en mock, desde el mock DB. */
 export function resolverTenant(): Tenant {
+  const slug = slugTenant();
+
+  if (isSupabaseEnabled) {
+    return leerCache(slug) ?? FORGEVIA_TENANT;
+  }
+
   const tenants = loadDB().tenants ?? [];
-  const slug = slugDeSubdominio();
   if (slug) {
     const porSlug = tenants.find((t) => t.slug === slug);
     if (porSlug) return porSlug;
@@ -52,8 +75,19 @@ export function tenantActual(): Tenant {
   return _cache;
 }
 
-/** Re-resuelve el tenant activo y re-aplica el tema. Llamar tras editar
- * la marca del tenant activo desde el panel super-admin. */
+/** Fija el tenant activo (tras hidratar desde Supabase o guardar en el
+ * panel): actualiza la caché en memoria y localStorage, y re-aplica el
+ * tema si es el tenant que se está mostrando. */
+export function fijarTenant(t: Tenant): Tenant {
+  escribirCache(t);
+  if (t.slug === (slugTenant() ?? t.slug)) {
+    _cache = t;
+    aplicarTema(t);
+  }
+  return t;
+}
+
+/** Re-resuelve el tenant activo y re-aplica el tema. */
 export function refrescarTenant(): Tenant {
   _cache = resolverTenant();
   aplicarTema(_cache);
@@ -82,7 +116,9 @@ export function aplicarTema(t: Tenant = tenantActual()): void {
   raiz.setProperty("--brand-orange-400", canales(c.orange400));
   raiz.setProperty("--brand-canvas", canales(c.canvas));
 
-  document.title = t.nombre;
+  // En el dominio raíz (marketing) el título es de la plataforma; en el
+  // subdominio de un cliente, el de su marca.
+  document.title = esApex() ? "fichaloop · Control de obra y equipo" : t.nombre;
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", t.colores.dark);
