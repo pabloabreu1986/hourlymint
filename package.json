@@ -6,7 +6,7 @@
   "description": "FORGEVIA — App de control de obra (mocks / localStorage). Trabajador (móvil) + Admin (escritorio).",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prepare-sites.mjs",
     "preview": "vite preview",
     "lint": "eslint ."
   },
