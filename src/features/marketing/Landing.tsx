@@ -87,7 +87,7 @@ function Hero() {
             </h1>
           </div>
 
-          <div className="absolute right-0 top-1/2 z-0 -mt-6 hidden h-[clamp(260px,28vw,390px)] w-[28%] -translate-y-1/2 overflow-hidden sm:block">
+          <div className="absolute bottom-8 right-0 z-0 hidden h-[clamp(260px,28vw,390px)] w-[28%] overflow-hidden sm:block">
             <LiquidHover
               imageSrc={blueprint}
               fit="cover"
