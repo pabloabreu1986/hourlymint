@@ -1,8 +1,7 @@
 import { type ReactNode } from "react";
 import { LoginForm } from "@/components/LoginForm";
-import LiquidHover from "@/components/LiquidHover";
+import { KineticGridBackground } from "@/components/KineticGridBackground";
 import logoDark from "@/assets/fichaloop_logo_dark_transparente.png";
-import blueprint from "@/assets/blueprint_full.png";
 import {
   IconMapPin,
   IconClipboard,
@@ -86,15 +85,6 @@ function Hero() {
             </h1>
           </div>
 
-          <div className="absolute right-0 top-1/2 z-0 -mt-8 hidden h-[clamp(280px,28vw,390px)] w-[28%] -translate-y-1/2 overflow-hidden md:block">
-            <LiquidHover
-              imageSrc={blueprint}
-              fit="cover"
-              resolution={7}
-              intensity={17}
-              cursorSize={50}
-            />
-          </div>
         </div>
 
         <div className="grid gap-12 pt-8 md:grid-cols-12 md:items-start">
@@ -117,8 +107,11 @@ function Hero() {
         </div>
       </div>
 
-      <div className="bg-[#101418] text-white">
-        <div className="mx-auto grid max-w-[1400px] md:grid-cols-2">
+      <div className="relative overflow-hidden bg-[#101418] text-white">
+        {/* Mismo efecto que el login de FORGEVIA, en blanco y negro (grayscale). */}
+        <KineticGridBackground className="absolute inset-0 [filter:grayscale(1)_brightness(1.35)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[#101418]/60" />
+        <div className="relative z-10 mx-auto grid max-w-[1400px] md:grid-cols-2">
           <div className="flex min-h-[400px] flex-col justify-between border-white/15 p-5 sm:p-8 md:min-h-[570px] md:border-r md:p-12">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Lo esencial, cada día</p>
             <div className="space-y-5">
