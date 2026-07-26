@@ -145,6 +145,13 @@ export default function LiquidHover({
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden" style={style}>
+      <img
+        src={imageSrc}
+        alt=""
+        className={`absolute inset-0 h-full w-full ${
+          fit === "cover" ? "object-cover" : "object-contain"
+        }`}
+      />
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
