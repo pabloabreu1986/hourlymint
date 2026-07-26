@@ -1,6 +1,8 @@
 import { type ReactNode } from "react";
 import { LoginForm } from "@/components/LoginForm";
+import LiquidHover from "@/components/LiquidHover";
 import logoDark from "@/assets/fichaloop_logo_dark_transparente.png";
+import blueprint from "@/assets/blueprint_full.png";
 import {
   IconMapPin,
   IconClipboard,
@@ -69,19 +71,33 @@ function Nav() {
 function Hero() {
   return (
     <section className="overflow-hidden">
-      <div className="mx-auto max-w-[1400px] px-5 pb-16 pt-12 sm:px-8 md:pb-24 md:pt-20">
-        <div className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-black/50">
-          <span className="h-2 w-2 rounded-full bg-[#E8721C]" />
-          Control de obra, sin papeles
+      <div className="relative mx-auto max-w-[1400px] px-5 pb-16 pt-12 sm:px-8 md:pb-24 md:pt-20">
+        <div className="relative border-b border-black/20 pb-12">
+          <div className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-black/50">
+            <span className="h-2 w-2 rounded-full bg-[#E8721C]" />
+            Control de obra, sin papeles
+          </div>
+
+          <div className="relative z-10 isolate grid items-center gap-10 md:grid-cols-12">
+            <h1 className="relative z-10 text-[clamp(3.7rem,8.2vw,8rem)] font-black leading-[0.84] tracking-[-0.075em] md:col-span-8">
+              Tu obra,
+              <br />
+              <span className="text-[#E8721C]">bajo control.</span>
+            </h1>
+          </div>
+
+          <div className="absolute right-0 top-1/2 z-0 -mt-8 hidden h-[clamp(280px,28vw,390px)] w-[28%] -translate-y-1/2 overflow-hidden md:block">
+            <LiquidHover
+              imageSrc={blueprint}
+              fit="cover"
+              resolution={7}
+              intensity={17}
+              cursorSize={50}
+            />
+          </div>
         </div>
 
-        <h1 className="max-w-[1250px] text-[clamp(3.7rem,9.4vw,9rem)] font-black leading-[0.84] tracking-[-0.075em]">
-          Tu obra,
-          <br />
-          <span className="text-[#E8721C]">bajo control.</span>
-        </h1>
-
-        <div className="mt-12 grid gap-12 border-t border-black/20 pt-8 md:grid-cols-12 md:items-start">
+        <div className="grid gap-12 pt-8 md:grid-cols-12 md:items-start">
           <p className="max-w-2xl text-xl font-medium leading-snug tracking-[-0.02em] md:col-span-7 md:text-3xl">
             Fichajes, partes, fotos y horas reales. Todo lo que pasa fuera,
             visible desde tu oficina.
