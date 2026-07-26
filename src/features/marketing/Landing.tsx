@@ -1,7 +1,9 @@
 import { type ReactNode } from "react";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
+import LiquidHover from "@/components/LiquidHover";
 import logoDark from "@/assets/fichaloop_logo_dark_transparente.png";
+import blueprint from "@/assets/blueprint_full.png";
 import {
   IconMapPin,
   IconClipboard,
@@ -85,6 +87,15 @@ function Hero() {
             </h1>
           </div>
 
+          <div className="absolute right-0 top-1/2 z-0 hidden h-[clamp(280px,28vw,390px)] w-[28%] -translate-y-1/2 overflow-hidden md:block">
+            <LiquidHover
+              imageSrc={blueprint}
+              fit="cover"
+              resolution={7}
+              intensity={17}
+              cursorSize={50}
+            />
+          </div>
         </div>
 
         <div className="grid gap-12 pt-8 md:grid-cols-12 md:items-start">
