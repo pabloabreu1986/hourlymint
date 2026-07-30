@@ -4,7 +4,7 @@ import { leadsApi } from "@/services";
 const NARANJA = "#E8721C";
 
 const inputCls =
-  "w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-[#101418] outline-none transition focus:border-[#E8721C] focus:ring-2 focus:ring-[#E8721C]/20 placeholder:text-black/35";
+  "w-full border-0 border-b border-black/20 bg-transparent px-0 py-3 text-[#101418] outline-none transition focus:border-[#E8721C] focus:ring-0 placeholder:text-black/30";
 
 export function DemoForm({
   open,
@@ -37,8 +37,8 @@ export function DemoForm({
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !email.trim()) {
-      setError("El nombre y el email son obligatorios.");
+    if (!nombre.trim() || !telefono.trim()) {
+      setError("El nombre y el teléfono son obligatorios.");
       return;
     }
     setError(null);
@@ -65,11 +65,11 @@ export function DemoForm({
       onClick={cerrar}
     >
       <div
-        className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-[#F5F3EE] p-6 text-[#101418] sm:rounded-3xl sm:p-8"
+        className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl bg-[#F5F3EE] text-[#101418] shadow-2xl sm:rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         {enviado ? (
-          <div className="py-6 text-center">
+          <div className="px-6 py-12 text-center sm:px-10 sm:py-16">
             <div
               className="mx-auto grid h-14 w-14 place-items-center rounded-full text-white"
               style={{ background: NARANJA }}
@@ -91,71 +91,98 @@ export function DemoForm({
             </button>
           </div>
         ) : (
-          <form onSubmit={enviar} className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl font-black tracking-[-0.03em]">Solicita tu demo</h3>
-                <p className="mt-1 text-sm text-black/55">
-                  {plan ? `Plan ${plan}. ` : ""}Cuéntanos de tu empresa y te contactamos.
+          <form onSubmit={enviar} className="grid md:grid-cols-[0.85fr_1.15fr]">
+            <div className="relative overflow-hidden bg-[#101418] p-6 text-white sm:p-8 md:p-10">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                {plan ? `Plan ${plan}` : "Demo personalizada"}
+              </span>
+              <h3 className="mt-8 text-4xl font-black leading-[0.92] tracking-[-0.055em]">
+                Empieza con todo
+                <span className="text-[#E8721C]"> bien conectado.</span>
+              </h3>
+              <p className="mt-6 leading-relaxed text-white/60">
+                Déjanos tus datos y prepararemos la demo según tu forma de trabajar.
+                Así podremos plantear una implementación más rápida y efectiva desde el primer día.
+              </p>
+              <div className="mt-8 border-t border-white/15 pt-5 text-sm text-white/65">
+                <p className="flex items-center gap-3">
+                  <span className="text-[#E8721C]">✓</span> Sin compromiso
+                </p>
+                <p className="mt-3 flex items-center gap-3">
+                  <span className="text-[#E8721C]">✓</span> Enfocada en tu empresa
                 </p>
               </div>
               <button
                 type="button"
                 onClick={cerrar}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-black/40 hover:bg-black/5"
+                className="absolute right-4 top-4 grid h-9 w-9 place-items-center text-white/45 transition hover:bg-white/10 hover:text-white"
                 aria-label="Cerrar"
               >
                 ✕
               </button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-5 p-6 sm:p-8 md:p-10">
               <div>
-                <label className="mb-1 block text-sm font-semibold">Nombre *</label>
-                <input className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre" autoFocus />
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
+                  Cuéntanos lo esencial
+                </p>
+                <p className="mt-2 text-sm text-black/55">
+                  Te llamaremos para conocer tu operativa y enseñarte cómo encaja fichaloop.
+                </p>
               </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="demo-nombre" className="block text-sm font-semibold">Nombre</label>
+                  <input id="demo-nombre" name="name" required autoComplete="name" className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre" autoFocus />
+                </div>
+                <div>
+                  <label htmlFor="demo-empresa" className="block text-sm font-semibold">Empresa <span className="font-normal text-black/40">(opcional)</span></label>
+                  <input id="demo-empresa" name="organization" autoComplete="organization" className={inputCls} value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Nombre de tu empresa" />
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="demo-telefono" className="block text-sm font-semibold">Teléfono</label>
+                  <input id="demo-telefono" name="tel" required type="tel" inputMode="tel" autoComplete="tel" className={inputCls} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+34 600 000 000" />
+                </div>
+                <div>
+                  <label htmlFor="demo-email" className="block text-sm font-semibold">Email <span className="font-normal text-black/40">(opcional)</span></label>
+                  <input id="demo-email" name="email" type="email" inputMode="email" autoComplete="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@empresa.com" />
+                </div>
+              </div>
+
               <div>
-                <label className="mb-1 block text-sm font-semibold">Empresa</label>
-                <input className={inputCls} value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Nombre de tu empresa" />
+                <label htmlFor="demo-mensaje" className="block text-sm font-semibold">¿Qué quieres mejorar? <span className="font-normal text-black/40">(opcional)</span></label>
+                <textarea
+                  id="demo-mensaje"
+                  name="message"
+                  className={`${inputCls} min-h-[76px] resize-y`}
+                  value={mensaje}
+                  onChange={(e) => setMensaje(e.target.value)}
+                  placeholder="Equipo, obras o procesos que quieres poner en orden…"
+                />
               </div>
+
+              {error && (
+                <p role="alert" className="bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={enviando}
+                className="flex w-full items-center justify-between px-5 py-4 font-bold text-white transition hover:brightness-110 disabled:opacity-60"
+                style={{ background: NARANJA }}
+              >
+                {enviando ? "Enviando…" : "Preparar mi demo"}
+                {!enviando && <span aria-hidden="true" className="text-lg">↗</span>}
+              </button>
+              <p className="text-center text-xs leading-relaxed text-black/40">
+                Usaremos tus datos solo para contactarte sobre la demo. Sin spam.
+              </p>
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-semibold">Email *</label>
-                <input type="email" inputMode="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tucorreo@empresa.com" />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold">Teléfono</label>
-                <input type="tel" inputMode="tel" className={inputCls} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="600 000 000" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold">¿Cómo trabajáis? (opcional)</label>
-              <textarea
-                className={`${inputCls} min-h-[90px] resize-y`}
-                value={mensaje}
-                onChange={(e) => setMensaje(e.target.value)}
-                placeholder="Nº de trabajadores, obras, qué necesitáis…"
-              />
-            </div>
-
-            {error && (
-              <p className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={enviando}
-              className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-bold text-white transition hover:brightness-110 disabled:opacity-60"
-              style={{ background: NARANJA }}
-            >
-              {enviando ? "Enviando…" : "Enviar solicitud"}
-            </button>
-            <p className="text-center text-xs text-black/40">
-              Al enviar aceptas nuestra política de privacidad. No compartimos tus datos.
-            </p>
           </form>
         )}
       </div>

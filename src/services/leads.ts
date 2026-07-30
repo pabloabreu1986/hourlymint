@@ -7,8 +7,8 @@ import * as sb from "./supabase/leads";
 export interface DemoInput {
   nombre: string;
   empresa: string;
-  email: string;
-  telefono?: string;
+  email?: string;
+  telefono: string;
   mensaje?: string;
 }
 

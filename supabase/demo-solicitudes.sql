@@ -12,11 +12,18 @@ create table if not exists demo_solicitudes (
   id         text primary key,
   nombre     text not null,
   empresa    text,
-  email      text not null,
-  telefono   text,
+  email      text,
+  telefono   text not null,
   mensaje    text,
   created_at timestamptz not null default now()
 );
+
+-- Migra instalaciones anteriores sin invalidar solicitudes ya guardadas.
+alter table demo_solicitudes alter column email drop not null;
+alter table demo_solicitudes drop constraint if exists demo_solicitudes_telefono_requerido;
+alter table demo_solicitudes
+  add constraint demo_solicitudes_telefono_requerido
+  check (nullif(trim(telefono), '') is not null) not valid;
 
 alter table demo_solicitudes enable row level security;
 

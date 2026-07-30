@@ -9,8 +9,8 @@ export async function solicitarDemo(input: DemoInput): Promise<void> {
       id: uid("lead"),
       nombre: input.nombre,
       empresa: input.empresa || null,
-      email: input.email,
-      telefono: input.telefono || null,
+      email: input.email || null,
+      telefono: input.telefono,
       mensaje: input.mensaje || null,
       created_at: new Date().toISOString(),
     })
