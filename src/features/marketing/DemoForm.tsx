@@ -4,7 +4,7 @@ import { leadsApi } from "@/services";
 const NARANJA = "#E8721C";
 
 const inputCls =
-  "w-full border-0 border-b border-black/20 bg-transparent px-0 py-3 text-[#101418] outline-none transition focus:border-[#E8721C] focus:ring-0 placeholder:text-black/30";
+  "w-full border-0 border-b border-black/15 bg-transparent px-0 py-3 text-[#101418] outline-none transition focus:border-[#E8721C] focus:ring-0 placeholder:text-black/20";
 
 export function DemoForm({
   open,
@@ -65,7 +65,7 @@ export function DemoForm({
       onClick={cerrar}
     >
       <div
-        className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl bg-[#F5F3EE] text-[#101418] shadow-2xl sm:rounded-none"
+        className="max-h-[94vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-[#F5F3EE] p-6 text-[#101418] shadow-2xl sm:rounded-none sm:p-10"
         onClick={(e) => e.stopPropagation()}
       >
         {enviado ? (
@@ -91,47 +91,28 @@ export function DemoForm({
             </button>
           </div>
         ) : (
-          <form onSubmit={enviar} className="grid md:grid-cols-[0.85fr_1.15fr]">
-            <div className="relative overflow-hidden bg-[#101418] p-6 text-white sm:p-8 md:p-10">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+          <form onSubmit={enviar}>
+            <div className="relative border-b border-black/15 pb-7 pr-10">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">
                 {plan ? `Plan ${plan}` : "Demo personalizada"}
               </span>
-              <h3 className="mt-8 text-4xl font-black leading-[0.92] tracking-[-0.055em]">
-                Empieza con todo
-                <span className="text-[#E8721C]"> bien conectado.</span>
+              <h3 className="mt-4 text-3xl font-black leading-none tracking-[-0.045em] sm:text-4xl">
+                Cuéntanos lo esencial.
               </h3>
-              <p className="mt-6 leading-relaxed text-white/60">
-                Déjanos tus datos y prepararemos la demo según tu forma de trabajar.
-                Así podremos plantear una implementación más rápida y efectiva desde el primer día.
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-black/45">
+                Prepararemos una demo adaptada para agilizar la puesta en marcha.
               </p>
-              <div className="mt-8 border-t border-white/15 pt-5 text-sm text-white/65">
-                <p className="flex items-center gap-3">
-                  <span className="text-[#E8721C]">✓</span> Sin compromiso
-                </p>
-                <p className="mt-3 flex items-center gap-3">
-                  <span className="text-[#E8721C]">✓</span> Enfocada en tu empresa
-                </p>
-              </div>
               <button
                 type="button"
                 onClick={cerrar}
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center text-white/45 transition hover:bg-white/10 hover:text-white"
+                className="absolute right-0 top-0 grid h-9 w-9 place-items-center text-black/35 transition hover:bg-black/5 hover:text-black"
                 aria-label="Cerrar"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-5 p-6 sm:p-8 md:p-10">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-                  Cuéntanos lo esencial
-                </p>
-                <p className="mt-2 text-sm text-black/55">
-                  Te llamaremos para conocer tu operativa y enseñarte cómo encaja fichaloop.
-                </p>
-              </div>
-
+            <div className="space-y-5 pt-7">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label htmlFor="demo-nombre" className="block text-sm font-semibold">Nombre</label>
@@ -173,14 +154,13 @@ export function DemoForm({
               <button
                 type="submit"
                 disabled={enviando}
-                className="flex w-full items-center justify-between px-5 py-4 font-bold text-white transition hover:brightness-110 disabled:opacity-60"
-                style={{ background: NARANJA }}
+                className="flex w-full items-center justify-between bg-[#101418] px-5 py-4 font-bold text-white transition hover:bg-[#E8721C] disabled:opacity-60"
               >
                 {enviando ? "Enviando…" : "Preparar mi demo"}
                 {!enviando && <span aria-hidden="true" className="text-lg">↗</span>}
               </button>
-              <p className="text-center text-xs leading-relaxed text-black/40">
-                Usaremos tus datos solo para contactarte sobre la demo. Sin spam.
+              <p className="text-center text-xs text-black/30">
+                Tus datos se usarán únicamente para contactarte.
               </p>
             </div>
           </form>
