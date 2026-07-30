@@ -13,3 +13,4 @@ export * as alertasApi from "./alertas";
 export * as recursosApi from "./recursos";
 export * as dashboardApi from "./dashboard";
 export * as tenantApi from "./tenant";
+export * as leadsApi from "./leads";

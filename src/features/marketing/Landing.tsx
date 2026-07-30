@@ -1,6 +1,7 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { LoginForm } from "@/components/LoginForm";
+import { DemoForm } from "./DemoForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
 import LiquidHover from "@/components/LiquidHover";
 import logoDark from "@/assets/fichaloop_logo_dark_transparente.png";
@@ -21,19 +22,22 @@ import {
 const NARANJA = "#E8721C";
 
 export default function Landing() {
+  const [demo, setDemo] = useState<{ open: boolean; plan?: string }>({ open: false });
+  const abrirDemo = (plan?: string) => setDemo({ open: true, plan });
   return (
     <div className="min-h-full bg-[#F5F3EE] text-[#101418] selection:bg-[#E8721C] selection:text-white">
       <Nav />
       <main>
-        <Hero />
+        <Hero onDemo={abrirDemo} />
         <Dolores />
         <Funciones />
         <ComoFunciona />
-        <Precios />
+        <Precios onDemo={abrirDemo} />
         <WhiteLabel />
-        <CTA />
+        <CTA onDemo={abrirDemo} />
       </main>
       <Footer />
+      <DemoForm open={demo.open} plan={demo.plan} onClose={() => setDemo({ open: false })} />
     </div>
   );
 }
@@ -72,7 +76,7 @@ function Nav() {
   );
 }
 
-function Hero() {
+function Hero({ onDemo }: { onDemo: (plan?: string) => void }) {
   return (
     <section className="overflow-hidden">
       <div className="relative mx-auto max-w-[1400px] px-5 pb-16 pt-12 sm:px-8 md:pb-24 md:pt-20">
@@ -111,12 +115,13 @@ function Hero() {
               Una herramienta directa para empresas de obra y servicios de campo.
               Tu equipo la usa desde el móvil. Tú recuperas el control.
             </p>
-            <a
-              href="mailto:hola@fichaloop.com"
+            <button
+              type="button"
+              onClick={() => onDemo()}
               className="inline-flex items-center gap-3 border-b-2 border-[#E8721C] pb-2 font-bold transition-all hover:gap-5"
             >
               Solicitar una demo <Flecha />
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -314,7 +319,7 @@ const PLANES = [
   },
 ];
 
-function Precios() {
+function Precios({ onDemo }: { onDemo: (plan?: string) => void }) {
   return (
     <section id="precios" className="scroll-mt-20 bg-[#F5F3EE]">
       <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
@@ -379,14 +384,15 @@ function Precios() {
                 ))}
               </ul>
 
-              <a
-                href={`mailto:hola@fichaloop.com?subject=Quiero%20conocer%20el%20plan%20${plan.nombre}`}
+              <button
+                type="button"
+                onClick={() => onDemo(plan.nombre)}
                 className={`mt-auto inline-flex w-full items-center justify-between border-t px-0 pt-5 font-bold transition-all hover:px-2 ${
                   plan.recomendado ? "border-black/30" : "border-black/20"
                 }`}
               >
                 Solicitar una demo <Flecha />
-              </a>
+              </button>
             </article>
           ))}
         </div>
@@ -398,12 +404,13 @@ function Precios() {
               Preparamos un plan a medida para varias sedes, equipos o empresas.
             </p>
           </div>
-          <a
-            href="mailto:hola@fichaloop.com?subject=Plan%20a%20medida"
+          <button
+            type="button"
+            onClick={() => onDemo("A medida")}
             className="inline-flex w-fit items-center gap-3 font-bold transition-all hover:gap-5"
           >
             Hablar con nosotros <Flecha />
-          </a>
+          </button>
         </div>
 
         <p className="mt-5 text-xs text-black/40">
@@ -450,7 +457,7 @@ function WhiteLabel() {
   );
 }
 
-function CTA() {
+function CTA({ onDemo }: { onDemo: (plan?: string) => void }) {
   return (
     <section id="contacto" className="scroll-mt-20 bg-[#F5F3EE]">
       <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
@@ -464,12 +471,13 @@ function CTA() {
           <p className="max-w-lg text-lg text-black/55">
             Cuéntanos cómo trabajas. Te enseñamos cómo fichaloop encaja en tu empresa.
           </p>
-          <a
-            href="mailto:hola@fichaloop.com"
+          <button
+            type="button"
+            onClick={() => onDemo()}
             className="inline-flex w-fit items-center gap-4 bg-[#101418] px-7 py-4 font-bold text-white transition-all hover:gap-6 hover:bg-[#E8721C]"
           >
             Solicitar una demo <Flecha />
-          </a>
+          </button>
         </div>
       </div>
     </section>
