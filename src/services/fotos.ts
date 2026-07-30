@@ -4,6 +4,7 @@
 // admin todas) es idéntica en ambos modos.
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import { fileToThumbDataURL } from "@/lib/image";
 import type { Foto, Usuario } from "@/lib/types";
 import * as sb from "./supabase/fotos";
@@ -27,6 +28,7 @@ export async function subirFoto(
   onFase?.("subiendo");
   const foto: Foto = {
     id: uid("ft"),
+    tenantId: tenantActivoId(),
     obraId: input.obraId,
     parteId: input.parteId,
     subidaPor: input.subidaPor,
@@ -57,7 +59,8 @@ export async function listFotosDeObra(obraId: string): Promise<Foto[]> {
 export async function listFotosVisibles(usuario: Usuario): Promise<Foto[]> {
   if (isSupabaseEnabled) return sb.listFotosVisibles(usuario);
   const db = loadDB();
-  let fotos = db.fotos;
+  const tid = tenantActivoId();
+  let fotos = db.fotos.filter((f) => f.tenantId === tid);
   if (usuario.rol !== "admin") {
     const visibles = new Set(
       db.obras

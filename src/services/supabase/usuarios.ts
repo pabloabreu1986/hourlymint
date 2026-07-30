@@ -1,5 +1,6 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import type { Usuario } from "@/lib/types";
 import type { NuevoUsuario } from "../usuarios";
 import { toUsuario, fromUsuario, check } from "./_map";
@@ -7,13 +8,20 @@ import { toUsuario, fromUsuario, check } from "./_map";
 const COLORS = ["#BE6B39", "#2E6F8E", "#5B7A4B", "#8E4B6F", "#3B4756", "#B08423", "#4B5F8E"];
 
 export async function listUsuarios(): Promise<Usuario[]> {
-  const data = check(await sb().from("usuarios").select("*").order("nombre"));
+  const data = check(
+    await sb().from("usuarios").select("*").eq("tenant_id", tenantActivoId()).order("nombre")
+  );
   return (data ?? []).map(toUsuario);
 }
 
 export async function listTrabajadores(): Promise<Usuario[]> {
   const data = check(
-    await sb().from("usuarios").select("*").eq("rol", "trabajador").order("nombre")
+    await sb()
+      .from("usuarios")
+      .select("*")
+      .eq("tenant_id", tenantActivoId())
+      .eq("rol", "trabajador")
+      .order("nombre")
   );
   return (data ?? []).map(toUsuario);
 }
@@ -21,6 +29,7 @@ export async function listTrabajadores(): Promise<Usuario[]> {
 export async function crearUsuario(input: NuevoUsuario): Promise<Usuario> {
   const nuevo: Usuario = {
     id: uid("u"),
+    tenantId: tenantActivoId(),
     activo: true,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     ...input,

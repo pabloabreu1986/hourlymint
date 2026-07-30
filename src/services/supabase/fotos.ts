@@ -1,5 +1,6 @@
 import { sb, FOTOS_BUCKET } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import { fileToThumbDataURL, dataURLtoBlob } from "@/lib/image";
 import type { Foto, Usuario } from "@/lib/types";
 import type { SubirFotoInput } from "../fotos";
@@ -40,6 +41,7 @@ export async function subirFoto(
 
   const foto: Foto = {
     id,
+    tenantId: tenantActivoId(),
     obraId: input.obraId,
     parteId: input.parteId,
     subidaPor: input.subidaPor,
@@ -49,6 +51,7 @@ export async function subirFoto(
   check(
     await sb().from("fotos").insert({
       id,
+      tenant_id: foto.tenantId,
       obra_id: foto.obraId,
       parte_id: foto.parteId,
       subida_por: foto.subidaPor,
@@ -86,13 +89,22 @@ export async function listFotosDeObra(obraId: string): Promise<Foto[]> {
  */
 export async function listFotosVisibles(usuario: Usuario): Promise<Foto[]> {
   const client = sb();
+  const tid = tenantActivoId();
   let rows: unknown[] | null;
 
   if (usuario.rol === "admin") {
-    rows = check(await client.from("fotos").select("*").order("created_at", { ascending: false }));
+    rows = check(
+      await client
+        .from("fotos")
+        .select("*")
+        .eq("tenant_id", tid)
+        .order("created_at", { ascending: false })
+    );
   } else {
     const obras =
-      check(await client.from("obras").select("id, encargado_id, trabajador_ids")) ?? [];
+      check(
+        await client.from("obras").select("id, encargado_id, trabajador_ids").eq("tenant_id", tid)
+      ) ?? [];
     const visibles = obras
       .filter(
         (o: { id: string; encargado_id: string | null; trabajador_ids: string[] | null }) =>
@@ -108,7 +120,12 @@ export async function listFotosVisibles(usuario: Usuario): Promise<Foto[]> {
       .join(",");
 
     rows = check(
-      await client.from("fotos").select("*").or(orExpr).order("created_at", { ascending: false })
+      await client
+        .from("fotos")
+        .select("*")
+        .eq("tenant_id", tid)
+        .or(orExpr)
+        .order("created_at", { ascending: false })
     );
   }
   return withUrls((rows ?? []).map(toFoto));

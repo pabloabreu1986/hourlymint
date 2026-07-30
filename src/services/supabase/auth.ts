@@ -1,4 +1,5 @@
 import { sb } from "@/lib/supabase";
+import { usuarioPermitidoEnHost } from "@/lib/host";
 import type { Usuario } from "@/lib/types";
 import type { Credenciales } from "../auth";
 import { toUsuario } from "./_map";
@@ -8,7 +9,13 @@ const norm = (s: string) => s.trim().toLowerCase();
 export async function login({ usuario, password }: Credenciales): Promise<Usuario> {
   const { data, error } = await sb().from("usuarios").select("*").eq("activo", true);
   if (error) throw new Error(error.message);
-  const u = (data ?? []).map(toUsuario).find((x) => norm(x.nombre) === norm(usuario));
+  // Solo usuarios que pueden acceder por este dominio (su tenant, o el
+  // super-admin en el apex). Evita el cruce entre clientes y desambigua
+  // nombres repetidos entre distintos negocios.
+  const u = (data ?? [])
+    .map(toUsuario)
+    .filter(usuarioPermitidoEnHost)
+    .find((x) => norm(x.nombre) === norm(usuario));
   if (!u || u.password !== password) throw new Error("Usuario o contraseña incorrectos");
   return u;
 }

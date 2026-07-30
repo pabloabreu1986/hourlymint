@@ -1,5 +1,6 @@
 import { loadDB, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { usuarioPermitidoEnHost } from "@/lib/host";
 import type { Usuario } from "@/lib/types";
 import * as sb from "./supabase/auth";
 
@@ -16,8 +17,11 @@ export async function login({ usuario, password }: Credenciales): Promise<Usuari
   if (isSupabaseEnabled) return sb.login({ usuario, password });
   const db = loadDB();
   const norm = (s: string) => s.trim().toLowerCase();
+  // Solo usuarios que pueden acceder por este dominio (su tenant, o el
+  // super-admin en el apex): así se busca al usuario correcto aunque dos
+  // clientes tengan un trabajador con el mismo nombre.
   const u = db.usuarios.find(
-    (x) => norm(x.nombre) === norm(usuario) && x.activo
+    (x) => x.activo && usuarioPermitidoEnHost(x) && norm(x.nombre) === norm(usuario)
   );
   if (!u || u.password !== password) {
     await delay(null, 250);

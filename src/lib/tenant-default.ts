@@ -66,7 +66,9 @@ export function nuevoTenant(nombreCorto: string, slugsOcupados: string[] = []): 
   let slug = slugify(base) || "cliente";
   if (slugsOcupados.includes(slug)) slug = `${slug}-${rid().slice(0, 4)}`;
   return {
-    id: `tn_${rid()}`,
+    // El id coincide con el slug: así el aislamiento de datos por tenant se
+    // resuelve de forma síncrona desde el subdominio (ver host.tenantActivoId).
+    id: slug,
     slug,
     nombre: `${base} · Control de Obra`,
     nombreCorto: base,

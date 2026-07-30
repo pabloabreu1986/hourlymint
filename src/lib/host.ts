@@ -43,3 +43,23 @@ export function slugTenant(): string | null {
 export function esApex(): boolean {
   return slugTenant() === null;
 }
+
+/**
+ * Id del tenant activo, para filtrar y estampar datos (aislamiento
+ * multi-tenant). El id de cada tenant coincide con su slug (subdominio).
+ * En el apex no se consultan datos de cliente; devolvemos el por defecto.
+ */
+export function tenantActivoId(): string {
+  return slugTenant() ?? SLUG_POR_DEFECTO;
+}
+
+/**
+ * ¿Puede este usuario acceder por el dominio actual?
+ * - En el apex (fichaloop.com): solo el super-admin de la plataforma.
+ * - En un subdominio de cliente: solo usuarios de ESE cliente (nunca el
+ *   super-admin). Es la barrera clave contra el cruce entre clientes.
+ */
+export function usuarioPermitidoEnHost(u: { rol: string; tenantId: string }): boolean {
+  if (esApex()) return u.rol === "superadmin";
+  return u.rol !== "superadmin" && u.tenantId === tenantActivoId();
+}

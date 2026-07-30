@@ -47,6 +47,8 @@ export interface Tenant {
 
 export interface Usuario {
   id: string;
+  /** Cliente (tenant) al que pertenece. `_platform` = super-admin. */
+  tenantId: string;
   /** Nombre de usuario = nombre del trabajador (lo usa para iniciar sesión) */
   nombre: string;
   /** Contraseña en claro. Mock: el admin la fija/edita a mano. */
@@ -61,6 +63,8 @@ export interface Usuario {
 
 export interface Obra {
   id: string;
+  /** Cliente (tenant) al que pertenece la obra. */
+  tenantId: string;
   nombre: string;
   direccion: string;
   estado: EstadoObra;
@@ -99,6 +103,7 @@ export interface Coordenada {
 
 export interface Fichaje {
   id: string;
+  tenantId: string;
   trabajadorId: string;
   obraId: string | null;
   tipo: TipoFichaje;
@@ -125,6 +130,7 @@ export type EstadoParte = "borrador" | "cerrado";
 
 export interface ParteDiario {
   id: string;
+  tenantId: string;
   obraId: string;
   /** Fecha del parte YYYY-MM-DD */
   fecha: string;
@@ -149,6 +155,7 @@ export interface ParteDiario {
  */
 export interface Foto {
   id: string;
+  tenantId: string;
   obraId: string;
   parteId: string | null;
   /** Trabajador que subió la foto */
@@ -169,6 +176,7 @@ export type TipoAdjunto = "imagen" | "video";
  */
 export interface Adjunto {
   id: string;
+  tenantId: string;
   obraId: string;
   tipo: TipoAdjunto;
   /** Ruta en Storage (Supabase) o data URL (mock). */
@@ -183,6 +191,7 @@ export type EstadoIncidencia = "nueva" | "en_proceso" | "resuelta";
 
 export interface Incidencia {
   id: string;
+  tenantId: string;
   obraId: string;
   titulo: string;
   descripcion: string;
@@ -195,6 +204,7 @@ export type TipoNotificacion = "aviso" | "fichaje" | "incidencia" | "material";
 
 export interface Notificacion {
   id: string;
+  tenantId: string;
   /** null = global (todos) */
   trabajadorId: string | null;
   tipo: TipoNotificacion;
@@ -208,6 +218,7 @@ export interface Notificacion {
 
 export interface Vehiculo {
   id: string;
+  tenantId: string;
   matricula: string;
   modelo: string;
   asignadoA: string | null; // trabajadorId
@@ -216,6 +227,7 @@ export interface Vehiculo {
 
 export interface Herramienta {
   id: string;
+  tenantId: string;
   nombre: string;
   cantidad: number;
   ubicacion: string; // obraId o "almacen"
@@ -223,6 +235,7 @@ export interface Herramienta {
 
 export interface AlmacenItem {
   id: string;
+  tenantId: string;
   nombre: string;
   stock: number;
   unidad: string;

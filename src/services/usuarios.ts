@@ -1,5 +1,6 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import type { Usuario } from "@/lib/types";
 import * as sb from "./supabase/usuarios";
 
@@ -7,21 +8,24 @@ const COLORS = ["#BE6B39", "#2E6F8E", "#5B7A4B", "#8E4B6F", "#3B4756", "#B08423"
 
 export async function listUsuarios(): Promise<Usuario[]> {
   if (isSupabaseEnabled) return sb.listUsuarios();
-  return delay([...loadDB().usuarios]);
+  const tid = tenantActivoId();
+  return delay(loadDB().usuarios.filter((u) => u.tenantId === tid));
 }
 
 export async function listTrabajadores(): Promise<Usuario[]> {
   if (isSupabaseEnabled) return sb.listTrabajadores();
-  return delay(loadDB().usuarios.filter((u) => u.rol === "trabajador"));
+  const tid = tenantActivoId();
+  return delay(loadDB().usuarios.filter((u) => u.tenantId === tid && u.rol === "trabajador"));
 }
 
-export type NuevoUsuario = Omit<Usuario, "id" | "color" | "activo"> &
+export type NuevoUsuario = Omit<Usuario, "id" | "tenantId" | "color" | "activo"> &
   Partial<Pick<Usuario, "activo" | "color">>;
 
 export async function crearUsuario(data: NuevoUsuario): Promise<Usuario> {
   if (isSupabaseEnabled) return sb.crearUsuario(data);
   const nuevo: Usuario = {
     id: uid("u"),
+    tenantId: tenantActivoId(),
     activo: true,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     ...data,

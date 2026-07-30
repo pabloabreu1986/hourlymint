@@ -1,17 +1,24 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { hoyISO } from "@/lib/seed";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import type { ParteDiario } from "@/lib/types";
 import * as sb from "./supabase/partes";
 
 export async function listPartes(): Promise<ParteDiario[]> {
   if (isSupabaseEnabled) return sb.listPartes();
-  return delay([...loadDB().partes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  const tid = tenantActivoId();
+  return delay(
+    loadDB()
+      .partes.filter((p) => p.tenantId === tid)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  );
 }
 
 export async function getParte(id: string): Promise<ParteDiario | null> {
   if (isSupabaseEnabled) return sb.getParte(id);
-  return delay(loadDB().partes.find((p) => p.id === id) ?? null, 0);
+  const tid = tenantActivoId();
+  return delay(loadDB().partes.find((p) => p.id === id && p.tenantId === tid) ?? null, 0);
 }
 
 /** Devuelve el parte de una obra para una fecha (por defecto hoy),
@@ -29,6 +36,7 @@ export async function getOrCreateParteDelDia(
 
   const nuevo: ParteDiario = {
     id: uid("p"),
+    tenantId: tenantActivoId(),
     obraId,
     fecha,
     encargadoId,

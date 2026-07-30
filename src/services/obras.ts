@@ -1,5 +1,6 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import type { Obra } from "@/lib/types";
 import * as sb from "./supabase/obras";
 
@@ -7,20 +8,25 @@ const COLORS = ["#BE6B39", "#2E6F8E", "#5B7A4B", "#8E4B6F", "#B08423"];
 
 export async function listObras(): Promise<Obra[]> {
   if (isSupabaseEnabled) return sb.listObras();
-  return delay([...loadDB().obras]);
+  const tid = tenantActivoId();
+  return delay(loadDB().obras.filter((o) => o.tenantId === tid));
 }
 
 export async function getObra(id: string): Promise<Obra | null> {
   if (isSupabaseEnabled) return sb.getObra(id);
-  return delay(loadDB().obras.find((o) => o.id === id) ?? null, 0);
+  const tid = tenantActivoId();
+  return delay(loadDB().obras.find((o) => o.id === id && o.tenantId === tid) ?? null, 0);
 }
 
 /** Obras en las que participa un trabajador HOY (incluye si es encargado). */
 export async function listObrasDeTrabajador(trabajadorId: string): Promise<Obra[]> {
   if (isSupabaseEnabled) return sb.listObrasDeTrabajador(trabajadorId);
+  const tid = tenantActivoId();
   return delay(
     loadDB().obras.filter(
-      (o) => o.trabajadorIds.includes(trabajadorId) || o.encargadoId === trabajadorId
+      (o) =>
+        o.tenantId === tid &&
+        (o.trabajadorIds.includes(trabajadorId) || o.encargadoId === trabajadorId)
     )
   );
 }
@@ -31,13 +37,14 @@ type CamposCuadrante =
   | "horaSalida"
   | "margenSalidaAutomaticaMin";
 
-export type NuevaObra = Omit<Obra, "id" | "color" | "createdAt" | CamposCuadrante> &
+export type NuevaObra = Omit<Obra, "id" | "tenantId" | "color" | "createdAt" | CamposCuadrante> &
   Partial<Pick<Obra, CamposCuadrante>>;
 
 export async function crearObra(data: NuevaObra): Promise<Obra> {
   if (isSupabaseEnabled) return sb.crearObra(data);
   const nueva: Obra = {
     id: uid("o"),
+    tenantId: tenantActivoId(),
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     createdAt: new Date().toISOString().slice(0, 10),
     diasLaborables: [1, 2, 3, 4, 5],

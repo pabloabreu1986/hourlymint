@@ -43,6 +43,7 @@ export const fromTenant = (t: Partial<Tenant>): any => ({
 // ── Usuario ──
 export const toUsuario = (r: any): Usuario => ({
   id: r.id,
+  tenantId: r.tenant_id,
   nombre: r.nombre,
   password: r.password,
   rol: r.rol,
@@ -53,6 +54,7 @@ export const toUsuario = (r: any): Usuario => ({
 });
 export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.id !== undefined && { id: u.id }),
+  ...(u.tenantId !== undefined && { tenant_id: u.tenantId }),
   ...(u.nombre !== undefined && { nombre: u.nombre }),
   ...(u.password !== undefined && { password: u.password }),
   ...(u.rol !== undefined && { rol: u.rol }),
@@ -65,6 +67,7 @@ export const fromUsuario = (u: Partial<Usuario>): any => ({
 // ── Obra ──
 export const toObra = (r: any): Obra => ({
   id: r.id,
+  tenantId: r.tenant_id,
   nombre: r.nombre,
   direccion: r.direccion,
   estado: r.estado,
@@ -80,6 +83,7 @@ export const toObra = (r: any): Obra => ({
 });
 export const fromObra = (o: Partial<Obra>): any => ({
   ...(o.id !== undefined && { id: o.id }),
+  ...(o.tenantId !== undefined && { tenant_id: o.tenantId }),
   ...(o.nombre !== undefined && { nombre: o.nombre }),
   ...(o.direccion !== undefined && { direccion: o.direccion }),
   ...(o.estado !== undefined && { estado: o.estado }),
@@ -99,6 +103,7 @@ export const fromObra = (o: Partial<Obra>): any => ({
 // ── Fichaje ──
 export const toFichaje = (r: any): Fichaje => ({
   id: r.id,
+  tenantId: r.tenant_id,
   trabajadorId: r.trabajador_id,
   obraId: r.obra_id,
   tipo: r.tipo,
@@ -110,6 +115,7 @@ export const toFichaje = (r: any): Fichaje => ({
 });
 export const fromFichaje = (f: Partial<Fichaje>): any => ({
   ...(f.id !== undefined && { id: f.id }),
+  ...(f.tenantId !== undefined && { tenant_id: f.tenantId }),
   ...(f.trabajadorId !== undefined && { trabajador_id: f.trabajadorId }),
   ...(f.obraId !== undefined && { obra_id: f.obraId }),
   ...(f.tipo !== undefined && { tipo: f.tipo }),
@@ -123,6 +129,7 @@ export const fromFichaje = (f: Partial<Fichaje>): any => ({
 // ── Parte ──
 export const toParte = (r: any): ParteDiario => ({
   id: r.id,
+  tenantId: r.tenant_id,
   obraId: r.obra_id,
   fecha: r.fecha,
   encargadoId: r.encargado_id,
@@ -138,6 +145,7 @@ export const toParte = (r: any): ParteDiario => ({
 });
 export const fromParte = (p: Partial<ParteDiario>): any => ({
   ...(p.id !== undefined && { id: p.id }),
+  ...(p.tenantId !== undefined && { tenant_id: p.tenantId }),
   ...(p.obraId !== undefined && { obra_id: p.obraId }),
   ...(p.fecha !== undefined && { fecha: p.fecha }),
   ...(p.encargadoId !== undefined && { encargado_id: p.encargadoId }),
@@ -155,6 +163,7 @@ export const fromParte = (p: Partial<ParteDiario>): any => ({
 // ── Foto ──
 export const toFoto = (r: any): Foto => ({
   id: r.id,
+  tenantId: r.tenant_id,
   obraId: r.obra_id,
   parteId: r.parte_id ?? null,
   subidaPor: r.subida_por ?? null,
@@ -165,6 +174,7 @@ export const toFoto = (r: any): Foto => ({
 // ── Adjunto (material de referencia de obra) ──
 export const toAdjunto = (r: any): Adjunto => ({
   id: r.id,
+  tenantId: r.tenant_id,
   obraId: r.obra_id,
   tipo: r.tipo,
   path: r.path,
@@ -175,6 +185,7 @@ export const toAdjunto = (r: any): Adjunto => ({
 // ── Incidencia ──
 export const toIncidencia = (r: any): Incidencia => ({
   id: r.id,
+  tenantId: r.tenant_id,
   obraId: r.obra_id,
   titulo: r.titulo,
   descripcion: r.descripcion,
@@ -184,6 +195,7 @@ export const toIncidencia = (r: any): Incidencia => ({
 });
 export const fromIncidencia = (i: Partial<Incidencia>): any => ({
   ...(i.id !== undefined && { id: i.id }),
+  ...(i.tenantId !== undefined && { tenant_id: i.tenantId }),
   ...(i.obraId !== undefined && { obra_id: i.obraId }),
   ...(i.titulo !== undefined && { titulo: i.titulo }),
   ...(i.descripcion !== undefined && { descripcion: i.descripcion }),
@@ -195,6 +207,7 @@ export const fromIncidencia = (i: Partial<Incidencia>): any => ({
 // ── Notificación ──
 export const toNotificacion = (r: any): Notificacion => ({
   id: r.id,
+  tenantId: r.tenant_id,
   trabajadorId: r.trabajador_id ?? null,
   tipo: r.tipo,
   titulo: r.titulo,
@@ -204,6 +217,7 @@ export const toNotificacion = (r: any): Notificacion => ({
 });
 export const fromNotificacion = (n: Partial<Notificacion>): any => ({
   ...(n.id !== undefined && { id: n.id }),
+  ...(n.tenantId !== undefined && { tenant_id: n.tenantId }),
   ...(n.trabajadorId !== undefined && { trabajador_id: n.trabajadorId }),
   ...(n.tipo !== undefined && { tipo: n.tipo }),
   ...(n.titulo !== undefined && { titulo: n.titulo }),
@@ -215,6 +229,7 @@ export const fromNotificacion = (n: Partial<Notificacion>): any => ({
 // ── Recursos ──
 export const toVehiculo = (r: any): Vehiculo => ({
   id: r.id,
+  tenantId: r.tenant_id,
   matricula: r.matricula,
   modelo: r.modelo,
   asignadoA: r.asignado_a ?? null,
@@ -222,12 +237,14 @@ export const toVehiculo = (r: any): Vehiculo => ({
 });
 export const toHerramienta = (r: any): Herramienta => ({
   id: r.id,
+  tenantId: r.tenant_id,
   nombre: r.nombre,
   cantidad: r.cantidad,
   ubicacion: r.ubicacion,
 });
 export const toAlmacen = (r: any): AlmacenItem => ({
   id: r.id,
+  tenantId: r.tenant_id,
   nombre: r.nombre,
   stock: r.stock,
   unidad: r.unidad,

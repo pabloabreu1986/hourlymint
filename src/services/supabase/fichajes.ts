@@ -1,5 +1,6 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import { capturarGPS } from "@/lib/geo";
 import { calcularJornada, type Jornada } from "@/lib/horas";
 import type { Fichaje, TipoFichaje } from "@/lib/types";
@@ -18,14 +19,21 @@ function rangoDia(fecha: Date): [string, string] {
 }
 
 export async function listFichajes(): Promise<Fichaje[]> {
-  const data = check(await sb().from("fichajes").select("*"));
+  const data = check(
+    await sb().from("fichajes").select("*").eq("tenant_id", tenantActivoId())
+  );
   return (data ?? []).map(toFichaje);
 }
 
 export async function fichajesDeHoy(): Promise<Fichaje[]> {
   const [ini, fin] = rangoDia(new Date());
   const data = check(
-    await sb().from("fichajes").select("*").gte("timestamp", ini).lt("timestamp", fin)
+    await sb()
+      .from("fichajes")
+      .select("*")
+      .eq("tenant_id", tenantActivoId())
+      .gte("timestamp", ini)
+      .lt("timestamp", fin)
   );
   return (data ?? []).map(toFichaje);
 }
@@ -102,6 +110,7 @@ export async function fichar(
   const nowIso = now.toISOString();
   const fichaje: Fichaje = {
     id: uid("f"),
+    tenantId: tenantActivoId(),
     trabajadorId,
     obraId,
     tipo,
@@ -124,6 +133,7 @@ export async function crearSalidaAutomatica(
   cierre.setHours(h, m, 0, 0);
   const fichaje: Fichaje = {
     id: uid("f"),
+    tenantId: tenantActivoId(),
     trabajadorId,
     obraId,
     tipo: "salida",

@@ -1,12 +1,17 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import type { Incidencia } from "@/lib/types";
 import type { NuevaIncidencia } from "../incidencias";
 import { toIncidencia, fromIncidencia, check } from "./_map";
 
 export async function listIncidencias(): Promise<Incidencia[]> {
   const data = check(
-    await sb().from("incidencias").select("*").order("fecha", { ascending: false })
+    await sb()
+      .from("incidencias")
+      .select("*")
+      .eq("tenant_id", tenantActivoId())
+      .order("fecha", { ascending: false })
   );
   return (data ?? []).map(toIncidencia);
 }
@@ -14,6 +19,7 @@ export async function listIncidencias(): Promise<Incidencia[]> {
 export async function crearIncidencia(input: NuevaIncidencia): Promise<Incidencia> {
   const nueva: Incidencia = {
     id: uid("i"),
+    tenantId: tenantActivoId(),
     fecha: new Date().toISOString(),
     estado: "nueva",
     ...input,

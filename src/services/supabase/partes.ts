@@ -1,18 +1,28 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
 import { hoyISO } from "@/lib/seed";
+import { tenantActivoId } from "@/lib/host";
 import type { ParteDiario } from "@/lib/types";
 import { toParte, fromParte, check } from "./_map";
 
 export async function listPartes(): Promise<ParteDiario[]> {
   const data = check(
-    await sb().from("partes").select("*").order("created_at", { ascending: false })
+    await sb()
+      .from("partes")
+      .select("*")
+      .eq("tenant_id", tenantActivoId())
+      .order("created_at", { ascending: false })
   );
   return (data ?? []).map(toParte);
 }
 
 export async function getParte(id: string): Promise<ParteDiario | null> {
-  const { data, error } = await sb().from("partes").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await sb()
+    .from("partes")
+    .select("*")
+    .eq("id", id)
+    .eq("tenant_id", tenantActivoId())
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data ? toParte(data) : null;
 }
@@ -25,6 +35,7 @@ export async function getOrCreateParteDelDia(
   const { data: existente, error } = await sb()
     .from("partes")
     .select("*")
+    .eq("tenant_id", tenantActivoId())
     .eq("obra_id", obraId)
     .eq("fecha", fecha)
     .maybeSingle();
@@ -33,6 +44,7 @@ export async function getOrCreateParteDelDia(
 
   const nuevo: ParteDiario = {
     id: uid("p"),
+    tenantId: tenantActivoId(),
     obraId,
     fecha,
     encargadoId,

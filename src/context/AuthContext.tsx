@@ -5,21 +5,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Rol, Usuario } from "@/lib/types";
+import type { Usuario } from "@/lib/types";
 import { authApi } from "@/services";
-import { esApex } from "@/lib/host";
+import { esApex, usuarioPermitidoEnHost } from "@/lib/host";
 
 const SESSION_KEY = "forgevia.session";
-
-/**
- * Control de acceso por dominio:
- * - En fichaloop.com (apex) solo entra el super-admin de la plataforma.
- * - En el subdominio de un cliente (empresa.fichaloop.com) solo entran los
- *   usuarios de ese negocio; el super-admin NO entra por ahí.
- */
-function rolPermitidoEnHost(rol: Rol): boolean {
-  return esApex() ? rol === "superadmin" : rol !== "superadmin";
-}
 
 function errorDeAcceso(): Error {
   return new Error(
@@ -54,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi
       .getUsuarioById(id)
       .then((u) => {
-        if (u && u.activo && rolPermitidoEnHost(u.rol)) {
+        if (u && u.activo && usuarioPermitidoEnHost(u)) {
           setUsuario(u);
         } else {
           // Sesión no válida para este dominio: la limpiamos.
@@ -67,8 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(nombre: string, password: string) {
     const u = await authApi.login({ usuario: nombre, password });
-    // Credenciales correctas, pero el rol no puede entrar por este dominio.
-    if (!rolPermitidoEnHost(u.rol)) throw errorDeAcceso();
+    // Credenciales correctas, pero el usuario no puede entrar por este dominio.
+    if (!usuarioPermitidoEnHost(u)) throw errorDeAcceso();
     localStorage.setItem(SESSION_KEY, u.id);
     setUsuario(u);
     return u;

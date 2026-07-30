@@ -279,18 +279,25 @@ export function seedDB(): DBSchema {
     { id: "a_4", nombre: "Perfilería 48mm", stock: 120, unidad: "ml", minimo: 60 },
   ];
 
+  // Datos mock de un único cliente (FORGEVIA). Estampamos su tenant para
+  // que respeten el aislamiento igual que en producción; el super-admin va
+  // a `_platform` (no pertenece a ningún cliente).
+  const T = "forgevia";
   return {
     tenants,
-    usuarios,
-    obras,
-    fichajes,
-    partes,
+    usuarios: usuarios.map((u) => ({
+      ...u,
+      tenantId: u.rol === "superadmin" ? "_platform" : T,
+    })),
+    obras: obras.map((o) => ({ ...o, tenantId: T })),
+    fichajes: fichajes.map((f) => ({ ...f, tenantId: T })),
+    partes: partes.map((p) => ({ ...p, tenantId: T })),
     fotos: [],
     adjuntos: [],
-    incidencias,
-    notificaciones,
-    vehiculos,
-    herramientas,
-    almacen,
+    incidencias: incidencias.map((i) => ({ ...i, tenantId: T })),
+    notificaciones: notificaciones.map((n) => ({ ...n, tenantId: T })),
+    vehiculos: vehiculos.map((v) => ({ ...v, tenantId: T })),
+    herramientas: herramientas.map((h) => ({ ...h, tenantId: T })),
+    almacen: almacen.map((a) => ({ ...a, tenantId: T })),
   };
 }

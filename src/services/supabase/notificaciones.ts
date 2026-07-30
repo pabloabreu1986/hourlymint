@@ -1,5 +1,6 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import type { Notificacion } from "@/lib/types";
 import { toNotificacion, fromNotificacion, check } from "./_map";
 
@@ -8,6 +9,7 @@ export async function notificacionesDe(trabajadorId: string): Promise<Notificaci
     await sb()
       .from("notificaciones")
       .select("*")
+      .eq("tenant_id", tenantActivoId())
       .or(`trabajador_id.eq.${trabajadorId},trabajador_id.is.null`)
       .order("fecha", { ascending: false })
   );
@@ -16,7 +18,11 @@ export async function notificacionesDe(trabajadorId: string): Promise<Notificaci
 
 export async function listNotificaciones(): Promise<Notificacion[]> {
   const data = check(
-    await sb().from("notificaciones").select("*").order("fecha", { ascending: false })
+    await sb()
+      .from("notificaciones")
+      .select("*")
+      .eq("tenant_id", tenantActivoId())
+      .order("fecha", { ascending: false })
   );
   return (data ?? []).map(toNotificacion);
 }
@@ -35,10 +41,11 @@ export async function marcarTodasLeidas(trabajadorId: string): Promise<void> {
 }
 
 export async function crearNotificacion(
-  input: Omit<Notificacion, "id" | "fecha" | "leida">
+  input: Omit<Notificacion, "id" | "tenantId" | "fecha" | "leida">
 ): Promise<Notificacion> {
   const nueva: Notificacion = {
     id: uid("n"),
+    tenantId: tenantActivoId(),
     fecha: new Date().toISOString(),
     leida: false,
     ...input,

@@ -1,6 +1,7 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { hoyISO } from "@/lib/seed";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import { capturarGPS } from "@/lib/geo";
 import { calcularJornada, CIERRE_ORDINARIO, type Jornada } from "@/lib/horas";
 import type { Fichaje, TipoFichaje } from "@/lib/types";
@@ -23,12 +24,14 @@ function esDeHoy(iso: string): boolean {
 
 export async function listFichajes(): Promise<Fichaje[]> {
   if (isSupabaseEnabled) return sb.listFichajes();
-  return delay([...loadDB().fichajes]);
+  const tid = tenantActivoId();
+  return delay(loadDB().fichajes.filter((f) => f.tenantId === tid));
 }
 
 export async function fichajesDeHoy(): Promise<Fichaje[]> {
   if (isSupabaseEnabled) return sb.fichajesDeHoy();
-  return delay(loadDB().fichajes.filter((f) => esDeHoy(f.timestamp)));
+  const tid = tenantActivoId();
+  return delay(loadDB().fichajes.filter((f) => f.tenantId === tid && esDeHoy(f.timestamp)));
 }
 
 export async function fichajesDeTrabajadorHoy(trabajadorId: string): Promise<Fichaje[]> {
@@ -105,6 +108,7 @@ export async function fichar(
   const nowIso = now.toISOString();
   const fichaje: Fichaje = {
     id: uid("f"),
+    tenantId: tenantActivoId(),
     trabajadorId,
     obraId,
     tipo,
@@ -130,6 +134,7 @@ export async function crearSalidaAutomatica(
   if (isSupabaseEnabled) return sb.crearSalidaAutomatica(trabajadorId, obraId);
   const fichaje: Fichaje = {
     id: uid("f"),
+    tenantId: tenantActivoId(),
     trabajadorId,
     obraId,
     tipo: "salida",

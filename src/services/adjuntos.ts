@@ -4,6 +4,7 @@
 // archivos pequeños: es la capa mock/demo).
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import { fileToThumbDataURL } from "@/lib/image";
 import type { Adjunto, TipoAdjunto } from "@/lib/types";
 import * as sb from "./supabase/adjuntos";
@@ -38,6 +39,7 @@ export async function subirAdjunto(
   onFase?.("subiendo");
   const adjunto: Adjunto = {
     id: uid("adj"),
+    tenantId: tenantActivoId(),
     obraId: input.obraId,
     tipo: input.tipo,
     subidoPor: input.subidoPor,

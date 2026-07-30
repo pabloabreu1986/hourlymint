@@ -1,4 +1,5 @@
 import { sb } from "@/lib/supabase";
+import { tenantActivoId } from "@/lib/host";
 import { calcularJornada } from "@/lib/horas";
 import type { DashboardData, FichajeHoyTrabajador } from "../dashboard";
 import { toUsuario, toFichaje, toObra, check } from "./_map";
@@ -14,17 +15,33 @@ function rangoHoy(): [string, string] {
 export async function getDashboard(): Promise<DashboardData> {
   const client = sb();
   const [ini, fin] = rangoHoy();
+  const tid = tenantActivoId();
 
-  const usuarios = (check(await client.from("usuarios").select("*")) ?? []).map(toUsuario);
-  const obras = (check(await client.from("obras").select("*")) ?? []).map(toObra);
+  const usuarios = (
+    check(await client.from("usuarios").select("*").eq("tenant_id", tid)) ?? []
+  ).map(toUsuario);
+  const obras = (
+    check(await client.from("obras").select("*").eq("tenant_id", tid)) ?? []
+  ).map(toObra);
   const fichajes = (
     check(
-      await client.from("fichajes").select("*").gte("timestamp", ini).lt("timestamp", fin)
+      await client
+        .from("fichajes")
+        .select("*")
+        .eq("tenant_id", tid)
+        .gte("timestamp", ini)
+        .lt("timestamp", fin)
     ) ?? []
   ).map(toFichaje);
-  const incidencias = check(await client.from("incidencias").select("estado"));
+  const incidencias = check(
+    await client.from("incidencias").select("estado").eq("tenant_id", tid)
+  );
   const partes = check(
-    await client.from("partes").select("estado, materiales_pendientes").eq("estado", "borrador")
+    await client
+      .from("partes")
+      .select("estado, materiales_pendientes")
+      .eq("tenant_id", tid)
+      .eq("estado", "borrador")
   );
 
   const trabajadores = usuarios.filter((u) => u.rol === "trabajador");

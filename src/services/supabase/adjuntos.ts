@@ -1,5 +1,6 @@
 import { sb, FOTOS_BUCKET } from "@/lib/supabase";
 import { uid } from "@/lib/db";
+import { tenantActivoId } from "@/lib/host";
 import { fileToThumbDataURL, dataURLtoBlob } from "@/lib/image";
 import type { Adjunto, TipoAdjunto } from "@/lib/types";
 import type { SubirAdjuntoInput } from "../adjuntos";
@@ -59,6 +60,7 @@ export async function subirAdjunto(
 
   const adjunto: Adjunto = {
     id,
+    tenantId: tenantActivoId(),
     obraId: input.obraId,
     tipo: input.tipo,
     subidoPor: input.subidoPor,
@@ -68,6 +70,7 @@ export async function subirAdjunto(
   check(
     await sb().from("obra_adjuntos").insert({
       id,
+      tenant_id: adjunto.tenantId,
       obra_id: adjunto.obraId,
       tipo: adjunto.tipo,
       subido_por: adjunto.subidoPor,
