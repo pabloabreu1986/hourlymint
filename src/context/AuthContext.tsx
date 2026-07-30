@@ -5,10 +5,29 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Usuario } from "@/lib/types";
+import type { Rol, Usuario } from "@/lib/types";
 import { authApi } from "@/services";
+import { esApex } from "@/lib/host";
 
 const SESSION_KEY = "forgevia.session";
+
+/**
+ * Control de acceso por dominio:
+ * - En fichaloop.com (apex) solo entra el super-admin de la plataforma.
+ * - En el subdominio de un cliente (empresa.fichaloop.com) solo entran los
+ *   usuarios de ese negocio; el super-admin NO entra por ahí.
+ */
+function rolPermitidoEnHost(rol: Rol): boolean {
+  return esApex() ? rol === "superadmin" : rol !== "superadmin";
+}
+
+function errorDeAcceso(): Error {
+  return new Error(
+    esApex()
+      ? "Acceso reservado a la plataforma. Entra desde el dominio de tu empresa."
+      : "El administrador de la plataforma accede desde fichaloop.com."
+  );
+}
 
 interface AuthState {
   usuario: Usuario | null;
@@ -34,12 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     authApi
       .getUsuarioById(id)
-      .then((u) => setUsuario(u && u.activo ? u : null))
+      .then((u) => {
+        if (u && u.activo && rolPermitidoEnHost(u.rol)) {
+          setUsuario(u);
+        } else {
+          // Sesión no válida para este dominio: la limpiamos.
+          localStorage.removeItem(SESSION_KEY);
+          setUsuario(null);
+        }
+      })
       .finally(() => setCargando(false));
   }, []);
 
   async function login(nombre: string, password: string) {
     const u = await authApi.login({ usuario: nombre, password });
+    // Credenciales correctas, pero el rol no puede entrar por este dominio.
+    if (!rolPermitidoEnHost(u.rol)) throw errorDeAcceso();
     localStorage.setItem(SESSION_KEY, u.id);
     setUsuario(u);
     return u;
