@@ -38,6 +38,28 @@ export async function crearUsuario(input: NuevoUsuario): Promise<Usuario> {
   return nuevo;
 }
 
+export async function listUsuariosDeTenant(tenantId: string): Promise<Usuario[]> {
+  const data = check(
+    await sb().from("usuarios").select("*").eq("tenant_id", tenantId).order("nombre")
+  );
+  return (data ?? []).map(toUsuario);
+}
+
+export async function crearUsuarioParaTenant(
+  tenantId: string,
+  input: NuevoUsuario
+): Promise<Usuario> {
+  const nuevo: Usuario = {
+    id: uid("u"),
+    tenantId,
+    activo: true,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    ...input,
+  };
+  check(await sb().from("usuarios").insert(fromUsuario(nuevo)));
+  return nuevo;
+}
+
 export async function actualizarUsuario(id: string, patch: Partial<Usuario>): Promise<Usuario> {
   const data = check(
     await sb().from("usuarios").update(fromUsuario(patch)).eq("id", id).select().single()

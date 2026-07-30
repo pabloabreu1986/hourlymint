@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { tenantApi } from "@/services";
+import { tenantApi, usuariosApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
 import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
-import type { Tenant, TenantColores } from "@/lib/types";
-import { Cargando, EmptyState, Spinner } from "@/components/ui";
-import { IconChevronLeft, IconCheck, IconTrash, IconCamera } from "@/components/icons";
+import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
+import { Cargando, EmptyState, Spinner, Avatar } from "@/components/ui";
+import { IconChevronLeft, IconCheck, IconTrash, IconCamera, IconPlus } from "@/components/icons";
 
 const COLORES: Array<{ key: keyof TenantColores; label: string; hint: string }> = [
   { key: "dark", label: "Oscuro / navy", hint: "Fondos, sidebar, textos" },
@@ -252,6 +252,9 @@ export default function SuperTenantEditor() {
         </p>
       </Seccion>
 
+      {/* Usuarios del cliente */}
+      <UsuariosTenant tenantId={t.id} slug={t.slug} />
+
       {/* Guardar (barra fija) */}
       <div className="sticky bottom-4 flex items-center gap-3">
         <button
@@ -292,5 +295,124 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
       <label className="mb-1 block text-sm font-medium text-slate-600">{label}</label>
       {children}
     </div>
+  );
+}
+
+/** Gestión de los usuarios de un cliente (desde el panel super-admin). */
+function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) {
+  const [usuarios, setUsuarios] = useState<Usuario[] | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [password, setPassword] = useState("");
+  const [puesto, setPuesto] = useState("");
+  const [rol, setRol] = useState<Rol>("admin");
+  const [creando, setCreando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function cargar() {
+    setUsuarios(await usuariosApi.listUsuariosDeTenant(tenantId));
+  }
+  useEffect(() => {
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
+
+  async function crear() {
+    if (!nombre.trim() || !password.trim()) {
+      setError("El nombre y la contraseña son obligatorios.");
+      return;
+    }
+    setError(null);
+    setCreando(true);
+    try {
+      await usuariosApi.crearUsuarioParaTenant(tenantId, {
+        nombre: nombre.trim(),
+        password: password.trim(),
+        rol,
+        puesto: puesto.trim() || undefined,
+      });
+      setNombre("");
+      setPassword("");
+      setPuesto("");
+      setRol("admin");
+      await cargar();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo crear el usuario.");
+    } finally {
+      setCreando(false);
+    }
+  }
+
+  async function eliminar(u: Usuario) {
+    if (!window.confirm(`¿Eliminar a ${u.nombre}?`)) return;
+    await usuariosApi.eliminarUsuario(u.id);
+    await cargar();
+  }
+
+  return (
+    <Seccion titulo="Usuarios del cliente">
+      <p className="text-xs text-slate-400">
+        Crea aquí el primer administrador. Luego él dará de alta a su equipo desde{" "}
+        <span className="font-mono">{slug}.fichaloop.com</span>.
+      </p>
+
+      {usuarios === null ? (
+        <Cargando />
+      ) : usuarios.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
+          Sin usuarios todavía.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {usuarios.map((u) => (
+            <li key={u.id} className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+              <Avatar nombre={u.nombre} color={u.color} size={32} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-800">{u.nombre}</p>
+                <p className="truncate text-xs text-slate-400">
+                  {u.rol}
+                  {u.puesto ? ` · ${u.puesto}` : ""}
+                  {!u.activo ? " · inactivo" : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => eliminar(u)}
+                className="grid h-8 w-8 place-items-center rounded-lg text-red-500 hover:bg-red-50"
+                aria-label="Eliminar"
+              >
+                <IconTrash className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2">
+        <Campo label="Nombre de usuario">
+          <input className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre y apellido" />
+        </Campo>
+        <Campo label="Contraseña">
+          <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" />
+        </Campo>
+        <Campo label="Rol">
+          <select className={inputCls} value={rol} onChange={(e) => setRol(e.target.value as Rol)}>
+            <option value="admin">Administrador</option>
+            <option value="trabajador">Trabajador</option>
+          </select>
+        </Campo>
+        <Campo label="Puesto (opcional)">
+          <input className={inputCls} value={puesto} onChange={(e) => setPuesto(e.target.value)} placeholder="p. ej. Encargado" />
+        </Campo>
+        <div className="sm:col-span-2">
+          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+          <button
+            onClick={crear}
+            disabled={creando}
+            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+          >
+            {creando ? <Spinner className="h-4 w-4" /> : <IconPlus className="h-4 w-4" />} Crear usuario
+          </button>
+        </div>
+      </div>
+    </Seccion>
   );
 }

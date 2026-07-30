@@ -36,6 +36,32 @@ export async function crearUsuario(data: NuevoUsuario): Promise<Usuario> {
   return delay(nuevo);
 }
 
+// ── Operaciones del super-admin: gestionar usuarios de OTRO tenant ──
+// El super-admin trabaja desde el apex (fichaloop.com), así que el tenant
+// no se resuelve del subdominio: se pasa explícito.
+
+export async function listUsuariosDeTenant(tenantId: string): Promise<Usuario[]> {
+  if (isSupabaseEnabled) return sb.listUsuariosDeTenant(tenantId);
+  return delay(loadDB().usuarios.filter((u) => u.tenantId === tenantId));
+}
+
+/** Crea un usuario para un tenant concreto (bootstrap del primer admin, etc.). */
+export async function crearUsuarioParaTenant(
+  tenantId: string,
+  data: NuevoUsuario
+): Promise<Usuario> {
+  if (isSupabaseEnabled) return sb.crearUsuarioParaTenant(tenantId, data);
+  const nuevo: Usuario = {
+    id: uid("u"),
+    tenantId,
+    activo: true,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    ...data,
+  };
+  updateDB((db) => db.usuarios.push(nuevo));
+  return delay(nuevo);
+}
+
 export async function actualizarUsuario(
   id: string,
   patch: Partial<Usuario>
