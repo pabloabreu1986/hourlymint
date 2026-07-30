@@ -44,3 +44,28 @@ export async function guardarTenant(tenant: Tenant): Promise<Tenant> {
   });
   return delay(tenant);
 }
+
+/**
+ * Elimina un cliente y TODOS sus datos (obras, usuarios, fichajes, partes,
+ * fotos, adjuntos, incidencias, notificaciones y recursos). Operación
+ * destructiva e irreversible. NO borra el subdominio de Vercel: eso lo
+ * orquesta el panel aparte (plataformaApi.eliminarSubdominio).
+ */
+export async function eliminarTenant(id: string): Promise<void> {
+  if (isSupabaseEnabled) return sb.eliminarTenant(id);
+  updateDB((d) => {
+    d.fichajes = d.fichajes.filter((x) => x.tenantId !== id);
+    d.fotos = d.fotos.filter((x) => x.tenantId !== id);
+    d.adjuntos = d.adjuntos.filter((x) => x.tenantId !== id);
+    d.partes = d.partes.filter((x) => x.tenantId !== id);
+    d.incidencias = d.incidencias.filter((x) => x.tenantId !== id);
+    d.notificaciones = d.notificaciones.filter((x) => x.tenantId !== id);
+    d.vehiculos = d.vehiculos.filter((x) => x.tenantId !== id);
+    d.herramientas = d.herramientas.filter((x) => x.tenantId !== id);
+    d.almacen = d.almacen.filter((x) => x.tenantId !== id);
+    d.obras = d.obras.filter((x) => x.tenantId !== id);
+    d.usuarios = d.usuarios.filter((x) => x.tenantId !== id);
+    d.tenants = d.tenants.filter((x) => x.id !== id);
+  });
+  return delay(undefined);
+}

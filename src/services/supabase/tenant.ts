@@ -56,3 +56,27 @@ export async function guardarTenant(tenant: Tenant): Promise<Tenant> {
   check(await sb().from("tenants").upsert(fromTenant(tenant)));
   return tenant;
 }
+
+/** Borra el cliente y todos sus datos. Orden: primero las tablas que
+ * referencian a obras/usuarios, luego obras, luego usuarios, luego el
+ * propio tenant (para no chocar con claves foráneas). */
+export async function eliminarTenant(id: string): Promise<void> {
+  const client = sb();
+  const hijas = [
+    "fichajes",
+    "fotos",
+    "obra_adjuntos",
+    "partes",
+    "incidencias",
+    "notificaciones",
+    "vehiculos",
+    "herramientas",
+    "almacen",
+  ];
+  for (const tabla of [...hijas, "obras", "usuarios"]) {
+    const { error } = await client.from(tabla).delete().eq("tenant_id", id);
+    if (error) throw new Error(`Error al borrar ${tabla}: ${error.message}`);
+  }
+  const { error } = await client.from("tenants").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

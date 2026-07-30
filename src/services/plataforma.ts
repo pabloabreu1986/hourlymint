@@ -7,20 +7,27 @@ export interface ResultadoSubdominio {
   mensaje: string;
 }
 
-/** Publica `<slug>.fichaloop.com` en Vercel (idempotente). */
-export async function publicarSubdominio(slug: string): Promise<ResultadoSubdominio> {
+async function llamar(endpoint: string, slug: string, exito: string): Promise<ResultadoSubdominio> {
   try {
-    const r = await fetch("/api/crear-subdominio", {
+    const r = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug }),
     });
     const data = await r.json().catch(() => ({}));
-    if (r.ok && data.ok) {
-      return { ok: true, mensaje: `Subdominio ${data.dominio} publicado en Vercel.` };
-    }
-    return { ok: false, mensaje: data.error || "No se pudo publicar el subdominio." };
+    if (r.ok && data.ok) return { ok: true, mensaje: `${exito}: ${data.dominio}` };
+    return { ok: false, mensaje: data.error || "Operación no completada." };
   } catch {
-    return { ok: false, mensaje: "No se pudo contactar con el servidor de publicación." };
+    return { ok: false, mensaje: "No se pudo contactar con el servidor." };
   }
+}
+
+/** Publica `<slug>.fichaloop.com` en Vercel (idempotente). */
+export function publicarSubdominio(slug: string): Promise<ResultadoSubdominio> {
+  return llamar("/api/crear-subdominio", slug, "Subdominio publicado");
+}
+
+/** Quita `<slug>.fichaloop.com` de Vercel (idempotente). */
+export function eliminarSubdominio(slug: string): Promise<ResultadoSubdominio> {
+  return llamar("/api/eliminar-subdominio", slug, "Subdominio eliminado");
 }

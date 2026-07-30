@@ -6,7 +6,7 @@ import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
 import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
-import { Cargando, EmptyState, Spinner, Avatar } from "@/components/ui";
+import { Cargando, EmptyState, Spinner, Avatar, Modal } from "@/components/ui";
 import { IconChevronLeft, IconCheck, IconTrash, IconCamera, IconPlus } from "@/components/icons";
 
 const COLORES: Array<{ key: keyof TenantColores; label: string; hint: string }> = [
@@ -29,6 +29,22 @@ export default function SuperTenantEditor() {
   const [guardado, setGuardado] = useState(false);
   const [publicando, setPublicando] = useState(false);
   const [pubMsg, setPubMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [borrarOpen, setBorrarOpen] = useState(false);
+  const [confirmNombre, setConfirmNombre] = useState("");
+  const [borrando, setBorrando] = useState(false);
+
+  async function eliminarCliente() {
+    if (!t || confirmNombre.trim() !== t.nombreCorto) return;
+    setBorrando(true);
+    try {
+      await tenantApi.eliminarTenant(t.id);
+      await plataformaApi.eliminarSubdominio(t.slug); // best-effort, no lanza
+      navigate("/super");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "No se pudo eliminar el cliente.");
+      setBorrando(false);
+    }
+  }
 
   async function publicarSubdominio() {
     if (!t) return;
@@ -288,6 +304,24 @@ export default function SuperTenantEditor() {
       {/* Usuarios del cliente */}
       <UsuariosTenant tenantId={t.id} slug={t.slug} />
 
+      {/* Zona de peligro */}
+      <section className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-red-600">Zona de peligro</h2>
+        <p className="text-sm text-red-700/80">
+          Eliminar este cliente borra de forma <strong>irreversible</strong> su marca y TODOS sus
+          datos (obras, trabajadores, fichajes, partes, fotos…) y quita su subdominio de Vercel.
+        </p>
+        <button
+          onClick={() => {
+            setConfirmNombre("");
+            setBorrarOpen(true);
+          }}
+          className="flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100"
+        >
+          <IconTrash className="h-4 w-4" /> Eliminar cliente
+        </button>
+      </section>
+
       {/* Guardar (barra fija) */}
       <div className="sticky bottom-4 flex items-center gap-3">
         <button
@@ -306,6 +340,48 @@ export default function SuperTenantEditor() {
           )}
         </button>
       </div>
+
+      {/* Confirmación de borrado */}
+      <Modal
+        open={borrarOpen}
+        onClose={() => !borrando && setBorrarOpen(false)}
+        title="Eliminar cliente"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Esto borra <strong>{t.nombreCorto}</strong> y <strong>todos sus datos</strong> de forma
+            permanente. No se puede deshacer.
+          </p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600">
+              Escribe <span className="font-bold">{t.nombreCorto}</span> para confirmar
+            </label>
+            <input
+              className={inputCls}
+              value={confirmNombre}
+              onChange={(e) => setConfirmNombre(e.target.value)}
+              placeholder={t.nombreCorto}
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setBorrarOpen(false)}
+              disabled={borrando}
+              className="flex-1 rounded-xl border border-slate-200 py-3 font-bold text-slate-600 hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={eliminarCliente}
+              disabled={borrando || confirmNombre.trim() !== t.nombreCorto}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-3 font-bold text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {borrando ? <Spinner className="h-5 w-5" /> : "Eliminar definitivamente"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
