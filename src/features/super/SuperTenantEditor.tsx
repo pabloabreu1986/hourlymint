@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { tenantApi, usuariosApi } from "@/services";
+import { tenantApi, usuariosApi, plataformaApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
 import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
 import { fileToThumbDataURL } from "@/lib/image";
@@ -27,6 +27,17 @@ export default function SuperTenantEditor() {
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [publicando, setPublicando] = useState(false);
+  const [pubMsg, setPubMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+
+  async function publicarSubdominio() {
+    if (!t) return;
+    setPublicando(true);
+    setPubMsg(null);
+    const r = await plataformaApi.publicarSubdominio(t.slug);
+    setPubMsg({ ok: r.ok, texto: r.mensaje });
+    setPublicando(false);
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -249,6 +260,28 @@ export default function SuperTenantEditor() {
         </div>
         <p className="text-xs text-slate-400">
           El filtrado del menú por estas funciones se aplicará en un paso posterior.
+        </p>
+      </Seccion>
+
+      {/* Dominio */}
+      <Seccion titulo="Dominio">
+        <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+          <span className="font-mono text-sm text-slate-700">{t.slug}.fichaloop.com</span>
+          <button
+            onClick={publicarSubdominio}
+            disabled={publicando}
+            className="flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+          >
+            {publicando ? <Spinner className="h-4 w-4" /> : null}
+            Publicar en Vercel
+          </button>
+        </div>
+        {pubMsg && (
+          <p className={`text-sm ${pubMsg.ok ? "text-green-600" : "text-red-600"}`}>{pubMsg.texto}</p>
+        )}
+        <p className="text-xs text-slate-400">
+          Publica el subdominio del cliente en Vercel automáticamente. El DNS comodín ya enruta
+          todos los subdominios; esto solo registra el dominio y emite su certificado.
         </p>
       </Seccion>
 

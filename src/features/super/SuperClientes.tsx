@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { tenantApi } from "@/services";
+import { tenantApi, plataformaApi } from "@/services";
 import type { Tenant } from "@/lib/types";
 import { Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import { IconPlus, IconChevronRight, IconObras } from "@/components/icons";
@@ -24,6 +24,9 @@ export default function SuperClientes() {
     setCreando(true);
     try {
       const t = await tenantApi.crearTenant(nombre);
+      // Publica el subdominio en Vercel (best-effort; el editor permite
+      // reintentarlo y ver el estado).
+      void plataformaApi.publicarSubdominio(t.slug);
       setNuevoOpen(false);
       setNombre("");
       navigate(`/super/clientes/${t.id}`);
