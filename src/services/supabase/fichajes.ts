@@ -114,3 +114,25 @@ export async function fichar(
   check(await sb().from("fichajes").insert(fromFichaje(fichaje)));
   return fichaje;
 }
+
+export async function crearSalidaAutomatica(
+  trabajadorId: string,
+  obraId: string | null
+): Promise<Fichaje> {
+  const [h, m] = "18:00".split(":").map(Number);
+  const cierre = new Date();
+  cierre.setHours(h, m, 0, 0);
+  const fichaje: Fichaje = {
+    id: uid("f"),
+    trabajadorId,
+    obraId,
+    tipo: "salida",
+    timestamp: cierre.toISOString(),
+    gps: null,
+    estado: "automatica",
+    creadoEn: new Date().toISOString(),
+    corrigeA: null,
+  };
+  check(await sb().from("fichajes").insert(fromFichaje(fichaje)));
+  return fichaje;
+}

@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/ui";
 import { IconUser, IconEye, IconEyeOff, IconClock } from "@/components/icons";
@@ -101,6 +102,14 @@ export function LoginForm({ className = "" }: { className?: string }) {
       >
         ¿Olvidaste tu contraseña?
       </button>
+
+      <p className="pt-1 text-center text-xs leading-relaxed text-white/40">
+        Al acceder aceptas los{" "}
+        <Link to="/terminos" className="underline decoration-white/30 underline-offset-2 hover:text-white/70">
+          Términos y Condiciones
+        </Link>{" "}
+        y la Política de Privacidad.
+      </p>
     </form>
   );
 }

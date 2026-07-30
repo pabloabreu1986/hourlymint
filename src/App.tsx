@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import Login from "@/features/auth/Login";
 // La web de marketing (logos grandes) solo se carga en el apex.
 const Landing = lazy(() => import("@/features/marketing/Landing"));
+const Terminos = lazy(() => import("@/features/marketing/Terminos"));
 
 // Trabajador (móvil)
 import WorkerLayout from "@/features/worker/WorkerLayout";
@@ -74,8 +75,12 @@ function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
 
   useEffect(() => {
     if (!usuario) return;
-    alertasApi.revisarFichajesFaltantes();
-    const id = setInterval(alertasApi.revisarFichajesFaltantes, INTERVALO_REVISION_FICHAJES);
+    const revisar = () => {
+      alertasApi.revisarFichajesFaltantes();
+      alertasApi.revisarSalidasAutomaticas();
+    };
+    revisar();
+    const id = setInterval(revisar, INTERVALO_REVISION_FICHAJES);
     return () => clearInterval(id);
   }, [usuario]);
 
@@ -101,6 +106,14 @@ export default function App() {
       {/* Raíz pública: web de marketing (apex) o login de cliente (subdominio) */}
       <Route path="/" element={<RaizPublica />} />
       <Route path="/login" element={<RaizPublica />} />
+      <Route
+        path="/terminos"
+        element={
+          <Suspense fallback={<Cargando />}>
+            <Terminos />
+          </Suspense>
+        }
+      />
 
       {/* ── Trabajador ── */}
       <Route

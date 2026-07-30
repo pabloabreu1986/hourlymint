@@ -11,6 +11,15 @@
 // ─────────────────────────────────────────────────────────────
 import type { Fichaje, Obra } from "./types";
 
+// Reglas de jornada (fijas para todas las obras):
+// - La jornada ordinaria se cierra a las 18:00; más allá solo cuentan las
+//   horas extra que el trabajador marque.
+// - Descanso por defecto de 14:00 a 15:00, que se descuenta salvo que el
+//   trabajador fiche su propia pausa (entonces cuenta la real).
+export const CIERRE_ORDINARIO = "18:00";
+export const DESCANSO_INICIO = "14:00";
+export const DESCANSO_FIN = "15:00";
+
 export interface Tramo {
   inicio: Fichaje;
   /** null mientras el tramo sigue abierto. */
@@ -36,12 +45,33 @@ export interface Jornada {
   segundosPausa: number;
   /** Segundos de horas extra, ya sin las pausas que caigan dentro. */
   segundosExtra: number;
+  /** true si el descanso se aplicó por defecto (no había pausa fichada). */
+  descansoPorDefecto: boolean;
   /** true si la salida quedó registrada por el cierre automático. */
   salidaAutomatica: boolean;
 }
 
 function ms(f: Fichaje): number {
   return new Date(f.timestamp).getTime();
+}
+
+/** ms de una hora "HH:MM" en la fecha local de `base`. */
+function horaLocal(base: Date, hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date(base);
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
+
+/** Tramo sintético (para el descanso por defecto), compatible con restarPausas. */
+function tramoFicticio(iniMs: number, finMs: number): Tramo {
+  const f = (t: number) => ({ timestamp: new Date(t).toISOString() } as Fichaje);
+  return { inicio: f(iniMs), fin: f(finMs) };
+}
+
+/** Segundos de solape entre [aIni,aFin) y [bIni,bFin). */
+function solape(aIni: number, aFin: number, bIni: number, bFin: number): number {
+  return Math.max(0, Math.min(aFin, bFin) - Math.max(aIni, bIni)) / 1000;
 }
 
 /** Empareja una secuencia de eventos tipo_inicio/tipo_fin en tramos, en orden. */
@@ -101,8 +131,29 @@ export function calcularJornada(fichajesDia: Fichaje[], ahora: Date = new Date()
   else if (entrada) estado = "trabajando";
   else estado = "sin_fichar";
 
+  // La jornada ordinaria se cierra como muy tarde a las 18:00: aunque el
+  // trabajador no haya fichado salida, no se acumulan horas ordinarias más
+  // allá de esa hora (lo de después es horas extra, solo si las marca).
+  const baseDia = entrada ? new Date(entrada.timestamp) : ahora;
+  const cierreMs = horaLocal(baseDia, CIERRE_ORDINARIO);
+  const finOrdinario = Math.min(salida ? ms(salida) : ahoraMs, cierreMs);
+
+  // Descanso: si fichó pausa(s), cuentan las reales; si no fichó ninguna, se
+  // aplica el descanso por defecto (14:00–15:00) que solape con lo trabajado.
+  const descIni = horaLocal(baseDia, DESCANSO_INICIO);
+  const descFin = horaLocal(baseDia, DESCANSO_FIN);
+  const solapeDescanso = entrada ? solape(ms(entrada), finOrdinario, descIni, descFin) : 0;
+  // Solo se aplica el descanso por defecto si NO hay ninguna pausa fichada
+  // dentro del tramo ordinario (una pausa fichada solo en horas extra no
+  // debe anular el descanso del tramo ordinario).
+  const hayPausaOrdinaria =
+    !!entrada &&
+    pausas.some((p) => solape(ms(entrada!), finOrdinario, ms(p.inicio), p.fin ? ms(p.fin) : ahoraMs) > 0);
+  const descansoPorDefecto = !!entrada && !hayPausaOrdinaria && solapeDescanso > 0;
+  const pausasOrdinario = descansoPorDefecto ? [tramoFicticio(descIni, descFin)] : pausas;
+
   const segundosOrdinarios = entrada
-    ? restarPausas(ms(entrada), salida ? ms(salida) : ahoraMs, pausas, ahoraMs)
+    ? restarPausas(ms(entrada), finOrdinario, pausasOrdinario, ahoraMs)
     : 0;
 
   const segundosExtra = extras.reduce(
@@ -110,10 +161,12 @@ export function calcularJornada(fichajesDia: Fichaje[], ahora: Date = new Date()
     0
   );
 
-  const segundosPausa = pausas.reduce(
-    (acc, p) => acc + (Math.max(0, (p.fin ? ms(p.fin) : ahoraMs) - ms(p.inicio)) / 1000),
-    0
-  );
+  const segundosPausa = descansoPorDefecto
+    ? solapeDescanso
+    : pausas.reduce(
+        (acc, p) => acc + (Math.max(0, (p.fin ? ms(p.fin) : ahoraMs) - ms(p.inicio)) / 1000),
+        0
+      );
 
   return {
     entrada,
@@ -124,6 +177,7 @@ export function calcularJornada(fichajesDia: Fichaje[], ahora: Date = new Date()
     segundosOrdinarios,
     segundosPausa,
     segundosExtra,
+    descansoPorDefecto,
     salidaAutomatica: salida?.estado === "automatica",
   };
 }

@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
 import LiquidHover from "@/components/LiquidHover";
@@ -28,6 +29,7 @@ export default function Landing() {
         <Dolores />
         <Funciones />
         <ComoFunciona />
+        <Precios />
         <WhiteLabel />
         <CTA />
       </main>
@@ -60,6 +62,7 @@ function Nav() {
           <a href="#dolores" className="transition-opacity hover:opacity-50">El problema</a>
           <a href="#funciones" className="transition-opacity hover:opacity-50">Producto</a>
           <a href="#como" className="transition-opacity hover:opacity-50">Proceso</a>
+          <a href="#precios" className="transition-opacity hover:opacity-50">Precios</a>
         </nav>
         <a href="#acceso" className="flex items-center gap-2 text-sm font-bold transition-opacity hover:opacity-50">
           Acceso <Flecha />
@@ -266,12 +269,157 @@ function ComoFunciona() {
   );
 }
 
+const PLANES = [
+  {
+    nombre: "Esencial",
+    precio: "39",
+    descripcion: "Para equipos pequeños que quieren dejar atrás el papel.",
+    limite: "Hasta 5 trabajadores",
+    funciones: [
+      "Fichaje con GPS",
+      "Partes y fotos de obra",
+      "3 obras activas",
+      "Control de horas",
+      "Soporte por email",
+    ],
+  },
+  {
+    nombre: "Equipo",
+    precio: "79",
+    descripcion: "El control completo para una empresa que está creciendo.",
+    limite: "Hasta 15 trabajadores",
+    recomendado: true,
+    funciones: [
+      "Obras activas ilimitadas",
+      "Materiales e incidencias",
+      "Vehículos y herramientas",
+      "Informes para nómina",
+      "Logo y colores propios",
+      "Soporte prioritario",
+    ],
+  },
+  {
+    nombre: "Pro",
+    precio: "149",
+    descripcion: "Más capacidad, permisos y personalización para estructuras mayores.",
+    limite: "Hasta 40 trabajadores",
+    funciones: [
+      "Todo lo incluido en Equipo",
+      "Roles y permisos avanzados",
+      "Dominio propio",
+      "Funciones a medida",
+      "Puesta en marcha guiada",
+      "Soporte prioritario",
+    ],
+  },
+];
+
+function Precios() {
+  return (
+    <section id="precios" className="scroll-mt-20 bg-[#F5F3EE]">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <div className="grid gap-10 md:grid-cols-12 md:items-end">
+          <div className="md:col-span-8">
+            <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/45">
+              04 — Precios claros
+            </p>
+            <h2 className="text-[clamp(3.2rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.07em]">
+              Empieza pequeño.
+              <br />
+              <span className="text-[#E8721C]">Crece sin líos.</span>
+            </h2>
+          </div>
+          <div className="md:col-span-4">
+            <p className="max-w-md text-lg leading-relaxed text-black/55">
+              Una cuota previsible para todo tu equipo. Sin permanencia, sin costes
+              ocultos y con la puesta en marcha incluida.
+            </p>
+            <p className="mt-5 text-sm font-bold uppercase tracking-[0.12em]">
+              Pago anual · 2 meses gratis
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-20 grid border-t border-black/20 md:grid-cols-3 md:mt-28">
+          {PLANES.map((plan) => (
+            <article
+              key={plan.nombre}
+              className={`relative flex flex-col border-b border-black/20 px-0 py-8 md:min-h-[610px] md:border-r md:px-8 md:first:pl-0 md:last:border-r-0 md:last:pr-0 ${
+                plan.recomendado ? "md:bg-[#E8721C] md:px-8" : ""
+              }`}
+            >
+              {plan.recomendado && (
+                <p className="mb-8 w-fit bg-[#101418] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-white">
+                  El más elegido
+                </p>
+              )}
+              <div className={plan.recomendado ? "" : "md:pt-[46px]"}>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h3 className="text-2xl font-black tracking-[-0.04em]">{plan.nombre}</h3>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em]">{plan.limite}</p>
+                </div>
+                <div className="mt-9 flex items-end gap-2">
+                  <span className="text-[clamp(4.8rem,7vw,7rem)] font-black leading-none tracking-[-0.08em]">
+                    {plan.precio}
+                  </span>
+                  <div className="pb-2">
+                    <p className="text-xl font-bold">€</p>
+                    <p className="text-xs text-black/55">al mes</p>
+                  </div>
+                </div>
+                <p className="mt-7 max-w-sm leading-relaxed text-black/60">{plan.descripcion}</p>
+              </div>
+
+              <ul className="mt-10 space-y-4 border-t border-black/20 pt-7">
+                {plan.funciones.map((funcion) => (
+                  <li key={funcion} className="flex items-center gap-3 text-sm font-medium">
+                    <IconCheck className="h-4 w-4 shrink-0" />
+                    {funcion}
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={`mailto:hola@fichaloop.com?subject=Quiero%20conocer%20el%20plan%20${plan.nombre}`}
+                className={`mt-auto inline-flex w-full items-center justify-between border-t px-0 pt-5 font-bold transition-all hover:px-2 ${
+                  plan.recomendado ? "border-black/30" : "border-black/20"
+                }`}
+              >
+                Solicitar una demo <Flecha />
+              </a>
+            </article>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-5 border-b border-black/20 py-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xl font-bold tracking-[-0.03em]">¿Más de 40 trabajadores?</p>
+            <p className="mt-1 text-sm text-black/50">
+              Preparamos un plan a medida para varias sedes, equipos o empresas.
+            </p>
+          </div>
+          <a
+            href="mailto:hola@fichaloop.com?subject=Plan%20a%20medida"
+            className="inline-flex w-fit items-center gap-3 font-bold transition-all hover:gap-5"
+          >
+            Hablar con nosotros <Flecha />
+          </a>
+        </div>
+
+        <p className="mt-5 text-xs text-black/40">
+          Precios sin IVA. La cuota incluye actualizaciones, alojamiento y copias de seguridad.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function WhiteLabel() {
   return (
     <section className="overflow-hidden bg-[#101418] text-white">
       <div className="mx-auto grid max-w-[1400px] md:grid-cols-12">
         <div className="px-5 py-20 sm:px-8 md:col-span-8 md:py-32 md:pr-12">
-          <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">04 — Tu identidad</p>
+          <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">05 — Tu identidad</p>
           <h2 className="text-[clamp(3.3rem,7.5vw,8rem)] font-black leading-[0.86] tracking-[-0.075em]">
             Parece tuya.
             <br />
@@ -343,6 +491,7 @@ function Footer() {
           <a href="#como" className="hover:text-[#E8721C]">Cómo funciona</a>
           <a href="#acceso" className="hover:text-[#E8721C]">Acceso</a>
           <a href="mailto:hola@fichaloop.com" className="hover:text-[#E8721C]">Contacto</a>
+          <Link to="/terminos" className="hover:text-[#E8721C]">Términos y condiciones</Link>
         </div>
         <div className="text-xs leading-relaxed text-black/40 md:text-right">
           <p>© 2026 fichaloop.</p>

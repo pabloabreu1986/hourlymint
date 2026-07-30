@@ -2,9 +2,17 @@ import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { hoyISO } from "@/lib/seed";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { capturarGPS } from "@/lib/geo";
-import { calcularJornada, type Jornada } from "@/lib/horas";
+import { calcularJornada, CIERRE_ORDINARIO, type Jornada } from "@/lib/horas";
 import type { Fichaje, TipoFichaje } from "@/lib/types";
 import * as sb from "./supabase/fichajes";
+
+/** ISO del cierre ordinario (18:00) de hoy en hora local. */
+export function isoCierreOrdinarioHoy(): string {
+  const [h, m] = CIERRE_ORDINARIO.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+}
 
 /** Hora de entrada por defecto cuando no se indica la de la obra. */
 export const HORA_ENTRADA_POR_DEFECTO = "09:00";
@@ -104,6 +112,31 @@ export async function fichar(
     gps,
     estado: tarde ? "tarde" : "correcto",
     creadoEn: nowIso,
+    corrigeA: null,
+  };
+  updateDB((db) => db.fichajes.push(fichaje));
+  return fichaje;
+}
+
+/**
+ * Cierre automático de la jornada ordinaria: registra una salida a las
+ * 18:00 (hora del cuadrante, no la de ejecución) con estado "automatica".
+ * Sin GPS (no hay teléfono que la genere).
+ */
+export async function crearSalidaAutomatica(
+  trabajadorId: string,
+  obraId: string | null
+): Promise<Fichaje> {
+  if (isSupabaseEnabled) return sb.crearSalidaAutomatica(trabajadorId, obraId);
+  const fichaje: Fichaje = {
+    id: uid("f"),
+    trabajadorId,
+    obraId,
+    tipo: "salida",
+    timestamp: isoCierreOrdinarioHoy(),
+    gps: null,
+    estado: "automatica",
+    creadoEn: new Date().toISOString(),
     corrigeA: null,
   };
   updateDB((db) => db.fichajes.push(fichaje));

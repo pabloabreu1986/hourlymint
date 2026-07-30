@@ -1,28 +1,21 @@
-// Captura de GPS. Usa la API del navegador; si falla o el usuario
-// deniega el permiso, cae a una posición simulada (Madrid) para el mock.
+// Captura de GPS del teléfono al fichar. Usa la API del navegador. Si el
+// usuario deniega el permiso o falla, se guarda `null` ("Sin ubicación"):
+// preferimos no registrar una posición que no sea la real (el admin ve
+// ubicaciones fiables).
 import type { Coordenada } from "./types";
 
-const FALLBACK: Coordenada = { lat: 40.4168, lng: -3.7038 };
-
-export function capturarGPS(): Promise<Coordenada> {
+export function capturarGPS(): Promise<Coordenada | null> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) {
-      resolve(jitter(FALLBACK));
+      resolve(null);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(jitter(FALLBACK)),
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
   });
-}
-
-function jitter(c: Coordenada): Coordenada {
-  return {
-    lat: c.lat + (Math.random() - 0.5) * 0.05,
-    lng: c.lng + (Math.random() - 0.5) * 0.05,
-  };
 }
 
 /** Texto corto de coordenadas: "40.4168, -3.7038" */

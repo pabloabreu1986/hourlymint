@@ -1,10 +1,30 @@
 import { useEffect, useState } from "react";
 import { usuariosApi, fichajesApi } from "@/services";
-import type { Usuario, Fichaje } from "@/lib/types";
+import type { Usuario, Fichaje, TipoFichaje } from "@/lib/types";
 import { calcularJornada, formatHoras } from "@/lib/horas";
 import { diaCorto, hora } from "@/lib/format";
-import { Avatar, Cargando } from "@/components/ui";
-import { IconChevronLeft, IconChevronRight } from "@/components/icons";
+import { coordText } from "@/lib/geo";
+import { Avatar, Cargando, Modal } from "@/components/ui";
+import { WorkerMap } from "@/components/WorkerMap";
+import { IconChevronLeft, IconChevronRight, IconMapPin } from "@/components/icons";
+
+const TIPO_LABEL: Record<TipoFichaje, string> = {
+  entrada: "Entrada",
+  salida: "Salida",
+  pausa_inicio: "Inicio de pausa",
+  pausa_fin: "Fin de pausa",
+  extra_inicio: "Inicio horas extra",
+  extra_fin: "Fin horas extra",
+};
+
+const TIPO_COLOR: Record<TipoFichaje, string> = {
+  entrada: "#16A34A",
+  salida: "#DC2626",
+  pausa_inicio: "#D97706",
+  pausa_fin: "#D97706",
+  extra_inicio: "#7C3AED",
+  extra_fin: "#7C3AED",
+};
 
 function inicioSemana(fecha: Date): Date {
   const d = new Date(fecha);
@@ -43,6 +63,7 @@ export default function AdminHoras() {
   const [refSemana, setRefSemana] = useState(() => new Date());
   const [fichajesSemana, setFichajesSemana] = useState<Fichaje[] | null>(null);
   const [fichajesMes, setFichajesMes] = useState<Fichaje[]>([]);
+  const [diaDetalle, setDiaDetalle] = useState<string | null>(null);
 
   useEffect(() => {
     usuariosApi.listTrabajadores().then((ts) => {
@@ -83,6 +104,20 @@ export default function AdminHoras() {
   const totalSemana = totalesPorDias(fichajesSemana ?? [], dias);
   const diasMes = Array.from(new Set(fichajesMes.map((f) => f.timestamp.slice(0, 10))));
   const totalMes = totalesPorDias(fichajesMes, diasMes);
+
+  const fichajesDelDia = diaDetalle
+    ? (fichajesSemana ?? [])
+        .filter((f) => f.timestamp.slice(0, 10) === diaDetalle)
+        .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    : [];
+  const pinsDia = fichajesDelDia
+    .filter((f) => f.gps)
+    .map((f) => ({
+      id: f.id,
+      coord: f.gps!,
+      color: TIPO_COLOR[f.tipo],
+      label: `${TIPO_LABEL[f.tipo]} · ${hora(f.timestamp)}`,
+    }));
 
   return (
     <div>
@@ -150,8 +185,14 @@ export default function AdminHoras() {
                 </td>
               </tr>
             ) : (
-              porDia.map(({ iso, jornada }) => (
-                <tr key={iso}>
+              porDia.map(({ iso, jornada }) => {
+                const tieneFichajes = !!jornada.entrada || jornada.pausas.length > 0 || jornada.extras.length > 0;
+                return (
+                <tr
+                  key={iso}
+                  onClick={() => tieneFichajes && setDiaDetalle(iso)}
+                  className={tieneFichajes ? "cursor-pointer hover:bg-slate-50" : ""}
+                >
                   <td className="px-4 py-3 font-semibold text-forge-dark">{diaCorto(iso)}</td>
                   <td className="px-4 py-3 text-slate-500">
                     {jornada.entrada ? hora(jornada.entrada.timestamp) : "—"}
@@ -176,7 +217,8 @@ export default function AdminHoras() {
                   <td className="px-4 py-3 text-amber-600">{formatHoras(jornada.segundosPausa)}</td>
                   <td className="px-4 py-3 text-violet-600">{formatHoras(jornada.segundosExtra)}</td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
           {fichajesSemana !== null && (
@@ -218,6 +260,52 @@ export default function AdminHoras() {
           </p>
         </div>
       </div>
+
+      {/* Detalle de un día: todos los fichajes con hora y ubicación */}
+      <Modal
+        open={!!diaDetalle}
+        onClose={() => setDiaDetalle(null)}
+        title={diaDetalle ? `Fichajes · ${diaCorto(diaDetalle)}` : "Fichajes"}
+      >
+        <div className="space-y-4">
+          {fichajesDelDia.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">Sin fichajes este día.</p>
+          ) : (
+            <>
+              <ul className="space-y-2">
+                {fichajesDelDia.map((f) => (
+                  <li key={f.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: TIPO_COLOR[f.tipo] }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-forge-dark">
+                        {TIPO_LABEL[f.tipo]}
+                        {f.estado === "automatica" && (
+                          <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                            AUTOMÁTICA
+                          </span>
+                        )}
+                        {f.estado === "tarde" && (
+                          <span className="ml-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                            TARDE
+                          </span>
+                        )}
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-slate-400">
+                        <IconMapPin className="h-3 w-3" /> {coordText(f.gps)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-forge-dark">{hora(f.timestamp)}</span>
+                  </li>
+                ))}
+              </ul>
+              {pinsDia.length > 0 && <WorkerMap height={200} pins={pinsDia} />}
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

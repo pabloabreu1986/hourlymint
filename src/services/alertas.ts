@@ -1,10 +1,10 @@
 import { hoyISO } from "@/lib/seed";
-import { esDiaLaborable } from "@/lib/horas";
+import { esDiaLaborable, CIERRE_ORDINARIO } from "@/lib/horas";
 import * as obrasApi from "./obras";
 import * as usuariosApi from "./usuarios";
 import * as fichajesApi from "./fichajes";
 import * as notificacionesApi from "./notificaciones";
-import type { Obra } from "@/lib/types";
+import type { Fichaje, Obra } from "@/lib/types";
 
 const TITULO_AVISO = "Fichaje pendiente";
 /** Margen tras la hora de entrada del cuadrante antes de avisar. */
@@ -82,5 +82,44 @@ async function ejecutarRevision(): Promise<void> {
       titulo: TITULO_AVISO,
       mensaje: `No has fichado la entrada hoy en ${obra.nombre}. Ficha en cuanto puedas.`,
     });
+  }
+}
+
+let salidasEnCurso: Promise<void> | null = null;
+
+/**
+ * Cierre automático de jornada: pasadas las 18:00, a quien fichó entrada
+ * hoy y no ha fichado salida se le registra una salida automática a las
+ * 18:00. Idempotente (solo si falta la salida). Comparte candado como la
+ * revisión de fichajes faltantes para evitar duplicados en concurrencia.
+ */
+export function revisarSalidasAutomaticas(): Promise<void> {
+  if (salidasEnCurso) return salidasEnCurso;
+  salidasEnCurso = ejecutarSalidas().finally(() => {
+    salidasEnCurso = null;
+  });
+  return salidasEnCurso;
+}
+
+async function ejecutarSalidas(): Promise<void> {
+  const ahora = new Date();
+  const [h, m] = CIERRE_ORDINARIO.split(":").map(Number);
+  if (ahora.getHours() * 60 + ahora.getMinutes() < h * 60 + m) return; // aún no son las 18:00
+
+  const fichajesHoy = await fichajesApi.fichajesDeHoy();
+
+  const porTrabajador = new Map<string, Fichaje[]>();
+  for (const f of fichajesHoy) {
+    const arr = porTrabajador.get(f.trabajadorId) ?? [];
+    arr.push(f);
+    porTrabajador.set(f.trabajadorId, arr);
+  }
+
+  for (const [trabajadorId, fs] of porTrabajador) {
+    const entrada = fs.find((f) => f.tipo === "entrada");
+    const tieneSalida = fs.some((f) => f.tipo === "salida");
+    if (entrada && !tieneSalida) {
+      await fichajesApi.crearSalidaAutomatica(trabajadorId, entrada.obraId);
+    }
   }
 }
