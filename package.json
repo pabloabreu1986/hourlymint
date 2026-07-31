@@ -1,9 +1,9 @@
 {
-  "name": "forgevia-control-obra",
+  "name": "fichaloop",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "FORGEVIA — App de control de obra (mocks / localStorage). Trabajador (móvil) + Admin (escritorio).",
+  "description": "fichaloop — Plataforma white-label de control horario y gestión de personal. Trabajador (móvil) + Admin (escritorio) + consola de plataforma.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/prepare-sites.mjs",

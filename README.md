@@ -21,9 +21,19 @@ npm run preview  # sirve el build
 La integración ya está cableada. Pasos (una sola vez):
 
 1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
-2. **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y
-   pulsa **Run**. Esto crea las tablas, las políticas (RLS), el **bucket privado de fotos**,
-   la publicación de **Realtime**, el job de **`pg_cron`** y los datos de ejemplo.
+2. **SQL Editor → New query**: ejecuta las migraciones de `supabase/` **en este orden**
+   (cada una es idempotente):
+   1. [`supabase/schema.sql`](supabase/schema.sql) — tablas base, políticas (RLS), **bucket
+      privado de fotos**, publicación de **Realtime**, job de **`pg_cron`** y datos de ejemplo.
+   2. [`supabase/multi-tenant.sql`](supabase/multi-tenant.sql) — columna `tenant_id` + índices
+      en todas las tablas (aislamiento por cliente).
+   3. [`supabase/whitelabel.sql`](supabase/whitelabel.sql) — tabla `tenants` (marca por cliente)
+      y alta del super-admin.
+   4. [`supabase/demo-solicitudes.sql`](supabase/demo-solicitudes.sql) — tabla de leads del
+      formulario "Solicitar demo" de la landing.
+   5. [`supabase/modulos-rrhh.sql`](supabase/modulos-rrhh.sql) — tablas de los módulos RRHH
+      (ausencias, turnos, gastos, documentos, evaluaciones, metas, onboarding, comunicados,
+      canal de denuncias).
 3. **Project Settings → API**: copia la *Project URL* y la *anon public key*.
 4. Copia `.env.example` a `.env` y pega los valores:
    ```bash
@@ -72,7 +82,11 @@ src/
     admin/     panel de administración. Escritorio: sidebar completo. Móvil (`lg:hidden`):
                cabecera + tab bar inferior con accesos principales
 supabase/
-  schema.sql   esquema + RLS + bucket + Realtime + pg_cron + datos semilla
+  schema.sql           esquema base + RLS + bucket + Realtime + pg_cron + datos semilla
+  multi-tenant.sql     tenant_id + índices (aislamiento por cliente)
+  whitelabel.sql       tabla tenants (marca por cliente) + super-admin
+  demo-solicitudes.sql leads del formulario de demo
+  modulos-rrhh.sql     módulos RRHH (ausencias, turnos, gastos, documentos, talento…)
 ```
 
 El interruptor mock ↔ Supabase vive en cada `src/services/*.ts`: al principio de cada función,
@@ -87,7 +101,8 @@ apiladas en móvil, tabla en escritorio, mismos datos.
 ### Notas
 - Fotos: en modo Supabase van a un **bucket privado** (URLs firmadas). En modo mock se guardan
   como data URLs comprimidas en `localStorage` (suficiente para la demo).
-- El GPS usa `navigator.geolocation`; si se deniega el permiso, cae a una posición simulada.
+- El GPS usa `navigator.geolocation`; si se deniega el permiso o falla, el fichaje se guarda
+  **sin ubicación** (`gps: null`) — nunca se inventa una posición.
 - El mapa es real: Leaflet + tiles de OpenStreetMap, con coordenadas GPS reales.
 
 ---
