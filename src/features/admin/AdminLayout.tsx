@@ -25,23 +25,90 @@ import {
   IconBell,
   IconClock,
   IconUser,
+  IconCalendar,
+  IconTurnos,
+  IconEuro,
+  IconReceipt,
+  IconFolder,
+  IconStar,
+  IconTarget,
+  IconCheckSquare,
+  IconSitemap,
+  IconMegaphone,
+  IconShield,
 } from "@/components/icons";
 
-const NAV = [
-  { to: "/admin", label: "Dashboard", icon: IconGrid, end: true },
-  { to: "/admin/obras", label: "Obras", icon: IconObras },
-  { to: "/admin/trabajadores", label: "Trabajadores", icon: IconUsers },
-  { to: "/admin/partes", label: "Partes diarios", icon: IconClipboard },
-  { to: "/admin/fotografias", label: "Fotografías", icon: IconCamera },
-  { to: "/admin/materiales", label: "Materiales", icon: IconBox },
-  { to: "/admin/incidencias", label: "Incidencias", icon: IconAlert },
-  { to: "/admin/vehiculos", label: "Vehículos", icon: IconTruck },
-  { to: "/admin/herramientas", label: "Herramientas", icon: IconWrench },
-  { to: "/admin/almacen", label: "Almacén", icon: IconWarehouse },
-  { to: "/admin/informes", label: "Informes", icon: IconChart },
-  { to: "/admin/horas", label: "Horas", icon: IconClock },
-  { to: "/admin/notificaciones", label: "Notificaciones", icon: IconBell },
-  { to: "/admin/configuracion", label: "Configuración", icon: IconSettings },
+// Menú lateral agrupado por áreas. Cada entrada se filtra por las
+// funciones activas del tenant (los títulos de sección desaparecen si
+// no les queda ninguna entrada visible).
+interface NavItem {
+  to: string;
+  label: string;
+  icon: (p: React.SVGProps<SVGSVGElement>) => JSX.Element;
+  end?: boolean;
+}
+
+const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
+  {
+    titulo: null,
+    items: [
+      { to: "/admin", label: "Dashboard", icon: IconGrid, end: true },
+      { to: "/admin/obras", label: "Obras", icon: IconObras },
+      { to: "/admin/trabajadores", label: "Trabajadores", icon: IconUsers },
+    ],
+  },
+  {
+    titulo: "Obra",
+    items: [
+      { to: "/admin/partes", label: "Partes diarios", icon: IconClipboard },
+      { to: "/admin/fotografias", label: "Fotografías", icon: IconCamera },
+      { to: "/admin/materiales", label: "Materiales", icon: IconBox },
+      { to: "/admin/incidencias", label: "Incidencias", icon: IconAlert },
+      { to: "/admin/vehiculos", label: "Vehículos", icon: IconTruck },
+      { to: "/admin/herramientas", label: "Herramientas", icon: IconWrench },
+      { to: "/admin/almacen", label: "Almacén", icon: IconWarehouse },
+    ],
+  },
+  {
+    titulo: "Tiempo",
+    items: [
+      { to: "/admin/horas", label: "Horas", icon: IconClock },
+      { to: "/admin/ausencias", label: "Ausencias", icon: IconCalendar },
+      { to: "/admin/turnos", label: "Turnos", icon: IconTurnos },
+    ],
+  },
+  {
+    titulo: "Finanzas",
+    items: [
+      { to: "/admin/gastos", label: "Gastos", icon: IconEuro },
+      { to: "/admin/nomina", label: "Nómina", icon: IconReceipt },
+    ],
+  },
+  {
+    titulo: "Talento",
+    items: [
+      { to: "/admin/evaluaciones", label: "Evaluaciones", icon: IconStar },
+      { to: "/admin/metas", label: "Metas y objetivos", icon: IconTarget },
+      { to: "/admin/onboarding", label: "Onboarding", icon: IconCheckSquare },
+      { to: "/admin/organigrama", label: "Organigrama", icon: IconSitemap },
+    ],
+  },
+  {
+    titulo: "Comunicación",
+    items: [
+      { to: "/admin/comunicados", label: "Comunicados", icon: IconMegaphone },
+      { to: "/admin/denuncias", label: "Canal de denuncias", icon: IconShield },
+      { to: "/admin/documentos", label: "Documentos", icon: IconFolder },
+      { to: "/admin/notificaciones", label: "Notificaciones", icon: IconBell },
+    ],
+  },
+  {
+    titulo: "Sistema",
+    items: [
+      { to: "/admin/informes", label: "Informes", icon: IconChart },
+      { to: "/admin/configuracion", label: "Configuración", icon: IconSettings },
+    ],
+  },
 ];
 
 // Barra de navegación inferior en móvil: mismo patrón que la vista de trabajador.
@@ -59,7 +126,11 @@ export default function AdminLayout() {
 
   // Filtra el menú por las funciones activas del cliente (tenant).
   const funciones = tenantActual().funciones;
-  const nav = NAV.filter((n) => tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to)));
+  const secciones = NAV_SECCIONES.map((s) => ({
+    ...s,
+    items: s.items.filter((n) => tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to))),
+  })).filter((s) => s.items.length > 0);
+  const nav = secciones.flatMap((s) => s.items);
   const tabsMobile = TABS_MOBILE.filter((n) =>
     tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to))
   );
@@ -83,23 +154,34 @@ export default function AdminLayout() {
       <div className="px-5 py-5">
         <Logo variant="light" />
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {nav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                isActive
-                  ? "bg-forge-orange text-white"
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <Icon className="h-5 w-5" />
-            {label}
-          </NavLink>
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        {secciones.map((s, i) => (
+          <div key={s.titulo ?? i} className="mb-1">
+            {s.titulo && (
+              <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-widest text-white/30">
+                {s.titulo}
+              </p>
+            )}
+            <div className="space-y-1">
+              {s.items.map(({ to, label, icon: Icon, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                      isActive
+                        ? "bg-forge-orange text-white"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
       <button

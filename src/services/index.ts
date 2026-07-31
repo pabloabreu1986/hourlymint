@@ -15,3 +15,10 @@ export * as dashboardApi from "./dashboard";
 export * as tenantApi from "./tenant";
 export * as leadsApi from "./leads";
 export * as plataformaApi from "./plataforma";
+// Suite RRHH
+export * as ausenciasApi from "./ausencias";
+export * as turnosApi from "./turnos";
+export * as gastosApi from "./gastos";
+export * as documentosApi from "./documentos";
+export * as talentoApi from "./talento";
+export * as comunicadosApi from "./comunicados";

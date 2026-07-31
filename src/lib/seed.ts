@@ -34,6 +34,14 @@ function hoyA(hora: string): string {
   return d.toISOString();
 }
 
+/** YYYY-MM-DD a `n` días de hoy (negativo = pasado). */
+function diasDesdeHoy(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+}
+
 export function seedDB(): DBSchema {
   const hoy = hoyISO();
 
@@ -279,6 +287,225 @@ export function seedDB(): DBSchema {
     { id: "a_4", nombre: "Perfilería 48mm", stock: 120, unidad: "ml", minimo: 60 },
   ];
 
+  // ── Módulos RRHH ──
+  const ausencias = [
+    {
+      id: "au_1",
+      trabajadorId: "u_juan",
+      tipo: "vacaciones" as const,
+      fechaInicio: diasDesdeHoy(14),
+      fechaFin: diasDesdeHoy(18),
+      motivo: "Vacaciones de verano",
+      estado: "pendiente" as const,
+      respuesta: null,
+      creadaEn: hoyA("08:30"),
+    },
+    {
+      id: "au_2",
+      trabajadorId: "u_pedro",
+      tipo: "permiso" as const,
+      fechaInicio: diasDesdeHoy(3),
+      fechaFin: diasDesdeHoy(3),
+      motivo: "Cita médica",
+      estado: "aprobada" as const,
+      respuesta: "Aprobado, avisa al encargado.",
+      creadaEn: hoyA("07:50"),
+    },
+    {
+      id: "au_3",
+      trabajadorId: "u_david",
+      tipo: "baja_medica" as const,
+      fechaInicio: diasDesdeHoy(-2),
+      fechaFin: diasDesdeHoy(5),
+      motivo: "Lumbalgia — parte médico entregado",
+      estado: "aprobada" as const,
+      respuesta: "Recupérate. Adjunta el alta cuando la tengas.",
+      creadaEn: diasDesdeHoy(-2) + "T08:00:00.000Z",
+    },
+  ];
+
+  // Turnos de esta semana para el equipo de Vallecas y Parla.
+  const turnos = [
+    ...["u_juan", "u_carlos", "u_antonio", "u_javier"].flatMap((t, i) =>
+      [0, 1, 2].map((d) => ({
+        id: `t_${t}_${d}`,
+        trabajadorId: t,
+        fecha: diasDesdeHoy(d),
+        obraId: "o_vallecas",
+        horaInicio: "09:00",
+        horaFin: "18:00",
+        nota: i === 0 && d === 2 ? "Recoger material en almacén antes de subir" : "",
+      }))
+    ),
+    ...["u_luis", "u_david"].flatMap((t) =>
+      [0, 1].map((d) => ({
+        id: `t_${t}_${d}`,
+        trabajadorId: t,
+        fecha: diasDesdeHoy(d),
+        obraId: "o_parla",
+        horaInicio: "08:00",
+        horaFin: "17:00",
+        nota: "",
+      }))
+    ),
+  ];
+
+  const gastos = [
+    {
+      id: "g_1",
+      trabajadorId: "u_luis",
+      obraId: "o_parla",
+      concepto: "Comida equipo (2 personas)",
+      categoria: "dietas" as const,
+      importe: 24.6,
+      fecha: diasDesdeHoy(-1),
+      justificante: null,
+      estado: "pendiente" as const,
+      creadoEn: hoyA("09:40"),
+    },
+    {
+      id: "g_2",
+      trabajadorId: "u_pedro",
+      obraId: "o_climatizacion",
+      concepto: "Parking centro",
+      categoria: "transporte" as const,
+      importe: 8.5,
+      fecha: diasDesdeHoy(-3),
+      justificante: null,
+      estado: "aprobado" as const,
+      creadoEn: diasDesdeHoy(-3) + "T14:10:00.000Z",
+    },
+    {
+      id: "g_3",
+      trabajadorId: "u_antonio",
+      obraId: "o_vallecas",
+      concepto: "Brocas SDS y discos de corte",
+      categoria: "material" as const,
+      importe: 37.9,
+      fecha: diasDesdeHoy(-6),
+      justificante: null,
+      estado: "pagado" as const,
+      creadoEn: diasDesdeHoy(-6) + "T11:00:00.000Z",
+    },
+  ];
+
+  const documentos = [
+    {
+      id: "d_1",
+      usuarioId: null,
+      nombre: "Plan de prevención de riesgos 2026",
+      categoria: "otro" as const,
+      path:
+        "data:text/plain;base64," +
+        btoa("Documento de ejemplo: plan de prevencion de riesgos laborales."),
+      mime: "text/plain",
+      subidoPor: "u_admin",
+      createdAt: diasDesdeHoy(-20) + "T09:00:00.000Z",
+    },
+    {
+      id: "d_2",
+      usuarioId: "u_juan",
+      nombre: "Nómina junio 2026",
+      categoria: "nomina" as const,
+      path: "data:text/plain;base64," + btoa("Nomina de ejemplo (mock)."),
+      mime: "text/plain",
+      subidoPor: "u_admin",
+      createdAt: diasDesdeHoy(-15) + "T09:00:00.000Z",
+    },
+  ];
+
+  const evaluaciones = [
+    {
+      id: "e_1",
+      trabajadorId: "u_juan",
+      evaluadorId: "u_admin",
+      periodo: "2º trimestre 2026",
+      puntuaciones: { puntualidad: 5, calidad: 4, seguridad: 4, equipo: 5 },
+      comentario: "Muy buen trimestre. Referente del equipo en Vallecas.",
+      createdAt: diasDesdeHoy(-10) + "T10:00:00.000Z",
+    },
+    {
+      id: "e_2",
+      trabajadorId: "u_carlos",
+      evaluadorId: "u_admin",
+      periodo: "2º trimestre 2026",
+      puntuaciones: { puntualidad: 3, calidad: 3, seguridad: 4, equipo: 4 },
+      comentario: "Progresa bien; reforzar puntualidad en la entrada.",
+      createdAt: diasDesdeHoy(-10) + "T10:30:00.000Z",
+    },
+  ];
+
+  const metas = [
+    {
+      id: "me_1",
+      trabajadorId: null,
+      titulo: "Cerrar Reforma Local Vallecas en plazo",
+      descripcion: "Entrega prevista a fin de mes con repaso de calidades incluido.",
+      progreso: 70,
+      fechaObjetivo: diasDesdeHoy(30),
+      createdAt: diasDesdeHoy(-30) + "T09:00:00.000Z",
+    },
+    {
+      id: "me_2",
+      trabajadorId: "u_pedro",
+      titulo: "Certificación de instalador de aerotermia",
+      descripcion: "Completar el curso y el examen antes de que acabe el trimestre.",
+      progreso: 40,
+      fechaObjetivo: diasDesdeHoy(60),
+      createdAt: diasDesdeHoy(-20) + "T09:00:00.000Z",
+    },
+  ];
+
+  const onboardings = [
+    {
+      id: "ob_1",
+      usuarioId: "u_javier",
+      tipo: "alta" as const,
+      tareas: [
+        { id: "ot_1", texto: "Contrato firmado", hecha: true },
+        { id: "ot_2", texto: "Alta en Seguridad Social", hecha: true },
+        { id: "ot_3", texto: "EPIs entregados (casco, botas, guantes)", hecha: true },
+        { id: "ot_4", texto: "Formación PRL básica (20h)", hecha: false },
+        { id: "ot_5", texto: "Acceso a la app y primer fichaje", hecha: true },
+      ],
+      createdAt: diasDesdeHoy(-12) + "T09:00:00.000Z",
+    },
+  ];
+
+  const comunicados = [
+    {
+      id: "c_1",
+      titulo: "Calendario de agosto",
+      cuerpo:
+        "La semana del 15 de agosto la empresa permanecerá cerrada por vacaciones. Las obras con entrega comprometida mantendrán retén — se avisará a los afectados.",
+      autorId: "u_admin",
+      fecha: hoyA("08:00"),
+      fijado: true,
+    },
+    {
+      id: "c_2",
+      titulo: "Nueva política de gastos",
+      cuerpo:
+        "A partir de este mes, todos los gastos se presentan desde la app con foto del ticket. Los aprobados se abonan con la nómina siguiente.",
+      autorId: "u_admin",
+      fecha: diasDesdeHoy(-4) + "T12:00:00.000Z",
+      fijado: false,
+    },
+  ];
+
+  const denuncias = [
+    {
+      id: "dn_1",
+      categoria: "seguridad" as const,
+      descripcion:
+        "En la obra de Parla se está trabajando en el andamio sin línea de vida. Lo he comentado y no se ha corregido.",
+      anonima: true,
+      trabajadorId: null,
+      estado: "en_revision" as const,
+      fecha: diasDesdeHoy(-2) + "T16:20:00.000Z",
+    },
+  ];
+
   // Datos mock de un único cliente (FORGEVIA). Estampamos su tenant para
   // que respeten el aislamiento igual que en producción; el super-admin va
   // a `_platform` (no pertenece a ningún cliente).
@@ -299,5 +526,14 @@ export function seedDB(): DBSchema {
     vehiculos: vehiculos.map((v) => ({ ...v, tenantId: T })),
     herramientas: herramientas.map((h) => ({ ...h, tenantId: T })),
     almacen: almacen.map((a) => ({ ...a, tenantId: T })),
+    ausencias: ausencias.map((a) => ({ ...a, tenantId: T })),
+    turnos: turnos.map((t) => ({ ...t, tenantId: T })),
+    gastos: gastos.map((g) => ({ ...g, tenantId: T })),
+    documentos: documentos.map((d) => ({ ...d, tenantId: T })),
+    evaluaciones: evaluaciones.map((e) => ({ ...e, tenantId: T })),
+    metas: metas.map((m) => ({ ...m, tenantId: T })),
+    onboardings: onboardings.map((o) => ({ ...o, tenantId: T })),
+    comunicados: comunicados.map((c) => ({ ...c, tenantId: T })),
+    denuncias: denuncias.map((d) => ({ ...d, tenantId: T })),
   };
 }

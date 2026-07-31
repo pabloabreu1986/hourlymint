@@ -59,6 +59,8 @@ export interface Usuario {
   activo: boolean;
   /** Color para el avatar/iniciales */
   color: string;
+  /** Días de vacaciones anuales (módulo Ausencias). Por defecto 22. */
+  diasVacaciones?: number;
 }
 
 export interface Obra {
@@ -242,6 +244,158 @@ export interface AlmacenItem {
   minimo: number;
 }
 
+// ─── Módulos RRHH (suite tipo Factorial) ─────────────────────
+
+export type TipoAusencia = "vacaciones" | "baja_medica" | "permiso" | "otro";
+export type EstadoAusencia = "pendiente" | "aprobada" | "rechazada";
+
+/** Solicitud de ausencia/vacaciones del trabajador; la aprueba el admin. */
+export interface Ausencia {
+  id: string;
+  tenantId: string;
+  trabajadorId: string;
+  tipo: TipoAusencia;
+  /** YYYY-MM-DD, ambos incluidos. */
+  fechaInicio: string;
+  fechaFin: string;
+  motivo: string;
+  estado: EstadoAusencia;
+  /** Comentario del admin al aprobar/rechazar. */
+  respuesta: string | null;
+  creadaEn: string; // ISO
+}
+
+/** Turno planificado para un trabajador en un día concreto. */
+export interface Turno {
+  id: string;
+  tenantId: string;
+  trabajadorId: string;
+  /** YYYY-MM-DD */
+  fecha: string;
+  obraId: string | null;
+  horaInicio: string; // "HH:MM"
+  horaFin: string; // "HH:MM"
+  nota: string;
+}
+
+export type CategoriaGasto = "dietas" | "transporte" | "material" | "alojamiento" | "otro";
+export type EstadoGasto = "pendiente" | "aprobado" | "rechazado" | "pagado";
+
+/** Gasto presentado por un trabajador (con foto del justificante). */
+export interface Gasto {
+  id: string;
+  tenantId: string;
+  trabajadorId: string;
+  obraId: string | null;
+  concepto: string;
+  categoria: CategoriaGasto;
+  /** Importe en euros. */
+  importe: number;
+  /** YYYY-MM-DD del gasto. */
+  fecha: string;
+  /** Justificante (foto del ticket) como data URL, o null. */
+  justificante: string | null;
+  estado: EstadoGasto;
+  creadoEn: string; // ISO
+}
+
+export type CategoriaDocumento = "nomina" | "contrato" | "certificado" | "otro";
+
+/** Documento laboral: de un empleado concreto o de empresa (usuarioId null). */
+export interface Documento {
+  id: string;
+  tenantId: string;
+  /** null = documento de empresa, visible para toda la plantilla. */
+  usuarioId: string | null;
+  nombre: string;
+  categoria: CategoriaDocumento;
+  /** Contenido como data URL (mock y BD). */
+  path: string;
+  mime: string;
+  subidoPor: string | null;
+  createdAt: string; // ISO
+}
+
+/** Puntuaciones 1–5 por criterio de una evaluación de desempeño. */
+export interface PuntuacionesEvaluacion {
+  puntualidad: number;
+  calidad: number;
+  seguridad: number;
+  equipo: number;
+}
+
+export interface Evaluacion {
+  id: string;
+  tenantId: string;
+  trabajadorId: string;
+  evaluadorId: string | null;
+  /** Etiqueta del periodo evaluado, p.ej. "2º trimestre 2026". */
+  periodo: string;
+  puntuaciones: PuntuacionesEvaluacion;
+  comentario: string;
+  createdAt: string; // ISO
+}
+
+/** Meta/objetivo (OKR simplificado): de empresa o de un trabajador. */
+export interface Meta {
+  id: string;
+  tenantId: string;
+  /** null = meta de empresa. */
+  trabajadorId: string | null;
+  titulo: string;
+  descripcion: string;
+  /** Avance 0–100. */
+  progreso: number;
+  /** YYYY-MM-DD objetivo. */
+  fechaObjetivo: string;
+  createdAt: string; // ISO
+}
+
+export type TipoOnboarding = "alta" | "baja";
+
+export interface TareaOnboarding {
+  id: string;
+  texto: string;
+  hecha: boolean;
+}
+
+/** Checklist de acogida (alta) o salida (baja) de un empleado. */
+export interface ProcesoOnboarding {
+  id: string;
+  tenantId: string;
+  usuarioId: string;
+  tipo: TipoOnboarding;
+  tareas: TareaOnboarding[];
+  createdAt: string; // ISO
+}
+
+/** Comunicado del tablón de empresa (lo publica el admin). */
+export interface Comunicado {
+  id: string;
+  tenantId: string;
+  titulo: string;
+  cuerpo: string;
+  autorId: string | null;
+  fecha: string; // ISO
+  fijado: boolean;
+}
+
+export type CategoriaDenuncia = "acoso" | "seguridad" | "fraude" | "otro";
+export type EstadoDenuncia = "nueva" | "en_revision" | "cerrada";
+
+/** Denuncia del canal ético; puede ser anónima. */
+export interface Denuncia {
+  id: string;
+  tenantId: string;
+  categoria: CategoriaDenuncia;
+  descripcion: string;
+  /** true = no se guarda quién la envió. */
+  anonima: boolean;
+  trabajadorId: string | null;
+  estado: EstadoDenuncia;
+  fecha: string; // ISO
+}
+
 export interface DBSchema {
   /** Clientes de la plataforma (white-label). El operador (super-admin)
    * los gestiona desde su panel. Hoy en mock; mañana en la BD. */
@@ -257,4 +411,14 @@ export interface DBSchema {
   vehiculos: Vehiculo[];
   herramientas: Herramienta[];
   almacen: AlmacenItem[];
+  // Módulos RRHH
+  ausencias: Ausencia[];
+  turnos: Turno[];
+  gastos: Gasto[];
+  documentos: Documento[];
+  evaluaciones: Evaluacion[];
+  metas: Meta[];
+  onboardings: ProcesoOnboarding[];
+  comunicados: Comunicado[];
+  denuncias: Denuncia[];
 }

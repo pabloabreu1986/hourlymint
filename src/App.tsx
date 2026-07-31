@@ -24,6 +24,10 @@ import CierreParte from "@/features/worker/CierreParte";
 import Fotografias from "@/features/worker/Fotografias";
 import Notificaciones from "@/features/worker/Notificaciones";
 import Perfil from "@/features/worker/Perfil";
+import MisAusencias from "@/features/worker/MisAusencias";
+import MisGastos from "@/features/worker/MisGastos";
+import MisDocumentos from "@/features/worker/MisDocumentos";
+import MiEmpresa from "@/features/worker/MiEmpresa";
 
 // Admin (escritorio)
 import AdminLayout from "@/features/admin/AdminLayout";
@@ -40,6 +44,16 @@ import AdminHoras from "@/features/admin/AdminHoras";
 import AdminConfiguracion from "@/features/admin/AdminConfiguracion";
 import AdminPerfil from "@/features/admin/AdminPerfil";
 import AdminNotificaciones from "@/features/admin/AdminNotificaciones";
+// Suite RRHH
+import AdminAusencias from "@/features/admin/AdminAusencias";
+import AdminTurnos from "@/features/admin/AdminTurnos";
+import AdminGastos from "@/features/admin/AdminGastos";
+import AdminNomina from "@/features/admin/AdminNomina";
+import AdminDocumentos from "@/features/admin/AdminDocumentos";
+import AdminTalento from "@/features/admin/AdminTalento";
+import AdminOrganigrama from "@/features/admin/AdminOrganigrama";
+import AdminComunicados from "@/features/admin/AdminComunicados";
+import AdminDenuncias from "@/features/admin/AdminDenuncias";
 
 // Super-admin (consola de plataforma)
 import SuperLayout from "@/features/super/SuperLayout";
@@ -131,6 +145,11 @@ export default function App() {
         <Route path="/fotos" element={<Fotografias />} />
         <Route path="/notificaciones" element={<Notificaciones />} />
         <Route path="/perfil" element={<Perfil />} />
+        {/* Suite RRHH (según funciones del tenant; accesos desde Perfil) */}
+        <Route path="/ausencias" element={<MisAusencias />} />
+        <Route path="/gastos" element={<MisGastos />} />
+        <Route path="/documentos" element={<MisDocumentos />} />
+        <Route path="/empresa" element={<MiEmpresa />} />
       </Route>
 
       {/* ── Admin ── */}
@@ -153,6 +172,18 @@ export default function App() {
         <Route path="/admin/almacen" element={<FuncionRoute clave="almacen"><AdminRecursos tab="almacen" /></FuncionRoute>} />
         <Route path="/admin/informes" element={<FuncionRoute clave="informes"><AdminInformes /></FuncionRoute>} />
         <Route path="/admin/horas" element={<FuncionRoute clave="horas"><AdminHoras /></FuncionRoute>} />
+        {/* Suite RRHH */}
+        <Route path="/admin/ausencias" element={<FuncionRoute clave="ausencias"><AdminAusencias /></FuncionRoute>} />
+        <Route path="/admin/turnos" element={<FuncionRoute clave="turnos"><AdminTurnos /></FuncionRoute>} />
+        <Route path="/admin/gastos" element={<FuncionRoute clave="gastos"><AdminGastos /></FuncionRoute>} />
+        <Route path="/admin/nomina" element={<FuncionRoute clave="nomina"><AdminNomina /></FuncionRoute>} />
+        <Route path="/admin/documentos" element={<FuncionRoute clave="documentos"><AdminDocumentos /></FuncionRoute>} />
+        <Route path="/admin/evaluaciones" element={<FuncionRoute clave="evaluaciones"><AdminTalento tab="evaluaciones" /></FuncionRoute>} />
+        <Route path="/admin/metas" element={<FuncionRoute clave="metas"><AdminTalento tab="metas" /></FuncionRoute>} />
+        <Route path="/admin/onboarding" element={<FuncionRoute clave="onboarding"><AdminTalento tab="onboarding" /></FuncionRoute>} />
+        <Route path="/admin/organigrama" element={<FuncionRoute clave="organigrama"><AdminOrganigrama /></FuncionRoute>} />
+        <Route path="/admin/comunicados" element={<FuncionRoute clave="comunicados"><AdminComunicados /></FuncionRoute>} />
+        <Route path="/admin/denuncias" element={<FuncionRoute clave="denuncias"><AdminDenuncias /></FuncionRoute>} />
         <Route path="/admin/notificaciones" element={<AdminNotificaciones />} />
         <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
         <Route path="/admin/perfil" element={<AdminPerfil />} />

@@ -17,6 +17,17 @@ import {
   IconClock,
   IconObras,
   IconCheck,
+  IconCalendar,
+  IconTurnos,
+  IconEuro,
+  IconReceipt,
+  IconFolder,
+  IconStar,
+  IconTarget,
+  IconCheckSquare,
+  IconSitemap,
+  IconMegaphone,
+  IconShield,
 } from "@/components/icons";
 
 const NARANJA = "#E8721C";
@@ -31,6 +42,7 @@ export default function Landing() {
         <Hero onDemo={abrirDemo} />
         <Dolores />
         <Funciones />
+        <SuiteRRHH />
         <ComoFunciona />
         <Precios onDemo={abrirDemo} />
         <WhiteLabel />
@@ -65,6 +77,7 @@ function Nav() {
         <nav className="hidden items-center gap-8 text-[13px] font-semibold uppercase tracking-[0.12em] md:flex">
           <a href="#dolores" className="transition-opacity hover:opacity-50">El problema</a>
           <a href="#funciones" className="transition-opacity hover:opacity-50">Producto</a>
+          <a href="#rrhh" className="transition-opacity hover:opacity-50">RRHH</a>
           <a href="#como" className="transition-opacity hover:opacity-50">Proceso</a>
           <a href="#precios" className="transition-opacity hover:opacity-50">Precios</a>
         </nav>
@@ -107,8 +120,8 @@ function Hero({ onDemo }: { onDemo: (plan?: string) => void }) {
 
         <div className="grid gap-12 pt-8 md:grid-cols-12 md:items-start">
           <p className="max-w-2xl text-xl font-medium leading-snug tracking-[-0.02em] md:col-span-7 md:text-3xl">
-            Fichajes, partes, fotos y horas reales. Todo lo que pasa fuera,
-            visible desde tu oficina.
+            Fichajes, partes, fotos y horas reales. Y también vacaciones, turnos,
+            gastos y nómina. Todo lo que pasa fuera, visible desde tu oficina.
           </p>
           <div className="md:col-span-4 md:col-start-9">
             <p className="mb-6 max-w-sm leading-relaxed text-black/60">
@@ -172,6 +185,8 @@ const DOLORES = [
   ["«Los partes llegan tarde.»", "Parte digital, cerrado y firmado cada día."],
   ["«Las fotos están en WhatsApp.»", "Cada imagen, en su obra y en su fecha."],
   ["«No me cuadran las horas.»", "Horas reales listas para nómina y facturación."],
+  ["«Las vacaciones se piden por WhatsApp.»", "Solicitud, aprobación y saldo de días, en la app."],
+  ["«Los tickets aparecen a fin de mes.»", "Gastos con foto del ticket y aprobación al momento."],
 ];
 
 function Dolores() {
@@ -247,6 +262,65 @@ function Funciones() {
   );
 }
 
+// Suite RRHH: los módulos de gestión de personas (tipo Factorial),
+// activables por cliente desde el panel de la plataforma.
+const MODULOS_RRHH: Array<{ icon: (p: { className?: string }) => ReactNode; titulo: string; texto: string }> = [
+  { icon: IconCalendar, titulo: "Ausencias y vacaciones", texto: "Tu equipo solicita desde el móvil; tú apruebas con el saldo de días a la vista." },
+  { icon: IconTurnos, titulo: "Turnos", texto: "Planifica la semana por persona y obra. Cada uno sabe dónde y a qué hora." },
+  { icon: IconEuro, titulo: "Gastos", texto: "Dietas, transporte y material con foto del ticket. Aprobar o rechazar, un clic." },
+  { icon: IconReceipt, titulo: "Nómina", texto: "Horas, extras, ausencias y gastos del mes en un CSV listo para tu gestoría." },
+  { icon: IconFolder, titulo: "Documentos", texto: "Nóminas, contratos y documentación de empresa, entregados en el móvil de cada uno." },
+  { icon: IconStar, titulo: "Evaluaciones", texto: "Desempeño por periodos con criterios claros: puntualidad, calidad, seguridad, equipo." },
+  { icon: IconTarget, titulo: "Metas y objetivos", texto: "Objetivos de empresa o personales con su avance, visibles para quien corresponde." },
+  { icon: IconCheckSquare, titulo: "Onboarding", texto: "Checklist de alta y de salida: contrato, EPIs, formación… nada se queda sin hacer." },
+  { icon: IconSitemap, titulo: "Organigrama", texto: "Quién es quién y en qué obra está, generado solo a partir de tus datos." },
+  { icon: IconMegaphone, titulo: "Comunicados", texto: "Un tablón de empresa que llega a toda la plantilla con aviso en el móvil." },
+  { icon: IconShield, titulo: "Canal de denuncias", texto: "Canal ético confidencial, con opción de anonimato real para tu equipo." },
+];
+
+function SuiteRRHH() {
+  return (
+    <section id="rrhh" className="scroll-mt-20 bg-[#101418] text-white">
+      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">03 — Las personas</p>
+        <div className="grid gap-10 md:grid-cols-12 md:items-end">
+          <h2 className="text-[clamp(3.2rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.07em] md:col-span-8">
+            No solo fichajes.
+            <br />
+            <span className="text-[#E8721C]">Todo tu equipo.</span>
+          </h2>
+          <p className="max-w-md text-lg leading-relaxed text-white/50 md:col-span-4">
+            La gestión de personal completa — vacaciones, turnos, gastos, nómina,
+            talento — en la misma herramienta con la que tu equipo ya ficha.
+            Activa solo los módulos que necesitas.
+          </p>
+        </div>
+
+        <div className="mt-20 grid border-t border-white/15 sm:grid-cols-2 lg:grid-cols-3 md:mt-28">
+          {MODULOS_RRHH.map((m, i) => (
+            <article
+              key={m.titulo}
+              className="group min-h-52 border-b border-white/15 py-7 sm:pr-7 sm:[&:nth-child(2n)]:pl-7 lg:min-h-60 lg:border-r lg:px-7 lg:[&:nth-child(3n)]:border-r-0 lg:[&:nth-child(3n+1)]:pl-0 lg:[&:nth-child(2n)]:pl-7"
+            >
+              <div className="flex items-center justify-between">
+                <m.icon className="h-6 w-6 text-[#E8721C]" />
+                <span className="text-xs text-white/25">{String(i + 1).padStart(2, "0")}</span>
+              </div>
+              <h3 className="mt-10 text-2xl font-bold tracking-[-0.035em]">{m.titulo}</h3>
+              <p className="mt-3 max-w-xs leading-relaxed text-white/45">{m.texto}</p>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-10 text-sm text-white/40">
+          Cada módulo se activa o desactiva por cliente. Pagas por lo que usas, y tu
+          panel solo muestra lo que necesitas.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 const PASOS = [
   ["Ficha", "Tu equipo registra entrada y salida desde el móvil, con GPS."],
   ["Reporta", "El encargado añade trabajo, fotos, materiales e incidencias."],
@@ -257,7 +331,7 @@ function ComoFunciona() {
   return (
     <section id="como" className="scroll-mt-20 bg-[#E8721C] text-[#101418]">
       <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8 md:py-32">
-        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/55">03 — Así de simple</p>
+        <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/55">04 — Así de simple</p>
         <div className="border-t border-black/30">
           {PASOS.map(([titulo, texto], i) => (
             <div key={titulo} className="grid gap-5 border-b border-black/30 py-9 md:grid-cols-12 md:items-center">
@@ -285,6 +359,7 @@ const PLANES = [
       "Partes y fotos de obra",
       "3 obras activas",
       "Control de horas",
+      "Ausencias y vacaciones",
       "Soporte por email",
     ],
   },
@@ -298,7 +373,8 @@ const PLANES = [
       "Obras activas ilimitadas",
       "Materiales e incidencias",
       "Vehículos y herramientas",
-      "Informes para nómina",
+      "Turnos, gastos y nómina",
+      "Documentos y comunicados",
       "Logo y colores propios",
       "Soporte prioritario",
     ],
@@ -310,11 +386,12 @@ const PLANES = [
     limite: "Hasta 40 trabajadores",
     funciones: [
       "Todo lo incluido en Equipo",
+      "Suite RRHH completa",
+      "Evaluaciones, metas y onboarding",
+      "Canal de denuncias",
       "Roles y permisos avanzados",
       "Dominio propio",
-      "Funciones a medida",
       "Puesta en marcha guiada",
-      "Soporte prioritario",
     ],
   },
 ];
@@ -326,7 +403,7 @@ function Precios({ onDemo }: { onDemo: (plan?: string) => void }) {
         <div className="grid gap-10 md:grid-cols-12 md:items-end">
           <div className="md:col-span-8">
             <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-black/45">
-              04 — Precios claros
+              05 — Precios claros
             </p>
             <h2 className="text-[clamp(3.2rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.07em]">
               Empieza pequeño.
@@ -426,7 +503,7 @@ function WhiteLabel() {
     <section className="overflow-hidden bg-[#101418] text-white">
       <div className="mx-auto grid max-w-[1400px] md:grid-cols-12">
         <div className="px-5 py-20 sm:px-8 md:col-span-8 md:py-32 md:pr-12">
-          <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">05 — Tu identidad</p>
+          <p className="mb-12 text-xs font-bold uppercase tracking-[0.18em] text-white/40">06 — Tu identidad</p>
           <h2 className="text-[clamp(3.3rem,7.5vw,8rem)] font-black leading-[0.86] tracking-[-0.075em]">
             Parece tuya.
             <br />
@@ -491,7 +568,8 @@ function Footer() {
         <div>
           <Marca />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-black/45">
-            Control de fichajes, obras y partes diarios para empresas que trabajan fuera.
+            Control de fichajes, obras y partes diarios — y la gestión completa de tu
+            equipo: ausencias, turnos, gastos, nómina y talento.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm font-medium">

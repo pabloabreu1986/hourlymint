@@ -229,3 +229,79 @@ export const IconMenu = (p: P) => (
     <path d="M3 12h18M3 6h18M3 18h18" />
   </svg>
 );
+
+// ── Iconos de la suite RRHH ──
+export const IconCalendar = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+  </svg>
+);
+export const IconTurnos = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M12 14v3l2 1" />
+  </svg>
+);
+export const IconEuro = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M18.5 5.5A8 8 0 0 0 6.8 8M18.5 18.5A8 8 0 0 1 6.8 16" />
+    <path d="M4 10.5h9M4 13.5h9" />
+  </svg>
+);
+export const IconReceipt = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 2v20l2.5-1.5L9 22l2.5-1.5L14 22l2.5-1.5L19 22V2l-2.5 1.5L14 2l-2.5 1.5L9 2 6.5 3.5 4 2z" />
+    <path d="M8 8h8M8 12h8M8 16h5" />
+  </svg>
+);
+export const IconFolder = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+  </svg>
+);
+export const IconStar = (p: P) => (
+  <svg {...base(p)}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+export const IconTarget = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+export const IconMegaphone = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 11l18-7v16L3 13v-2z" />
+    <path d="M7.5 13.5V19a1.5 1.5 0 0 0 3 0v-4" />
+  </svg>
+);
+export const IconShield = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+export const IconSitemap = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="9" y="2" width="6" height="5" rx="1" />
+    <rect x="2" y="17" width="6" height="5" rx="1" />
+    <rect x="16" y="17" width="6" height="5" rx="1" />
+    <path d="M12 7v4M5 17v-3h14v3M12 11v3" />
+  </svg>
+);
+export const IconCheckSquare = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <path d="M9 12l2 2 4-5" />
+  </svg>
+);
+export const IconDownload = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="M7 10l5 5 5-5" />
+    <path d="M12 15V3" />
+  </svg>
+);

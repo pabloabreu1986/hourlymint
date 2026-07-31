@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { fichajesApi, usuariosApi } from "@/services";
+import { tenantActual } from "@/lib/branding";
+import { tenantTieneAlguna, tenantTieneFuncion } from "@/lib/funciones";
 import type { Fichaje, TipoFichaje } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Avatar, Modal, Spinner } from "@/components/ui";
 import { hora } from "@/lib/format";
-import { IconLogout, IconClock, IconUser, IconMapPin } from "@/components/icons";
+import {
+  IconLogout,
+  IconClock,
+  IconUser,
+  IconMapPin,
+  IconCalendar,
+  IconEuro,
+  IconFolder,
+  IconMegaphone,
+  IconChevronRight,
+} from "@/components/icons";
 
 const ETIQUETA_TIPO: Record<TipoFichaje, string> = {
   entrada: "Entrada",
@@ -81,6 +94,9 @@ export default function Perfil() {
           <Row label="Puesto" value={usuario.puesto ?? "—"} />
         </div>
 
+        {/* Mi espacio (módulos RRHH activos para este cliente) */}
+        <MenuEspacio />
+
         {/* Fichajes de hoy */}
         <div className="card mt-4 p-5">
           <p className="label mb-3">Mis fichajes de hoy</p>
@@ -146,6 +162,54 @@ export default function Perfil() {
           </button>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+/** Accesos a los módulos RRHH que el cliente tenga activos. */
+function MenuEspacio() {
+  const funciones = tenantActual().funciones;
+  const items = [
+    tenantTieneFuncion(funciones, "ausencias") && {
+      to: "/ausencias",
+      label: "Mis ausencias y vacaciones",
+      icon: IconCalendar,
+    },
+    tenantTieneFuncion(funciones, "gastos") && {
+      to: "/gastos",
+      label: "Mis gastos",
+      icon: IconEuro,
+    },
+    tenantTieneFuncion(funciones, "documentos") && {
+      to: "/documentos",
+      label: "Mis documentos",
+      icon: IconFolder,
+    },
+    tenantTieneAlguna(funciones, [
+      "comunicados",
+      "turnos",
+      "metas",
+      "evaluaciones",
+      "denuncias",
+    ]) && {
+      to: "/empresa",
+      label: "Mi empresa",
+      icon: IconMegaphone,
+    },
+  ].filter(Boolean) as { to: string; label: string; icon: typeof IconCalendar }[];
+
+  if (items.length === 0) return null;
+  return (
+    <div className="card mt-4 divide-y divide-slate-100">
+      {items.map(({ to, label, icon: Icon }) => (
+        <NavLink key={to} to={to} className="flex items-center gap-3 px-5 py-3.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-forge-orange/10 text-forge-orange">
+            <Icon className="h-5 w-5" />
+          </span>
+          <span className="flex-1 text-sm font-semibold text-forge-dark">{label}</span>
+          <IconChevronRight className="h-4 w-4 text-slate-300" />
+        </NavLink>
+      ))}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // Catálogo de módulos activables por cliente (feature flags). El
-// super-admin marca cuáles ve cada tenant. Hoy solo se guarda el dato;
-// el filtrado del menú/rutas por estas claves llega en un paso posterior.
-// La clave coincide con el segmento de ruta de /admin/<clave>.
+// super-admin marca cuáles ve cada tenant y tanto el menú del admin
+// (AdminLayout) como las rutas (FuncionRoute en App.tsx) filtran por
+// estas claves. La clave coincide con el segmento de ruta de /admin/<clave>.
 
 export interface FuncionDef {
   clave: string;
@@ -11,9 +11,11 @@ export interface FuncionDef {
 }
 
 export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
+  // ── Núcleo (siempre activo) ──
   { clave: "dashboard", label: "Dashboard", fija: true },
   { clave: "obras", label: "Obras", fija: true },
   { clave: "trabajadores", label: "Trabajadores", fija: true },
+  // ── Operativa de obra ──
   { clave: "partes", label: "Partes diarios" },
   { clave: "fotografias", label: "Fotografías" },
   { clave: "materiales", label: "Materiales" },
@@ -23,6 +25,18 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "almacen", label: "Almacén" },
   { clave: "informes", label: "Informes" },
   { clave: "horas", label: "Horas" },
+  // ── Suite RRHH ──
+  { clave: "ausencias", label: "Ausencias y vacaciones" },
+  { clave: "turnos", label: "Turnos" },
+  { clave: "gastos", label: "Gastos" },
+  { clave: "nomina", label: "Nómina" },
+  { clave: "documentos", label: "Documentos" },
+  { clave: "evaluaciones", label: "Evaluaciones" },
+  { clave: "metas", label: "Metas y objetivos" },
+  { clave: "onboarding", label: "Onboarding" },
+  { clave: "organigrama", label: "Organigrama" },
+  { clave: "comunicados", label: "Comunicados" },
+  { clave: "denuncias", label: "Canal de denuncias" },
 ];
 
 /** Claves fijas que todo tenant tiene siempre activas. */
@@ -50,4 +64,9 @@ export function claveDeRutaAdmin(to: string): string {
 export function tenantTieneFuncion(funciones: string[], clave: string): boolean {
   if (!OPCIONALES.has(clave)) return true;
   return funciones.includes(clave);
+}
+
+/** ¿El tenant tiene activa al menos una de estas funciones? */
+export function tenantTieneAlguna(funciones: string[], claves: string[]): boolean {
+  return claves.some((c) => tenantTieneFuncion(funciones, c));
 }

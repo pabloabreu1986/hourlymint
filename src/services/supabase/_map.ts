@@ -14,6 +14,15 @@ import type {
   Foto,
   Adjunto,
   Tenant,
+  Ausencia,
+  Turno,
+  Gasto,
+  Documento,
+  Evaluacion,
+  Meta,
+  ProcesoOnboarding,
+  Comunicado,
+  Denuncia,
 } from "@/lib/types";
 
 // ── Tenant (cliente white-label) ──
@@ -51,6 +60,7 @@ export const toUsuario = (r: any): Usuario => ({
   puesto: r.puesto ?? undefined,
   activo: r.activo,
   color: r.color,
+  diasVacaciones: r.dias_vacaciones ?? undefined,
 });
 export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.id !== undefined && { id: u.id }),
@@ -62,6 +72,7 @@ export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.puesto !== undefined && { puesto: u.puesto ?? null }),
   ...(u.activo !== undefined && { activo: u.activo }),
   ...(u.color !== undefined && { color: u.color }),
+  ...(u.diasVacaciones !== undefined && { dias_vacaciones: u.diasVacaciones ?? null }),
 });
 
 // ── Obra ──
@@ -249,6 +260,202 @@ export const toAlmacen = (r: any): AlmacenItem => ({
   stock: r.stock,
   unidad: r.unidad,
   minimo: r.minimo,
+});
+
+// ── Módulos RRHH ──
+export const toAusencia = (r: any): Ausencia => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  trabajadorId: r.trabajador_id,
+  tipo: r.tipo,
+  fechaInicio: r.fecha_inicio,
+  fechaFin: r.fecha_fin,
+  motivo: r.motivo ?? "",
+  estado: r.estado,
+  respuesta: r.respuesta ?? null,
+  creadaEn: r.creada_en,
+});
+export const fromAusencia = (a: Partial<Ausencia>): any => ({
+  ...(a.id !== undefined && { id: a.id }),
+  ...(a.tenantId !== undefined && { tenant_id: a.tenantId }),
+  ...(a.trabajadorId !== undefined && { trabajador_id: a.trabajadorId }),
+  ...(a.tipo !== undefined && { tipo: a.tipo }),
+  ...(a.fechaInicio !== undefined && { fecha_inicio: a.fechaInicio }),
+  ...(a.fechaFin !== undefined && { fecha_fin: a.fechaFin }),
+  ...(a.motivo !== undefined && { motivo: a.motivo }),
+  ...(a.estado !== undefined && { estado: a.estado }),
+  ...(a.respuesta !== undefined && { respuesta: a.respuesta }),
+  ...(a.creadaEn !== undefined && { creada_en: a.creadaEn }),
+});
+
+export const toTurno = (r: any): Turno => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  trabajadorId: r.trabajador_id,
+  fecha: r.fecha,
+  obraId: r.obra_id ?? null,
+  horaInicio: (r.hora_inicio ?? "09:00").slice(0, 5),
+  horaFin: (r.hora_fin ?? "18:00").slice(0, 5),
+  nota: r.nota ?? "",
+});
+export const fromTurno = (t: Partial<Turno>): any => ({
+  ...(t.id !== undefined && { id: t.id }),
+  ...(t.tenantId !== undefined && { tenant_id: t.tenantId }),
+  ...(t.trabajadorId !== undefined && { trabajador_id: t.trabajadorId }),
+  ...(t.fecha !== undefined && { fecha: t.fecha }),
+  ...(t.obraId !== undefined && { obra_id: t.obraId }),
+  ...(t.horaInicio !== undefined && { hora_inicio: t.horaInicio }),
+  ...(t.horaFin !== undefined && { hora_fin: t.horaFin }),
+  ...(t.nota !== undefined && { nota: t.nota }),
+});
+
+export const toGasto = (r: any): Gasto => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  trabajadorId: r.trabajador_id,
+  obraId: r.obra_id ?? null,
+  concepto: r.concepto,
+  categoria: r.categoria,
+  importe: Number(r.importe),
+  fecha: r.fecha,
+  justificante: r.justificante ?? null,
+  estado: r.estado,
+  creadoEn: r.creado_en,
+});
+export const fromGasto = (g: Partial<Gasto>): any => ({
+  ...(g.id !== undefined && { id: g.id }),
+  ...(g.tenantId !== undefined && { tenant_id: g.tenantId }),
+  ...(g.trabajadorId !== undefined && { trabajador_id: g.trabajadorId }),
+  ...(g.obraId !== undefined && { obra_id: g.obraId }),
+  ...(g.concepto !== undefined && { concepto: g.concepto }),
+  ...(g.categoria !== undefined && { categoria: g.categoria }),
+  ...(g.importe !== undefined && { importe: g.importe }),
+  ...(g.fecha !== undefined && { fecha: g.fecha }),
+  ...(g.justificante !== undefined && { justificante: g.justificante }),
+  ...(g.estado !== undefined && { estado: g.estado }),
+  ...(g.creadoEn !== undefined && { creado_en: g.creadoEn }),
+});
+
+export const toDocumento = (r: any): Documento => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  usuarioId: r.usuario_id ?? null,
+  nombre: r.nombre,
+  categoria: r.categoria,
+  path: r.path,
+  mime: r.mime ?? "application/octet-stream",
+  subidoPor: r.subido_por ?? null,
+  createdAt: r.created_at,
+});
+export const fromDocumento = (d: Partial<Documento>): any => ({
+  ...(d.id !== undefined && { id: d.id }),
+  ...(d.tenantId !== undefined && { tenant_id: d.tenantId }),
+  ...(d.usuarioId !== undefined && { usuario_id: d.usuarioId }),
+  ...(d.nombre !== undefined && { nombre: d.nombre }),
+  ...(d.categoria !== undefined && { categoria: d.categoria }),
+  ...(d.path !== undefined && { path: d.path }),
+  ...(d.mime !== undefined && { mime: d.mime }),
+  ...(d.subidoPor !== undefined && { subido_por: d.subidoPor }),
+  ...(d.createdAt !== undefined && { created_at: d.createdAt }),
+});
+
+export const toEvaluacion = (r: any): Evaluacion => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  trabajadorId: r.trabajador_id,
+  evaluadorId: r.evaluador_id ?? null,
+  periodo: r.periodo,
+  puntuaciones: r.puntuaciones,
+  comentario: r.comentario ?? "",
+  createdAt: r.created_at,
+});
+export const fromEvaluacion = (e: Partial<Evaluacion>): any => ({
+  ...(e.id !== undefined && { id: e.id }),
+  ...(e.tenantId !== undefined && { tenant_id: e.tenantId }),
+  ...(e.trabajadorId !== undefined && { trabajador_id: e.trabajadorId }),
+  ...(e.evaluadorId !== undefined && { evaluador_id: e.evaluadorId }),
+  ...(e.periodo !== undefined && { periodo: e.periodo }),
+  ...(e.puntuaciones !== undefined && { puntuaciones: e.puntuaciones }),
+  ...(e.comentario !== undefined && { comentario: e.comentario }),
+  ...(e.createdAt !== undefined && { created_at: e.createdAt }),
+});
+
+export const toMeta = (r: any): Meta => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  trabajadorId: r.trabajador_id ?? null,
+  titulo: r.titulo,
+  descripcion: r.descripcion ?? "",
+  progreso: r.progreso ?? 0,
+  fechaObjetivo: r.fecha_objetivo,
+  createdAt: r.created_at,
+});
+export const fromMeta = (m: Partial<Meta>): any => ({
+  ...(m.id !== undefined && { id: m.id }),
+  ...(m.tenantId !== undefined && { tenant_id: m.tenantId }),
+  ...(m.trabajadorId !== undefined && { trabajador_id: m.trabajadorId }),
+  ...(m.titulo !== undefined && { titulo: m.titulo }),
+  ...(m.descripcion !== undefined && { descripcion: m.descripcion }),
+  ...(m.progreso !== undefined && { progreso: m.progreso }),
+  ...(m.fechaObjetivo !== undefined && { fecha_objetivo: m.fechaObjetivo }),
+  ...(m.createdAt !== undefined && { created_at: m.createdAt }),
+});
+
+export const toOnboarding = (r: any): ProcesoOnboarding => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  usuarioId: r.usuario_id,
+  tipo: r.tipo,
+  tareas: r.tareas ?? [],
+  createdAt: r.created_at,
+});
+export const fromOnboarding = (o: Partial<ProcesoOnboarding>): any => ({
+  ...(o.id !== undefined && { id: o.id }),
+  ...(o.tenantId !== undefined && { tenant_id: o.tenantId }),
+  ...(o.usuarioId !== undefined && { usuario_id: o.usuarioId }),
+  ...(o.tipo !== undefined && { tipo: o.tipo }),
+  ...(o.tareas !== undefined && { tareas: o.tareas }),
+  ...(o.createdAt !== undefined && { created_at: o.createdAt }),
+});
+
+export const toComunicado = (r: any): Comunicado => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  titulo: r.titulo,
+  cuerpo: r.cuerpo ?? "",
+  autorId: r.autor_id ?? null,
+  fecha: r.fecha,
+  fijado: r.fijado ?? false,
+});
+export const fromComunicado = (c: Partial<Comunicado>): any => ({
+  ...(c.id !== undefined && { id: c.id }),
+  ...(c.tenantId !== undefined && { tenant_id: c.tenantId }),
+  ...(c.titulo !== undefined && { titulo: c.titulo }),
+  ...(c.cuerpo !== undefined && { cuerpo: c.cuerpo }),
+  ...(c.autorId !== undefined && { autor_id: c.autorId }),
+  ...(c.fecha !== undefined && { fecha: c.fecha }),
+  ...(c.fijado !== undefined && { fijado: c.fijado }),
+});
+
+export const toDenuncia = (r: any): Denuncia => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  categoria: r.categoria,
+  descripcion: r.descripcion,
+  anonima: r.anonima ?? false,
+  trabajadorId: r.trabajador_id ?? null,
+  estado: r.estado,
+  fecha: r.fecha,
+});
+export const fromDenuncia = (d: Partial<Denuncia>): any => ({
+  ...(d.id !== undefined && { id: d.id }),
+  ...(d.tenantId !== undefined && { tenant_id: d.tenantId }),
+  ...(d.categoria !== undefined && { categoria: d.categoria }),
+  ...(d.descripcion !== undefined && { descripcion: d.descripcion }),
+  ...(d.anonima !== undefined && { anonima: d.anonima }),
+  ...(d.trabajadorId !== undefined && { trabajador_id: d.trabajadorId }),
+  ...(d.estado !== undefined && { estado: d.estado }),
+  ...(d.fecha !== undefined && { fecha: d.fecha }),
 });
 
 /** Lanza un Error legible a partir del error de Supabase. */
