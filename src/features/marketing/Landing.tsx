@@ -78,8 +78,10 @@ function Nav() {
           <a href="#dolores" className="transition-opacity hover:opacity-50">El problema</a>
           <a href="#funciones" className="transition-opacity hover:opacity-50">Producto</a>
           <a href="#rrhh" className="transition-opacity hover:opacity-50">RRHH</a>
-          <a href="#como" className="transition-opacity hover:opacity-50">Proceso</a>
           <a href="#precios" className="transition-opacity hover:opacity-50">Precios</a>
+          <Link to="/funcionalidades" className="transition-opacity hover:opacity-50">
+            Funcionalidades
+          </Link>
         </nav>
         <a href="#acceso" className="flex items-center gap-2 text-sm font-bold transition-opacity hover:opacity-50">
           Acceso <Flecha />
@@ -257,6 +259,15 @@ function Funciones() {
             </article>
           ))}
         </div>
+
+        <div className="mt-10">
+          <Link
+            to="/funcionalidades"
+            className="inline-flex items-center gap-3 border-b-2 border-[#E8721C] pb-2 font-bold transition-all hover:gap-5"
+          >
+            Ver todas las funcionalidades, una a una <Flecha />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -312,10 +323,18 @@ function SuiteRRHH() {
           ))}
         </div>
 
-        <p className="mt-10 text-sm text-white/40">
-          Cada módulo se activa o desactiva por cliente. Pagas por lo que usas, y tu
-          panel solo muestra lo que necesitas.
-        </p>
+        <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-white/40">
+            Cada módulo se activa o desactiva por cliente. Pagas por lo que usas, y tu
+            panel solo muestra lo que necesitas.
+          </p>
+          <Link
+            to="/funcionalidades"
+            className="inline-flex w-fit shrink-0 items-center gap-3 border-b-2 border-[#E8721C] pb-2 font-bold text-white transition-all hover:gap-5"
+          >
+            Cómo funciona cada módulo <Flecha />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -574,6 +593,7 @@ function Footer() {
         </div>
         <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm font-medium">
           <a href="#funciones" className="hover:text-[#E8721C]">Producto</a>
+          <Link to="/funcionalidades" className="hover:text-[#E8721C]">Funcionalidades</Link>
           <a href="#como" className="hover:text-[#E8721C]">Cómo funciona</a>
           <a href="#acceso" className="hover:text-[#E8721C]">Acceso</a>
           <a href="mailto:hola@fichaloop.com" className="hover:text-[#E8721C]">Contacto</a>

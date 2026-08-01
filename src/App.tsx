@@ -13,6 +13,7 @@ import Login from "@/features/auth/Login";
 // La web de marketing (logos grandes) solo se carga en el apex.
 const Landing = lazy(() => import("@/features/marketing/Landing"));
 const Terminos = lazy(() => import("@/features/marketing/Terminos"));
+const Funcionalidades = lazy(() => import("@/features/marketing/Funcionalidades"));
 
 // Trabajador (móvil)
 import WorkerLayout from "@/features/worker/WorkerLayout";
@@ -125,6 +126,14 @@ export default function App() {
         element={
           <Suspense fallback={<Cargando />}>
             <Terminos />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/funcionalidades"
+        element={
+          <Suspense fallback={<Cargando />}>
+            <Funcionalidades />
           </Suspense>
         }
       />

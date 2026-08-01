@@ -24,7 +24,8 @@ La integración ya está cableada. Pasos (una sola vez):
 2. **SQL Editor → New query**: ejecuta las migraciones de `supabase/` **en este orden**
    (cada una es idempotente):
    1. [`supabase/schema.sql`](supabase/schema.sql) — tablas base, políticas (RLS), **bucket
-      privado de fotos**, publicación de **Realtime**, job de **`pg_cron`** y datos de ejemplo.
+      privado de fotos**, publicación de **Realtime**, job de **`pg_cron`** y el admin inicial
+      del cliente (sin datos de ejemplo).
    2. [`supabase/multi-tenant.sql`](supabase/multi-tenant.sql) — columna `tenant_id` + índices
       en todas las tablas (aislamiento por cliente).
    3. [`supabase/whitelabel.sql`](supabase/whitelabel.sql) — tabla `tenants` (marca por cliente)
