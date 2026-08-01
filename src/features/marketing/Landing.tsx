@@ -80,7 +80,7 @@ function Nav() {
           <a href="#rrhh" className="transition-opacity hover:opacity-50">RRHH</a>
           <a href="#precios" className="transition-opacity hover:opacity-50">Precios</a>
           <Link to="/funcionalidades" className="transition-opacity hover:opacity-50">
-            Funcionalidades
+            Módulos
           </Link>
         </nav>
         <a href="#acceso" className="flex items-center gap-2 text-sm font-bold transition-opacity hover:opacity-50">
@@ -96,9 +96,17 @@ function Hero({ onDemo }: { onDemo: (plan?: string) => void }) {
     <section className="overflow-hidden">
       <div className="relative mx-auto max-w-[1400px] px-5 pb-16 pt-12 sm:px-8 md:pb-24 md:pt-20">
         <div className="relative border-b border-black/20 pb-12">
-          <div className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-black/50">
-            <span className="h-2 w-2 rounded-full bg-[#E8721C]" />
-            Control de obra, sin papeles
+          <div className="mb-8 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-black/50">
+              <span className="h-2 w-2 rounded-full bg-[#E8721C]" />
+              Control de obra, sin papeles
+            </div>
+            <Link
+              to="/funcionalidades"
+              className="flex shrink-0 items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#E8721C] transition-opacity hover:opacity-60"
+            >
+              Módulos <Flecha />
+            </Link>
           </div>
 
           <div className="relative z-10 isolate grid items-center gap-10 md:grid-cols-12">
