@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Cargando } from "@/components/ui";
 import { alertasApi } from "@/services";
@@ -10,10 +10,45 @@ import type { Rol } from "@/lib/types";
 import type { ReactNode } from "react";
 
 import Login from "@/features/auth/Login";
+
+/**
+ * Si falla la carga de un chunk lazy (típico justo tras un despliegue:
+ * la pestaña tiene el index antiguo y pide un archivo que ya no existe
+ * en el servidor), recargamos una vez para coger la versión nueva en
+ * vez de dejar la página en blanco.
+ */
+const CLAVE_RECARGA = "fichaloop.recarga-chunk";
+function lazyConRecarga(fn: () => Promise<{ default: React.ComponentType }>) {
+  return lazy(() =>
+    fn().then(
+      (mod) => {
+        sessionStorage.removeItem(CLAVE_RECARGA);
+        return mod;
+      },
+      (err) => {
+        if (!sessionStorage.getItem(CLAVE_RECARGA)) {
+          sessionStorage.setItem(CLAVE_RECARGA, "1");
+          window.location.reload();
+        }
+        throw err;
+      }
+    )
+  );
+}
+
 // La web de marketing (logos grandes) solo se carga en el apex.
-const Landing = lazy(() => import("@/features/marketing/Landing"));
-const Terminos = lazy(() => import("@/features/marketing/Terminos"));
-const Funcionalidades = lazy(() => import("@/features/marketing/Funcionalidades"));
+const Landing = lazyConRecarga(() => import("@/features/marketing/Landing"));
+const Terminos = lazyConRecarga(() => import("@/features/marketing/Terminos"));
+const Funcionalidades = lazyConRecarga(() => import("@/features/marketing/Funcionalidades"));
+
+/** Al cambiar de ruta, vuelve arriba (React Router conserva el scroll). */
+function ScrollArriba() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 // Trabajador (móvil)
 import WorkerLayout from "@/features/worker/WorkerLayout";
@@ -117,6 +152,8 @@ function FuncionRoute({ clave, children }: { clave: string; children: ReactNode 
 
 export default function App() {
   return (
+    <>
+    <ScrollArriba />
     <Routes>
       {/* Raíz pública: web de marketing (apex) o login de cliente (subdominio) */}
       <Route path="/" element={<RaizPublica />} />
@@ -212,5 +249,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
