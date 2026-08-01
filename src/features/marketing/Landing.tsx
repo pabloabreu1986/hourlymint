@@ -109,7 +109,9 @@ function Hero({ onDemo }: { onDemo: (plan?: string) => void }) {
             </h1>
           </div>
 
-          <div className="absolute bottom-8 right-0 z-0 hidden h-[clamp(260px,28vw,390px)] w-[28%] overflow-hidden sm:block">
+          {/* Anclada al bloque del titular: del borde superior (eyebrow) a la
+              línea divisoria inferior, sin sobresalir hacia el nav. */}
+          <div className="absolute inset-y-0 right-0 z-0 hidden w-[28%] overflow-hidden sm:block">
             <LiquidHover
               imageSrc={blueprint}
               fit="cover"
