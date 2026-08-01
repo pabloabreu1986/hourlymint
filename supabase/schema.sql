@@ -332,10 +332,8 @@ select cron.schedule(
   $cron$select public.cron_cierre_automatico_fichajes();$cron$
 );
 
--- ── Datos iniciales (solo productivos) ─────────────────────
--- Únicamente el primer admin del cliente. Sin obras, trabajadores ni
--- datos de ejemplo: la app arranca vacía, lista para datos reales.
--- (El super-admin de la plataforma se crea en whitelabel.sql.)
-insert into usuarios (id, nombre, password, rol, telefono, puesto, activo, color) values
-  ('u_admin','Antonio Manzanares','admin1234','admin','600 000 000','Administrador',true,'#3B4756')
-on conflict (id) do nothing;
+-- ── Datos iniciales ──────────────────────────────────────────
+-- Este esquema no siembra NINGÚN usuario ni dato de ejemplo.
+-- El super-admin de la plataforma se crea en whitelabel.sql y el
+-- primer admin de cada cliente se da de alta desde el panel de
+-- super-admin (Clientes → editar → alta de usuario).
