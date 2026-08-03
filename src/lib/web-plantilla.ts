@@ -1,11 +1,15 @@
-// Plantilla de ejemplo para la mini-web de un cliente, basada en la
-// estrategia premium de FORGEVIA (Experiencias Essential / Signature /
-// Bespoke). El super-admin la inserta con un clic y la adapta.
+// Plantillas para la mini-web de un cliente. El super-admin las inserta
+// con un clic desde su panel y las adapta:
+//  - Premium: basada en la estrategia de experiencias de FORGEVIA
+//    (Essential / Signature / Bespoke, reserva, libro del proyecto…).
+//  - Básica: una sección de cada tipo, como punto de partida genérico.
 import { uid } from "./db";
 import type { ItemWeb, SeccionWeb } from "./types";
 
-export function plantillaWebEjemplo(nombreCorto: string): SeccionWeb[] {
-  const item = (x: Omit<ItemWeb, "id">): ItemWeb => ({ id: uid("wi"), ...x });
+const item = (x: Omit<ItemWeb, "id">): ItemWeb => ({ id: uid("wi"), ...x });
+
+/** Plantilla premium (experiencias tipo FORGEVIA). */
+export function plantillaWebPremium(nombreCorto: string): SeccionWeb[] {
   return [
     {
       id: uid("ws"),
@@ -115,6 +119,96 @@ export function plantillaWebEjemplo(nombreCorto: string): SeccionWeb[] {
       tipo: "cta",
       titulo: "¿Hablamos de tu proyecto?",
       subtitulo: "Cuéntanos qué tienes en mente y te preparamos una visita técnica.",
+      items: [],
+      telefono: "",
+      email: "",
+      whatsapp: "",
+    },
+  ];
+}
+
+/** Plantilla básica: una sección de cada tipo, lista para adaptar. */
+export function plantillaWebBasica(nombreCorto: string): SeccionWeb[] {
+  return [
+    {
+      id: uid("ws"),
+      tipo: "hero",
+      titulo: `Bienvenido a ${nombreCorto}.`,
+      subtitulo: "Cuéntale al mundo en una frase qué hace tu empresa y por qué elegirte.",
+      items: [],
+    },
+    {
+      id: uid("ws"),
+      tipo: "texto",
+      titulo: "Quiénes somos",
+      subtitulo:
+        "Presenta tu empresa en un par de párrafos: tu historia, tu equipo y tu manera de trabajar.",
+      items: [],
+    },
+    {
+      id: uid("ws"),
+      tipo: "cards",
+      titulo: "Nuestros servicios",
+      subtitulo: "Los servicios que ofreces, cada uno con lo que incluye.",
+      items: [
+        item({
+          titulo: "Servicio 1",
+          texto: "Descripción corta del servicio.",
+          puntos: ["Qué incluye", "Otro punto incluido", "Y otro más"],
+        }),
+        item({
+          titulo: "Servicio 2",
+          etiqueta: "El más solicitado",
+          texto: "Descripción corta del servicio.",
+          destacada: true,
+          puntos: ["Qué incluye", "Otro punto incluido", "Y otro más"],
+        }),
+        item({
+          titulo: "Servicio 3",
+          texto: "Descripción corta del servicio.",
+          puntos: ["Qué incluye", "Otro punto incluido"],
+        }),
+      ],
+    },
+    {
+      id: uid("ws"),
+      tipo: "lista",
+      titulo: "Cómo trabajamos",
+      subtitulo: "Los pasos de tu forma de trabajar, en orden.",
+      items: [
+        item({ texto: "Primera visita y toma de datos" }),
+        item({ texto: "Presupuesto detallado sin compromiso" }),
+        item({ texto: "Ejecución con seguimiento diario" }),
+        item({ texto: "Entrega y garantía" }),
+      ],
+    },
+    {
+      id: uid("ws"),
+      tipo: "chips",
+      titulo: "Zonas de trabajo",
+      subtitulo: "",
+      items: [
+        item({ texto: "Madrid capital" }),
+        item({ texto: "Zona norte" }),
+        item({ texto: "Zona sur" }),
+        item({ texto: "Corredor del Henares" }),
+      ],
+    },
+    {
+      id: uid("ws"),
+      tipo: "faq",
+      titulo: "Preguntas frecuentes",
+      subtitulo: "",
+      items: [
+        item({ titulo: "¿Dais presupuesto sin compromiso?", texto: "Sí, la primera visita y el presupuesto son gratuitos." }),
+        item({ titulo: "¿Qué garantía tienen los trabajos?", texto: "Todos nuestros trabajos incluyen garantía por escrito." }),
+      ],
+    },
+    {
+      id: uid("ws"),
+      tipo: "cta",
+      titulo: "¿Hablamos?",
+      subtitulo: "Llámanos o escríbenos y te respondemos hoy mismo.",
       items: [],
       telefono: "",
       email: "",

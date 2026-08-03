@@ -1,6 +1,6 @@
 import { uid } from "@/lib/db";
 import { urlDeEspacio } from "@/lib/host";
-import { plantillaWebEjemplo } from "@/lib/web-plantilla";
+import { plantillaWebBasica, plantillaWebPremium } from "@/lib/web-plantilla";
 import type { ItemWeb, SeccionWeb, TipoSeccionWeb } from "@/lib/types";
 import {
   IconChevronDown,
@@ -89,12 +89,28 @@ export default function EditorWeb({
       </div>
 
       {web.length === 0 && (
-        <button
-          onClick={() => onChange(plantillaWebEjemplo(nombreCorto))}
-          className="w-full rounded-xl border-2 border-dashed border-slate-300 p-4 text-sm font-semibold text-slate-500 hover:border-slate-400 hover:text-slate-700"
-        >
-          Insertar plantilla de ejemplo (experiencias, reserva, libro del proyecto, FAQ y contacto)
-        </button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            onClick={() => onChange(plantillaWebBasica(nombreCorto))}
+            className="rounded-xl border-2 border-dashed border-slate-300 p-4 text-left hover:border-slate-400"
+          >
+            <p className="text-sm font-bold text-slate-700">Plantilla básica</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Una sección de cada tipo: portada, quiénes somos, servicios, cómo trabajamos,
+              zonas, FAQ y contacto. Punto de partida para cualquier cliente.
+            </p>
+          </button>
+          <button
+            onClick={() => onChange(plantillaWebPremium(nombreCorto))}
+            className="rounded-xl border-2 border-dashed border-slate-300 p-4 text-left hover:border-slate-400"
+          >
+            <p className="text-sm font-bold text-slate-700">Plantilla premium (experiencias)</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Experiencias Essential/Signature/Bespoke, reserva de proyecto, libro del
+              proyecto, FAQ y contacto — la estrategia FORGEVIA.
+            </p>
+          </button>
+        </div>
       )}
 
       {web.map((s, i) => (
