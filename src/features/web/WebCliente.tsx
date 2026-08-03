@@ -488,12 +488,13 @@ function FormularioProyecto({
 }
 
 function Card({ c }: { c: ItemWeb }) {
+  // La card destacada lleva el fondo de acento SIEMPRE (también en móvil,
+  // donde antes se perdía el resaltado y el texto claro quedaba ilegible).
+  const clases = c.destacada
+    ? "flex flex-col bg-forge-orange px-6 py-8 text-white rounded-2xl my-3 md:my-0 md:rounded-none md:px-8 md:border-b md:border-black/15"
+    : "flex flex-col border-b border-black/15 py-8 md:border-r md:px-8 md:first:pl-0 md:last:border-r-0 md:last:pr-0";
   return (
-    <article
-      className={`flex flex-col border-b border-black/15 py-8 md:border-r md:px-8 md:first:pl-0 md:last:border-r-0 md:last:pr-0 ${
-        c.destacada ? "md:bg-forge-orange md:px-8 md:text-white" : ""
-      }`}
-    >
+    <article className={clases}>
       {c.etiqueta && (
         <p
           className={`mb-6 w-fit px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ${
