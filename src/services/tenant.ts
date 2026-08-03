@@ -1,7 +1,7 @@
 // Servicio de tenants (marca/white-label). Enruta a Supabase si está
 // configurado; si no, al mock (localStorage). La UI lo consume desde el
 // barrel (`tenantApi`).
-import { loadDB, updateDB, delay } from "@/lib/db";
+import { loadDB, updateDB, delay, uid } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { resolverTenant } from "@/lib/branding";
 import { nuevoTenant } from "@/lib/tenant-default";
@@ -29,6 +29,36 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
 export async function getTenantPorSlug(slug: string): Promise<Tenant | null> {
   if (isSupabaseEnabled) return sb.getTenantPorSlug(slug);
   return delay(loadDB().tenants.find((t) => t.slug === slug) ?? null, 0);
+}
+
+/**
+ * El admin del cliente actualiza los datos de contacto de su web pública
+ * (la sección "cta"): teléfono, WhatsApp y email del formulario
+ * "Cuéntanos tu proyecto". Devuelve el tenant actualizado, o null si el
+ * cliente no tiene web configurada (nada que actualizar).
+ */
+export async function actualizarContactoWeb(datos: {
+  telefono: string;
+  email: string;
+  whatsapp: string;
+}): Promise<Tenant | null> {
+  const t = await getTenant();
+  if (!t.web || t.web.length === 0) return null;
+  const hayCta = t.web.some((s) => s.tipo === "cta");
+  const web = hayCta
+    ? t.web.map((s) => (s.tipo === "cta" ? { ...s, ...datos } : s))
+    : [
+        ...t.web,
+        {
+          id: uid("ws"),
+          tipo: "cta" as const,
+          titulo: "¿Hablamos?",
+          subtitulo: "",
+          items: [],
+          ...datos,
+        },
+      ];
+  return guardarTenant({ ...t, web });
 }
 
 /** Crea un cliente nuevo con la plantilla por defecto y lo persiste. */

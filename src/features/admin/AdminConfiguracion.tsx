@@ -1,9 +1,111 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resetDB } from "@/lib/db";
-import { tenantActual } from "@/lib/branding";
+import { fijarTenant, tenantActual } from "@/lib/branding";
 import { useAuth } from "@/context/AuthContext";
-import { Modal } from "@/components/ui";
-import { IconSettings, IconTrash, IconBox } from "@/components/icons";
+import { tenantApi } from "@/services";
+import { Modal, Spinner } from "@/components/ui";
+import { IconSettings, IconTrash, IconBox, IconCheck, IconMegaphone } from "@/components/icons";
+
+/** Contacto de la web pública del cliente (lo edita su propio admin). */
+function ContactoWeb() {
+  const [tieneWeb, setTieneWeb] = useState<boolean | null>(null);
+  const [telefono, setTelefono] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+
+  useEffect(() => {
+    tenantApi.getTenant().then((t) => {
+      const cta = t.web?.find((s) => s.tipo === "cta");
+      setTieneWeb(!!t.web && t.web.length > 0);
+      setTelefono(cta?.telefono ?? "");
+      setWhatsapp(cta?.whatsapp ?? "");
+      setEmail(cta?.email ?? "");
+    });
+  }, []);
+
+  // Sin web pública configurada no hay nada que editar aquí.
+  if (tieneWeb === null || !tieneWeb) return null;
+
+  async function guardar() {
+    setGuardando(true);
+    try {
+      const t = await tenantApi.actualizarContactoWeb({
+        telefono: telefono.trim(),
+        whatsapp: whatsapp.trim(),
+        email: email.trim(),
+      });
+      if (t) fijarTenant(t); // refresca la caché local de la marca/web
+      setGuardado(true);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <section className="card p-6">
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-forge-orange/10 text-forge-orange">
+          <IconMegaphone className="h-6 w-6" />
+        </span>
+        <div>
+          <h2 className="font-bold text-forge-dark">Contacto de tu web pública</h2>
+          <p className="text-sm text-slate-400">
+            Adónde llegan los clientes del formulario «Cuéntanos tu proyecto».
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="label">Teléfono</label>
+          <input
+            className="field mt-1.5"
+            inputMode="tel"
+            placeholder="600 000 000"
+            value={telefono}
+            onChange={(e) => { setTelefono(e.target.value); setGuardado(false); }}
+          />
+        </div>
+        <div>
+          <label className="label">WhatsApp</label>
+          <input
+            className="field mt-1.5"
+            inputMode="tel"
+            placeholder="+34 600 000 000"
+            value={whatsapp}
+            onChange={(e) => { setWhatsapp(e.target.value); setGuardado(false); }}
+          />
+        </div>
+        <div>
+          <label className="label">Email</label>
+          <input
+            className="field mt-1.5"
+            type="email"
+            placeholder="hola@tuempresa.com"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setGuardado(false); }}
+          />
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-slate-400">
+        El email recibe los datos del formulario; el WhatsApp es el del botón «Continuar por
+        WhatsApp». Deja vacío lo que no quieras mostrar.
+      </p>
+      <button onClick={guardar} disabled={guardando} className="btn-primary mt-4 px-5 py-2.5">
+        {guardando ? (
+          <Spinner className="h-5 w-5" />
+        ) : guardado ? (
+          <>
+            <IconCheck className="h-5 w-5" /> Guardado
+          </>
+        ) : (
+          "Guardar contacto"
+        )}
+      </button>
+    </section>
+  );
+}
 
 export default function AdminConfiguracion() {
   const { logout } = useAuth();
@@ -33,6 +135,8 @@ export default function AdminConfiguracion() {
           </li>
         </ul>
       </section>
+
+      <ContactoWeb />
 
       <section className="card p-6">
         <h2 className="font-bold text-forge-dark">Datos de demostración</h2>
