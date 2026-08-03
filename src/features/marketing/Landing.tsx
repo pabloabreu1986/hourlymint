@@ -729,7 +729,7 @@ function Footer() {
         <div className="text-xs leading-relaxed text-black/40 md:text-right">
           <p>© 2026 fichaloop.</p>
           <a href="https://ensodev.eu" target="_blank" rel="noopener noreferrer" className="hover:text-black">
-            Desarrollado por ensodev.eu
+            Desarrollado con <span aria-hidden="true">❤️</span> por ENSODev
           </a>
         </div>
       </div>

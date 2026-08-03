@@ -301,14 +301,14 @@ export default function Terminos() {
             Al utilizar fichaloop usted reconoce haber leído y aceptado estos Términos y Condiciones.
           </p>
           <p className="mt-2">
-            © 2026 fichaloop · Desarrollado por{" "}
+            © 2026 fichaloop · Desarrollado con <span aria-hidden="true">❤️</span> por{" "}
             <a
               href="https://ensodev.eu"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold underline underline-offset-2"
             >
-              ensodev.eu
+              ENSODev
             </a>
           </p>
         </div>

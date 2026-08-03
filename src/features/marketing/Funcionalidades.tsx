@@ -451,9 +451,12 @@ export default function Funcionalidades() {
       <footer className="border-t border-black/15">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-5 py-8 text-xs text-black/40 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© 2026 fichaloop.</p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-6">
             <Link to="/" className="hover:text-black">Inicio</Link>
             <Link to="/terminos" className="hover:text-black">Términos y condiciones</Link>
+            <a href="https://ensodev.eu" target="_blank" rel="noopener noreferrer" className="hover:text-black">
+              Desarrollado con <span aria-hidden="true">❤️</span> por ENSODev
+            </a>
           </div>
         </div>
       </footer>
