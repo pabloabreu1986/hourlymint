@@ -26,6 +26,40 @@ export interface TenantColores {
   canvas: string;
 }
 
+// ── Mini-web pública por cliente (empresa.fichaloop.com) ─────
+// La configura el super-admin por secciones; se pinta con la marca
+// del tenant. Si un cliente no tiene secciones, su raíz sigue siendo
+// el login de siempre.
+
+export type TipoSeccionWeb = "hero" | "texto" | "cards" | "lista" | "chips" | "faq" | "cta";
+
+export interface ItemWeb {
+  id: string;
+  /** Card: título · FAQ: pregunta. */
+  titulo?: string;
+  /** Card: descripción · FAQ: respuesta · lista/chips: el texto. */
+  texto?: string;
+  /** Card: etiqueta destacada (precio, "Servicio estrella"…). */
+  etiqueta?: string;
+  /** Card: puntos incluidos (bullets). */
+  puntos?: string[];
+  /** Card resaltada visualmente. */
+  destacada?: boolean;
+}
+
+export interface SeccionWeb {
+  id: string;
+  tipo: TipoSeccionWeb;
+  titulo: string;
+  /** Texto de apoyo bajo el título (en `texto` es el cuerpo). */
+  subtitulo: string;
+  items: ItemWeb[];
+  // Solo para `cta`:
+  telefono?: string;
+  email?: string;
+  whatsapp?: string;
+}
+
 export interface Tenant {
   id: string;
   /** Subdominio del cliente: `<slug>`.fichaloop.com */
@@ -43,6 +77,8 @@ export interface Tenant {
   colores: TenantColores;
   /** Feature flags: módulos activos para este cliente (uso posterior) */
   funciones: string[];
+  /** Mini-web pública del cliente (vacía = sin web, raíz muestra login). */
+  web?: SeccionWeb[];
 }
 
 export interface Usuario {

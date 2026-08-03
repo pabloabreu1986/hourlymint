@@ -8,6 +8,7 @@ import { errorDeTamano } from "@/lib/files";
 import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
 import { Cargando, EmptyState, Spinner, Avatar, Modal } from "@/components/ui";
 import { IconChevronLeft, IconCheck, IconTrash, IconCamera, IconPlus } from "@/components/icons";
+import EditorWeb from "./EditorWeb";
 
 const COLORES: Array<{ key: keyof TenantColores; label: string; hint: string }> = [
   { key: "dark", label: "Oscuro / navy", hint: "Fondos, sidebar, textos" },
@@ -275,8 +276,18 @@ export default function SuperTenantEditor() {
           })}
         </div>
         <p className="text-xs text-slate-400">
-          El filtrado del menú por estas funciones se aplicará en un paso posterior.
+          El menú y las rutas del panel del cliente se filtran por estas funciones.
         </p>
+      </Seccion>
+
+      {/* Mini-web pública */}
+      <Seccion titulo="Web pública del cliente">
+        <EditorWeb
+          web={t.web ?? []}
+          nombreCorto={t.nombreCorto}
+          slug={t.slug}
+          onChange={(web) => set("web", web)}
+        />
       </Seccion>
 
       {/* Dominio */}

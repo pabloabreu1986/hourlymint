@@ -40,6 +40,8 @@ function lazyConRecarga(fn: () => Promise<{ default: React.ComponentType }>) {
 const Landing = lazyConRecarga(() => import("@/features/marketing/Landing"));
 const Terminos = lazyConRecarga(() => import("@/features/marketing/Terminos"));
 const Funcionalidades = lazyConRecarga(() => import("@/features/marketing/Funcionalidades"));
+// Mini-web pública de cada cliente (en su subdominio).
+const WebCliente = lazyConRecarga(() => import("@/features/web/WebCliente"));
 
 /** Al cambiar de ruta, vuelve arriba (React Router conserva el scroll). */
 function ScrollArriba() {
@@ -105,19 +107,29 @@ function inicioDe(rol: Rol): string {
 
 /**
  * Raíz pública ("/"). Sin sesión: en el apex (fichaloop.com) muestra la
- * web de marketing; en un subdominio de cliente, su login con su marca.
- * Con sesión, redirige al inicio según el rol.
+ * web de marketing; en un subdominio de cliente, su mini-web pública si
+ * la tiene configurada (WebCliente cae al login si no la hay). Con
+ * sesión, redirige al inicio según el rol.
  */
 function RaizPublica() {
   const { usuario, cargando } = useAuth();
   if (cargando) return <Cargando />;
   if (usuario) return <Navigate to={inicioDe(usuario.rol)} replace />;
-  if (!esApex()) return <Login />;
   return (
     <Suspense fallback={<Cargando />}>
-      <Landing />
+      {esApex() ? <Landing /> : <WebCliente />}
     </Suspense>
   );
+}
+
+/** "/login": en un subdominio siempre es el login del cliente (aunque
+ * tenga web pública); en el apex se comporta como la raíz. */
+function LoginPublico() {
+  const { usuario, cargando } = useAuth();
+  if (cargando) return <Cargando />;
+  if (usuario) return <Navigate to={inicioDe(usuario.rol)} replace />;
+  if (!esApex()) return <Login />;
+  return <RaizPublica />;
 }
 
 function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
@@ -163,7 +175,7 @@ export default function App() {
     <Routes>
       {/* Raíz pública: web de marketing (apex) o login de cliente (subdominio) */}
       <Route path="/" element={<RaizPublica />} />
-      <Route path="/login" element={<RaizPublica />} />
+      <Route path="/login" element={<LoginPublico />} />
       <Route
         path="/terminos"
         element={
