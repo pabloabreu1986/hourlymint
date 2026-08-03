@@ -53,7 +53,13 @@ export default function WebCliente() {
 
       <main>
         {secciones.map((s, i) => (
-          <SeccionRender key={s.id} s={s} n={i} onProyecto={() => setFormAbierto(true)} />
+          <SeccionRender
+            key={s.id}
+            s={s}
+            n={i}
+            nombreEmpresa={tenant.nombreCorto}
+            onProyecto={() => setFormAbierto(true)}
+          />
         ))}
       </main>
 
@@ -108,10 +114,12 @@ function Eyebrow({ n, texto, claro }: { n: number; texto: string; claro?: boolea
 function SeccionRender({
   s,
   n,
+  nombreEmpresa,
   onProyecto,
 }: {
   s: SeccionWeb;
   n: number;
+  nombreEmpresa: string;
   onProyecto: () => void;
 }) {
   switch (s.tipo) {
@@ -147,7 +155,7 @@ function SeccionRender({
                     salida clara hacia el formulario para quien llegue
                     aquí buscando presupuesto. */}
                 <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-                  Área del equipo · Solo personal
+                  Equipo {nombreEmpresa}
                 </p>
                 <LoginForm />
                 <p className="mt-5 text-center text-sm text-white/40">
