@@ -25,6 +25,21 @@ export async function getTenant(): Promise<Tenant> {
   }
 }
 
+/** Busca un cliente por slug (tenant discovery del apex). */
+export async function getTenantPorSlug(slug: string): Promise<Tenant | null> {
+  try {
+    const { data, error } = await sb()
+      .from("tenants")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error || !data) return null;
+    return toTenant(data);
+  } catch {
+    return null;
+  }
+}
+
 export async function listTenants(): Promise<Tenant[]> {
   try {
     const { data, error } = await sb().from("tenants").select("*").order("nombre");

@@ -25,6 +25,12 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
   return delay(loadDB().tenants.find((t) => t.id === id) ?? null, 0);
 }
 
+/** Busca un cliente por su slug (para el "entra en tu espacio" del apex). */
+export async function getTenantPorSlug(slug: string): Promise<Tenant | null> {
+  if (isSupabaseEnabled) return sb.getTenantPorSlug(slug);
+  return delay(loadDB().tenants.find((t) => t.slug === slug) ?? null, 0);
+}
+
 /** Crea un cliente nuevo con la plantilla por defecto y lo persiste. */
 export async function crearTenant(nombreCorto: string): Promise<Tenant> {
   if (isSupabaseEnabled) return sb.crearTenant(nombreCorto);

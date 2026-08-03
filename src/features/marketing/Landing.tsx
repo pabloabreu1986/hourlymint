@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { LoginForm } from "@/components/LoginForm";
+import { tenantApi } from "@/services";
+import { ultimoEspacio, urlDeEspacio, DOMINIO_PLATAFORMA } from "@/lib/host";
 import { DemoForm } from "./DemoForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
 import LiquidHover from "@/components/LiquidHover";
@@ -170,17 +172,140 @@ function Hero({ onDemo }: { onDemo: (plan?: string) => void }) {
               <span className="mb-10 text-xs font-bold uppercase tracking-[0.18em] text-white/45">Área de clientes</span>
               <h2 className="mb-3 text-4xl font-black tracking-[-0.055em] sm:text-5xl">Bienvenido.</h2>
               <p className="mb-9 text-white/50">
-                Entra en tu espacio de trabajo o{" "}
+                Entra en el espacio de tu empresa o{" "}
                 <a href="#contacto" className="text-white underline decoration-white/30 underline-offset-4">
                   habla con nosotros
                 </a>.
               </p>
-              <LoginForm />
+              <AccesoEspacio />
             </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Tenant discovery (patrón Slack): el cliente escribe el nombre de su
+ * espacio y le llevamos a su subdominio, validando antes que existe.
+ * Si ya visitó su espacio (cookie compartida en .fichaloop.com), se le
+ * ofrece continuar directamente. El login con credenciales del operador
+ * de plataforma queda plegado detrás de un enlace discreto.
+ */
+function AccesoEspacio() {
+  const recordado = ultimoEspacio();
+  const [slug, setSlug] = useState("");
+  const [error, setError] = useState("");
+  const [buscando, setBuscando] = useState(false);
+  const [modoPlataforma, setModoPlataforma] = useState(false);
+
+  /** Admite "miempresa", "miempresa.fichaloop.com" o la URL completa. */
+  function normalizar(v: string): string {
+    return v
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(new RegExp(`\\.${DOMINIO_PLATAFORMA.replace(".", "\\.")}.*$`), "")
+      .replace(/[^a-z0-9-]/g, "");
+  }
+
+  async function ir(e: FormEvent) {
+    e.preventDefault();
+    const s = normalizar(slug);
+    if (!s) {
+      setError("Escribe el nombre de tu espacio.");
+      return;
+    }
+    setBuscando(true);
+    setError("");
+    try {
+      const tenant = await tenantApi.getTenantPorSlug(s);
+      if (!tenant) {
+        setError(`No encontramos «${s}». Revisa la dirección o pide una demo.`);
+        return;
+      }
+      window.location.href = urlDeEspacio(s);
+    } catch {
+      setError("No se pudo comprobar el espacio. Inténtalo de nuevo.");
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  if (modoPlataforma) {
+    return (
+      <div>
+        <LoginForm />
+        <button
+          type="button"
+          onClick={() => setModoPlataforma(false)}
+          className="mt-6 text-sm text-white/40 underline decoration-white/20 underline-offset-4 hover:text-white/70"
+        >
+          ← Volver al acceso de clientes
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Continuar al último espacio visitado */}
+      {recordado && (
+        <a
+          href={urlDeEspacio(recordado)}
+          className="mb-4 flex w-full items-center justify-between rounded-xl bg-forge-orange px-5 py-3.5 font-bold text-white transition hover:bg-forge-orange-600"
+        >
+          Continuar a {recordado}.{DOMINIO_PLATAFORMA}
+          <Flecha />
+        </a>
+      )}
+
+      {/* Buscar tu espacio por su dirección */}
+      <form onSubmit={ir} className="space-y-4">
+        <div className="flex items-center overflow-hidden rounded-xl border border-white/15 bg-white/10 focus-within:border-forge-orange focus-within:ring-2 focus-within:ring-forge-orange/30">
+          <input
+            value={slug}
+            onChange={(e) => {
+              setSlug(e.target.value);
+              setError("");
+            }}
+            placeholder="tuempresa"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="min-w-0 flex-1 bg-transparent py-3.5 pl-4 text-white placeholder:text-white/40 outline-none"
+          />
+          <span className="shrink-0 pr-4 text-white/40">.{DOMINIO_PLATAFORMA}</span>
+        </div>
+        {error && <p className="rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-200">{error}</p>}
+        <button
+          type="submit"
+          disabled={buscando}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-bold text-white transition active:scale-[.99] disabled:opacity-60 ${
+            recordado
+              ? "border border-white/20 hover:bg-white/5"
+              : "bg-forge-orange hover:bg-forge-orange-600"
+          }`}
+        >
+          {buscando ? "Comprobando…" : recordado ? "Ir a otro espacio" : "Ir a mi espacio"}
+        </button>
+      </form>
+
+      <p className="mt-4 text-sm text-white/40">
+        Tu espacio es la dirección que usa tu equipo cada día, p.ej.{" "}
+        <span className="font-mono text-white/60">tuempresa.{DOMINIO_PLATAFORMA}</span>.
+        ¿No la recuerdas? Pregunta a tu administrador.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setModoPlataforma(true)}
+        className="mt-8 text-xs text-white/30 underline decoration-white/15 underline-offset-4 hover:text-white/60"
+      >
+        Acceso operador de plataforma
+      </button>
+    </div>
   );
 }
 

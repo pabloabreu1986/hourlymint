@@ -63,3 +63,42 @@ export function usuarioPermitidoEnHost(u: { rol: string; tenantId: string }): bo
   if (esApex()) return u.rol === "superadmin";
   return u.rol !== "superadmin" && u.tenantId === tenantActivoId();
 }
+
+// ─── "Recordar mi espacio" (tenant discovery en el apex) ─────
+// El subdominio de cada cliente guarda su slug en una cookie del dominio
+// padre (.fichaloop.com). Así, cuando alguien vuelve a fichaloop.com, la
+// web puede ofrecerle "Continuar a tuempresa →" sin exponer la lista de
+// clientes.
+
+const COOKIE_ESPACIO = "fichaloop_espacio";
+
+/** Llamar al arrancar la app: si estamos en un subdominio real de la
+ * plataforma, recuerda este espacio en la cookie compartida. */
+export function recordarEspacio(): void {
+  if (typeof document === "undefined") return;
+  const slug = slugTenant();
+  const host = window.location.hostname.toLowerCase();
+  if (!slug || !host.endsWith(`.${DOMINIO_PLATAFORMA}`)) return;
+  const seisMeses = 60 * 60 * 24 * 180;
+  document.cookie =
+    `${COOKIE_ESPACIO}=${slug}; domain=.${DOMINIO_PLATAFORMA}; path=/; ` +
+    `max-age=${seisMeses}; SameSite=Lax; Secure`;
+}
+
+/** Último espacio visitado (o null si no hay cookie). */
+export function ultimoEspacio(): string | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(/(?:^|;\s*)fichaloop_espacio=([a-z0-9-]+)/);
+  return m ? m[1] : null;
+}
+
+/** URL del espacio de un cliente. En el dominio real → su subdominio;
+ * en dev/preview (localhost, *.vercel.app) → override `?t=` local. */
+export function urlDeEspacio(slug: string): string {
+  const host = window.location.hostname.toLowerCase();
+  const esDominioReal =
+    host === DOMINIO_PLATAFORMA || host === `www.${DOMINIO_PLATAFORMA}` ||
+    host.endsWith(`.${DOMINIO_PLATAFORMA}`);
+  if (esDominioReal) return `https://${slug}.${DOMINIO_PLATAFORMA}/`;
+  return `${window.location.origin}/?t=${slug}`;
+}

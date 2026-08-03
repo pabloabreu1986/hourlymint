@@ -5,7 +5,7 @@ import { Cargando } from "@/components/ui";
 import { alertasApi } from "@/services";
 import { tenantActual } from "@/lib/branding";
 import { tenantTieneFuncion } from "@/lib/funciones";
-import { esApex } from "@/lib/host";
+import { esApex, recordarEspacio } from "@/lib/host";
 import type { Rol } from "@/lib/types";
 import type { ReactNode } from "react";
 
@@ -151,6 +151,12 @@ function FuncionRoute({ clave, children }: { clave: string; children: ReactNode 
 }
 
 export default function App() {
+  // En un subdominio de cliente, recuerda el espacio en la cookie del
+  // dominio padre (para el "Continuar a tuempresa →" del apex).
+  useEffect(() => {
+    recordarEspacio();
+  }, []);
+
   return (
     <>
     <ScrollArriba />
