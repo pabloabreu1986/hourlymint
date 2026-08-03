@@ -5,6 +5,8 @@ import { fijarTenant } from "@/lib/branding";
 import type { ItemWeb, SeccionWeb, Tenant } from "@/lib/types";
 import Login from "@/features/auth/Login";
 import { Logo } from "@/components/Logo";
+import { LoginForm } from "@/components/LoginForm";
+import { KineticGridBackground } from "@/components/KineticGridBackground";
 import { Cargando } from "@/components/ui";
 import { IconCheck, IconChevronDown } from "@/components/icons";
 
@@ -32,6 +34,10 @@ export default function WebCliente() {
   if (cargando) return <Cargando />;
   const secciones = tenant?.web ?? [];
   if (!tenant || secciones.length === 0) return <Login />;
+  // Si hay portada, el login vive en ella; si no, se va a /login.
+  const tieneHero = secciones.some((s) => s.tipo === "hero");
+  const clsAcceso =
+    "rounded-xl bg-forge-orange px-5 py-2.5 text-sm font-bold text-white transition hover:bg-forge-orange-600";
 
   return (
     <div className="min-h-full bg-forge-canvas text-forge-dark">
@@ -39,12 +45,15 @@ export default function WebCliente() {
       <header className="sticky top-0 z-40 bg-forge-dark/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo variant="light" />
-          <Link
-            to="/login"
-            className="rounded-xl bg-forge-orange px-5 py-2.5 text-sm font-bold text-white transition hover:bg-forge-orange-600"
-          >
-            Acceso
-          </Link>
+          {tieneHero ? (
+            <a href="#acceso" className={clsAcceso}>
+              Acceso
+            </a>
+          ) : (
+            <Link to="/login" className={clsAcceso}>
+              Acceso
+            </Link>
+          )}
         </div>
       </header>
 
@@ -77,21 +86,35 @@ export default function WebCliente() {
 function SeccionRender({ s }: { s: SeccionWeb }) {
   switch (s.tipo) {
     case "hero":
+      // Portada con el mismo efecto que el login del cliente (rejilla
+      // cinética + velo oscuro) y el acceso integrado a la derecha.
       return (
-        <section className="bg-forge-dark text-white">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 md:py-28">
-            <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-              {s.titulo}
-            </h1>
-            {s.subtitulo && (
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{s.subtitulo}</p>
-            )}
-            <a
-              href="#contacto"
-              className="mt-10 inline-block rounded-xl bg-forge-orange px-7 py-3.5 font-bold text-white transition hover:bg-forge-orange-600"
-            >
-              Cuéntanos tu proyecto
-            </a>
+        <section id="acceso" className="relative scroll-mt-20 overflow-hidden bg-forge-dark text-white">
+          <KineticGridBackground className="absolute inset-0" />
+          <div className="pointer-events-none absolute inset-0 bg-forge-dark/70" />
+          <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 sm:px-8 md:grid-cols-12 md:py-24">
+            <div className="md:col-span-7">
+              <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+                {s.titulo}
+              </h1>
+              {s.subtitulo && (
+                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{s.subtitulo}</p>
+              )}
+              <a
+                href="#contacto"
+                className="mt-10 inline-block rounded-xl bg-forge-orange px-7 py-3.5 font-bold text-white transition hover:bg-forge-orange-600"
+              >
+                Cuéntanos tu proyecto
+              </a>
+            </div>
+            <div className="md:col-span-5">
+              <div className="mx-auto w-full max-w-sm rounded-2xl border border-white/10 bg-forge-dark/50 p-6 backdrop-blur-sm sm:p-7">
+                <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                  Área de clientes
+                </p>
+                <LoginForm />
+              </div>
+            </div>
           </div>
         </section>
       );
