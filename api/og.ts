@@ -62,6 +62,8 @@ function html(m: {
 <meta property="og:description" content="${esc(m.descripcion)}" />
 <meta property="og:url" content="${esc(m.url)}" />
 <meta property="og:image" content="${esc(m.imagen)}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta property="og:locale" content="es_ES" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${esc(m.titulo)}" />
@@ -102,9 +104,8 @@ export default async function handler(req: any, res: any) {
         titulo: t.eslogan ? `${nombreCorto} · ${t.eslogan}` : t.nombre || nombreCorto,
         descripcion,
         url: urlPagina,
-        // Si el cliente tiene logo subido, lo servimos como miniatura;
-        // si no, la imagen de fichaloop.
-        imagen: t.logo_url ? `https://${host}/api/og-imagen` : OG_FICHALOOP,
+        // Tarjeta 1200×630 generada con la marca del cliente (api/og-imagen).
+        imagen: `https://${host}/api/og-imagen`,
         siteName: nombreCorto,
       };
     }
