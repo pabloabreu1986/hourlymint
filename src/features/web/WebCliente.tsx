@@ -142,10 +142,24 @@ function SeccionRender({
             </div>
             <div className="md:col-span-5">
               <div className="mx-auto w-full max-w-sm">
+                {/* Login del personal de la empresa (admins y trabajadores),
+                    no de sus clientes finales: etiqueta discreta y una
+                    salida clara hacia el formulario para quien llegue
+                    aquí buscando presupuesto. */}
                 <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-                  Área de clientes
+                  Área del equipo · Solo personal
                 </p>
                 <LoginForm />
+                <p className="mt-5 text-center text-sm text-white/40">
+                  ¿Tienes un proyecto entre manos?{" "}
+                  <button
+                    type="button"
+                    onClick={onProyecto}
+                    className="font-semibold text-white/80 underline decoration-white/30 underline-offset-4 hover:text-white"
+                  >
+                    Cuéntanoslo aquí
+                  </button>
+                </p>
               </div>
             </div>
           </div>
