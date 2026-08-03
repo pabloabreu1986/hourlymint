@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
-import { tenantApi } from "@/services";
+import { useEffect, useState, type FormEvent } from "react";
+import { tenantApi, webLeadsApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
 import type { ItemWeb, SeccionWeb, Tenant } from "@/lib/types";
 import Login from "@/features/auth/Login";
 import { Logo } from "@/components/Logo";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
-import { Cargando } from "@/components/ui";
+import { Cargando, Modal, Spinner } from "@/components/ui";
 import { IconCheck, IconChevronDown } from "@/components/icons";
+
+/** Mensaje prefijado del CTA "Continuar por WhatsApp". */
+const MENSAJE_WHATSAPP =
+  "Hola, vengo desde su web en fichaloop.com. Quisiera que me contactaran para una conversación sobre mi proyecto. Saludos.";
 
 /**
  * Mini-web pública del cliente (empresa.fichaloop.com). Renderiza las
@@ -19,6 +23,7 @@ import { IconCheck, IconChevronDown } from "@/components/icons";
 export default function WebCliente() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [formAbierto, setFormAbierto] = useState(false);
 
   useEffect(() => {
     tenantApi
@@ -34,6 +39,8 @@ export default function WebCliente() {
   if (cargando) return <Cargando />;
   const secciones = tenant?.web ?? [];
   if (!tenant || secciones.length === 0) return <Login />;
+  // Datos de contacto del cliente (sección "cta"), para el formulario.
+  const cta = secciones.find((s) => s.tipo === "cta");
 
   return (
     <div className="min-h-full bg-forge-canvas text-forge-dark">
@@ -46,9 +53,17 @@ export default function WebCliente() {
 
       <main>
         {secciones.map((s, i) => (
-          <SeccionRender key={s.id} s={s} n={i} />
+          <SeccionRender key={s.id} s={s} n={i} onProyecto={() => setFormAbierto(true)} />
         ))}
       </main>
+
+      <FormularioProyecto
+        open={formAbierto}
+        onClose={() => setFormAbierto(false)}
+        nombreEmpresa={tenant.nombreCorto}
+        emailDestino={cta?.email || ""}
+        whatsapp={cta?.whatsapp || ""}
+      />
 
       <footer className="border-t border-black/10">
         <div className="mx-auto flex max-w-[1300px] flex-col items-center gap-2 px-5 py-8 text-center text-xs text-black/40 sm:flex-row sm:justify-between sm:text-left sm:px-8">
@@ -90,7 +105,15 @@ function Eyebrow({ n, texto, claro }: { n: number; texto: string; claro?: boolea
   );
 }
 
-function SeccionRender({ s, n }: { s: SeccionWeb; n: number }) {
+function SeccionRender({
+  s,
+  n,
+  onProyecto,
+}: {
+  s: SeccionWeb;
+  n: number;
+  onProyecto: () => void;
+}) {
   switch (s.tipo) {
     case "hero":
       // Portada con el efecto del login del cliente (rejilla cinética +
@@ -109,12 +132,13 @@ function SeccionRender({ s, n }: { s: SeccionWeb; n: number }) {
                   {s.subtitulo}
                 </p>
               )}
-              <a
-                href="#contacto"
+              <button
+                type="button"
+                onClick={onProyecto}
                 className="mt-10 inline-flex items-center gap-3 border-b-2 border-forge-orange pb-2 font-bold transition-all hover:gap-5"
               >
                 Cuéntanos tu proyecto <span aria-hidden="true" className="text-lg leading-none">↗</span>
-              </a>
+              </button>
             </div>
             <div className="md:col-span-5">
               <div className="mx-auto w-full max-w-sm">
@@ -239,6 +263,9 @@ function SeccionRender({ s, n }: { s: SeccionWeb; n: number }) {
             </h2>
             {s.subtitulo && <p className="mt-6 max-w-2xl text-lg text-white/55">{s.subtitulo}</p>}
             <div className="mt-12 flex flex-wrap gap-4 border-t border-white/15 pt-8">
+              <button type="button" onClick={onProyecto} className={btnCta}>
+                Cuéntanos tu proyecto <Flecha />
+              </button>
               {s.telefono && (
                 <a href={`tel:${s.telefono.replace(/\s/g, "")}`} className={btnCta}>
                   Llamar · {s.telefono} <Flecha />
@@ -259,11 +286,6 @@ function SeccionRender({ s, n }: { s: SeccionWeb; n: number }) {
                   {s.email} <Flecha />
                 </a>
               )}
-              {!s.telefono && !s.email && !s.whatsapp && (
-                <a href="#acceso" className={btnCta}>
-                  Área de clientes <Flecha />
-                </a>
-              )}
             </div>
           </div>
         </section>
@@ -280,6 +302,168 @@ function Flecha() {
 
 const btnCta =
   "inline-flex items-center gap-3 bg-forge-orange px-6 py-3.5 font-bold text-white transition-all hover:gap-5 hover:bg-forge-orange-600";
+
+/**
+ * Formulario "Cuéntanos tu proyecto": guarda el lead (tabla web_leads),
+ * prepara un correo con los datos al email del cliente (mailto) y ofrece
+ * continuar la conversación por WhatsApp con mensaje prefijado.
+ */
+function FormularioProyecto({
+  open,
+  onClose,
+  nombreEmpresa,
+  emailDestino,
+  whatsapp,
+}: {
+  open: boolean;
+  onClose: () => void;
+  nombreEmpresa: string;
+  emailDestino: string;
+  whatsapp: string;
+}) {
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [email, setEmail] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [error, setError] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+
+  const urlWhatsapp = whatsapp
+    ? `https://wa.me/${whatsapp.replace(/[^\d]/g, "")}?text=${encodeURIComponent(MENSAJE_WHATSAPP)}`
+    : "";
+
+  const urlCorreo = emailDestino
+    ? `mailto:${emailDestino}?subject=${encodeURIComponent(
+        `Nuevo proyecto — ${nombre || "consulta desde la web"}`
+      )}&body=${encodeURIComponent(
+        `Nombre: ${nombre}\nTeléfono: ${telefono}\nEmail: ${email || "—"}\n\nProyecto:\n${mensaje}\n\n(Enviado desde la web en fichaloop.com)`
+      )}`
+    : "";
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault();
+    if (!nombre.trim() || !telefono.trim() || !mensaje.trim()) {
+      setError("Rellena al menos tu nombre, tu teléfono y el proyecto.");
+      return;
+    }
+    setEnviando(true);
+    setError("");
+    try {
+      await webLeadsApi.enviarProyecto({
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        email: email.trim() || undefined,
+        mensaje: mensaje.trim(),
+      });
+      // Abre el correo con los datos ya redactados (si hay email configurado).
+      if (urlCorreo) window.location.href = urlCorreo;
+      setEnviado(true);
+    } catch {
+      setError("No se pudo enviar. Inténtalo de nuevo en un momento.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function cerrar() {
+    if (enviado) {
+      setNombre("");
+      setTelefono("");
+      setEmail("");
+      setMensaje("");
+      setEnviado(false);
+    }
+    onClose();
+  }
+
+  return (
+    <Modal open={open} onClose={cerrar} title="Cuéntanos tu proyecto">
+      {enviado ? (
+        <div className="grid place-items-center gap-4 py-4 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-full bg-green-100 text-green-600">
+            <IconCheck className="h-7 w-7" />
+          </span>
+          <div>
+            <p className="text-lg font-bold text-forge-dark">¡Recibido!</p>
+            <p className="mx-auto mt-1 max-w-xs text-sm text-slate-400">
+              {nombreEmpresa} tiene ya tus datos y te contactará muy pronto.
+            </p>
+          </div>
+          {urlWhatsapp && (
+            <a
+              href={urlWhatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn w-full bg-[#25D366] py-3 font-bold text-white hover:opacity-90"
+            >
+              Continuar por WhatsApp
+            </a>
+          )}
+          {urlCorreo && (
+            <a href={urlCorreo} className="text-sm font-semibold text-forge-orange hover:underline">
+              Reabrir el correo con mis datos
+            </a>
+          )}
+          <button onClick={cerrar} className="text-sm text-slate-400 hover:text-slate-600">
+            Cerrar
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={enviar} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="label">Tu nombre</label>
+              <input className="field mt-1.5" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Teléfono</label>
+              <input
+                className="field mt-1.5"
+                inputMode="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label">Email (opcional)</label>
+            <input
+              className="field mt-1.5"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Cuéntanos tu proyecto</label>
+            <textarea
+              className="field mt-1.5"
+              rows={4}
+              placeholder="Qué quieres hacer, dónde y para cuándo"
+              value={mensaje}
+              onChange={(e) => setMensaje(e.target.value)}
+            />
+          </div>
+          {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+          <button type="submit" disabled={enviando} className="btn-primary w-full py-3">
+            {enviando ? <Spinner className="h-5 w-5" /> : "Enviar"}
+          </button>
+          {urlWhatsapp && (
+            <a
+              href={urlWhatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn w-full bg-[#25D366] py-3 font-bold text-white hover:opacity-90"
+            >
+              Continuar por WhatsApp
+            </a>
+          )}
+        </form>
+      )}
+    </Modal>
+  );
+}
 
 function Card({ c }: { c: ItemWeb }) {
   return (
