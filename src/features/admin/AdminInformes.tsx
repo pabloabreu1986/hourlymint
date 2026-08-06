@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
-import { obrasApi, partesApi, dashboardApi } from "@/services";
+import { obrasApi, partesApi } from "@/services";
 import type { Obra, ParteDiario } from "@/lib/types";
-import type { DashboardData } from "@/services/dashboard";
 import { Cargando, Donut, ProgressBar } from "@/components/ui";
 import { IconChart, IconClipboard, IconObras } from "@/components/icons";
 
 export default function AdminInformes() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [partes, setPartes] = useState<ParteDiario[]>([]);
-  const [dash, setDash] = useState<DashboardData | null>(null);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    obrasApi.listObras().then(setObras);
-    partesApi.listPartes().then(setPartes);
-    dashboardApi.getDashboard().then(setDash);
+    // Gatea sobre los datos que realmente se pintan (obras + partes) para
+    // no mostrar un instante de ceros mientras cargan.
+    Promise.all([obrasApi.listObras(), partesApi.listPartes()]).then(([o, p]) => {
+      setObras(o);
+      setPartes(p);
+      setCargando(false);
+    });
   }, []);
 
-  if (!dash) return <Cargando />;
+  if (cargando) return <Cargando />;
 
   const avanceMedio = obras.length
     ? Math.round(obras.reduce((s, o) => s + o.avance, 0) / obras.length)

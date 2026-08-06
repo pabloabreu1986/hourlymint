@@ -37,6 +37,8 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "organigrama", label: "Organigrama" },
   { clave: "comunicados", label: "Comunicados" },
   { clave: "denuncias", label: "Canal de denuncias" },
+  // ── Marketing ──
+  { clave: "dosier", label: "Dosier corporativo" },
 ];
 
 /** Claves fijas que todo tenant tiene siempre activas. */

@@ -5,7 +5,7 @@ import { loadDB, updateDB, delay, uid } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { resolverTenant } from "@/lib/branding";
 import { nuevoTenant } from "@/lib/tenant-default";
-import type { Tenant } from "@/lib/types";
+import type { Dosier, Tenant } from "@/lib/types";
 import * as sb from "./supabase/tenant";
 
 /** Tenant activo (según subdominio; en local, FORGEVIA). */
@@ -59,6 +59,16 @@ export async function actualizarContactoWeb(datos: {
         },
       ];
   return guardarTenant({ ...t, web });
+}
+
+/**
+ * El admin del cliente guarda su dosier corporativo (lo edita entero
+ * desde su panel). Persiste sobre el tenant actual y devuelve el tenant
+ * actualizado para refrescar la caché de marca local.
+ */
+export async function actualizarDosier(dosier: Dosier): Promise<Tenant> {
+  const t = await getTenant();
+  return guardarTenant({ ...t, dosier });
 }
 
 /** Crea un cliente nuevo con la plantilla por defecto y lo persiste. */

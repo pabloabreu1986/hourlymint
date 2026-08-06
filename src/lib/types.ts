@@ -60,6 +60,119 @@ export interface SeccionWeb {
   whatsapp?: string;
 }
 
+// ── Dosier corporativo por cliente (brochure exportable a PDF) ──
+// Lo edita el propio admin de la empresa desde su panel. Cada bloque
+// activo es una página A4 del PDF y de la vista previa. La portada y la
+// contraportada son fijas (viven en el nivel superior de `Dosier`); los
+// bloques intermedios se activan, reordenan y rellenan a voluntad.
+// Se pinta con la marca del tenant (variables --brand-*), igual que la web.
+
+export type TipoBloqueDosier =
+  | "texto-imagen" // Quiénes somos: texto a la izq. + foto a sangre a la der.
+  | "lista-imagen" // ¿Por qué elegirnos?: lista de textos grandes izq. + foto der.
+  | "pasos" // Nuestro proceso: pasos conectados en vertical + foto der.
+  | "iconos" // Qué incluye: rejilla de iconos que se reparte por la página
+  | "servicios" // Cómo trabajamos: lista con líneas + imagen diagonal abajo-der.
+  | "logos" // Calidad: texto + logos de fabricantes/marcas
+  | "lista-detalle" // Tecnología: icono+título+desc en columnas
+  | "antes-despues" // Dos imágenes comparadas (antes izq. · después der.)
+  | "garantias" // Garantías: imagen a sangre izq. + lista en 1 columna der.
+  | "testimonios" // Opiniones: estrellas + cita + autor
+  | "pagos" // Forma de pago: porcentaje + concepto + detalle
+  | "faq"; // Preguntas frecuentes
+
+/** Posición de la imagen principal de una página. */
+export type PosicionImagen = "ninguna" | "fondo" | "izquierda" | "derecha" | "diagonal";
+
+/** Alineación horizontal de los elementos (portada/contraportada). */
+export type Alineacion = "izquierda" | "centro" | "derecha";
+
+/** Estilo global del dosier (con posibles overrides por bloque/ítem). */
+export interface EstiloDosier {
+  /** Color del número de página (hex). Vacío = color de marca. */
+  numeroColor?: string;
+  /** Color del título junto al número (hex). Vacío = por defecto. */
+  tituloColor?: string;
+  /** Tamaño del número+título de página, en px. */
+  numeroSize?: number;
+  /** Fuente del número+título: "sans" | "serif" | "mono". */
+  numeroFuente?: string;
+  /** Color por defecto de los iconos (hex). Vacío = color de marca. */
+  iconoColor?: string;
+  /** Tamaño por defecto de los iconos, en px. */
+  iconoSize?: number;
+}
+
+/** Un ítem dentro de un bloque (tarjeta, paso, testimonio, pregunta…). */
+export interface ItemDosier {
+  id: string;
+  /** Tarjeta/paso: título · FAQ: pregunta · testimonio: autor · pago: concepto. */
+  titulo?: string;
+  /** Cuerpo: descripción · respuesta FAQ · cita del testimonio · detalle del pago. */
+  texto?: string;
+  /** Valor destacado: "60%" (pago) · nº de estrellas "1"–"5" (testimonio). */
+  valor?: string;
+  /** Imagen del ítem (logos, antes/después) como data URL (mock) o path Storage. */
+  imagen?: string | null;
+  /** Nombre del icono (lucide) para este ítem; vacío = icono por defecto. */
+  icono?: string;
+  /** Color del icono de este ítem (hex); vacío = color global/marca. */
+  iconoColor?: string;
+  /** Tamaño del icono de este ítem (px); vacío = tamaño global. */
+  iconoSize?: number;
+}
+
+/** Un bloque = una página intermedia del dosier. */
+export interface BloqueDosier {
+  id: string;
+  tipo: TipoBloqueDosier;
+  /** Si se incluye como página del dosier. */
+  activo: boolean;
+  /** Eyebrow/numeración de la página ("01", "Antes y después"). */
+  eyebrow?: string;
+  /** Título grande de la página. */
+  titulo: string;
+  /** Texto de apoyo / cuerpo bajo el título. */
+  subtitulo: string;
+  /** Foto principal de la página (data URL o path Storage), si el bloque la usa. */
+  imagen?: string | null;
+  /** Posición de la imagen principal. Vacío = la que trae el tipo por defecto. */
+  imagenPos?: PosicionImagen;
+  /** Posición del corte diagonal (0–100) cuando `imagenPos` = "diagonal". */
+  diagonalOffset?: number;
+  /** Color de fondo de la página (hex). Vacío = blanco. */
+  bg?: string;
+  /** Color de acento de la página (hex): número e iconos. Vacío = marca/global. */
+  acento?: string;
+  /** Alineación del texto del bloque. */
+  align?: Alineacion;
+  /** El texto se coloca por encima de la imagen (la desborda), no a un lado. */
+  textoSobreImagen?: boolean;
+  /** Efecto de sombra del texto: "ninguna" | "suave" | "fuerte" | "halo" | "contorno". */
+  textoSombra?: string;
+  items: ItemDosier[];
+}
+
+export interface Dosier {
+  /** Título de portada (p.ej. "Dosier corporativo"). */
+  titulo: string;
+  /** Eslogan de portada. */
+  eslogan: string;
+  /** Imagen de fondo de la portada (data URL o path Storage). */
+  portada?: string | null;
+  /** Imagen que atraviesa en diagonal la contraportada. */
+  contraportada?: string | null;
+  /** Datos de contacto que aparecen en la contraportada. */
+  contacto: { telefono?: string; email?: string; web?: string; direccion?: string };
+  /** Estilo global (números de página, iconos). */
+  estilo?: EstiloDosier;
+  /** Alineación de los elementos de la portada. */
+  portadaAlign?: Alineacion;
+  /** Alineación de los elementos de la contraportada. */
+  contraAlign?: Alineacion;
+  bloques: BloqueDosier[];
+}
+
 export interface Tenant {
   id: string;
   /** Subdominio del cliente: `<slug>`.fichaloop.com */
@@ -79,6 +192,8 @@ export interface Tenant {
   funciones: string[];
   /** Mini-web pública del cliente (vacía = sin web, raíz muestra login). */
   web?: SeccionWeb[];
+  /** Dosier corporativo del cliente (undefined = aún sin crear). */
+  dosier?: Dosier;
 }
 
 export interface Usuario {

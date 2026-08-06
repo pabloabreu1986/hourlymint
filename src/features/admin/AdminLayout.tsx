@@ -36,7 +36,10 @@ import {
   IconSitemap,
   IconMegaphone,
   IconShield,
+  IconHelp,
 } from "@/components/icons";
+import Tour from "@/features/onboarding/Tour";
+import { TOUR_BIENVENIDA, tourDeRuta, type DefTour } from "@/features/onboarding/tour-content";
 
 // Menú lateral agrupado por áreas. Cada entrada se filtra por las
 // funciones activas del tenant (los títulos de sección desaparecen si
@@ -103,6 +106,10 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
     ],
   },
   {
+    titulo: "Marketing",
+    items: [{ to: "/admin/dosier", label: "Dosier corporativo", icon: IconClipboard }],
+  },
+  {
     titulo: "Sistema",
     items: [
       { to: "/admin/informes", label: "Informes", icon: IconChart },
@@ -122,7 +129,26 @@ const TABS_MOBILE = [
 export default function AdminLayout() {
   const { usuario, logout } = useAuth();
   const [sinLeer, setSinLeer] = useState(0);
+  const [tour, setTour] = useState<DefTour | null>(null);
   const location = useLocation();
+
+  // Lanza el tour de bienvenida la primera vez que este usuario entra.
+  useEffect(() => {
+    if (!usuario) return;
+    const clave = `fichaloop.onboarding.${usuario.id}`;
+    try {
+      if (!localStorage.getItem(clave)) {
+        localStorage.setItem(clave, "1");
+        setTour(TOUR_BIENVENIDA);
+      }
+    } catch {
+      /* modo privado / cuota: sin autoarranque */
+    }
+  }, [usuario]);
+
+  function abrirAyuda() {
+    setTour(tourDeRuta(location.pathname));
+  }
 
   // Filtra el menú por las funciones activas del cliente (tenant).
   const funciones = tenantActual().funciones;
@@ -154,7 +180,7 @@ export default function AdminLayout() {
       <div className="px-5 py-5">
         <Logo variant="light" />
       </div>
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
+      <nav data-tour="nav" className="flex-1 overflow-y-auto px-3 py-2">
         {secciones.map((s, i) => (
           <div key={s.titulo ?? i} className="mb-1">
             {s.titulo && (
@@ -209,14 +235,19 @@ export default function AdminLayout() {
         >
           <div className="flex items-center justify-between">
             <Logo />
-            <NavLink to="/admin/notificaciones" className="relative text-forge-dark">
-              <Avatar nombre={usuario.nombre} color={usuario.color} size={38} />
-              {sinLeer > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-forge-orange px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                  {sinLeer}
-                </span>
-              )}
-            </NavLink>
+            <div className="flex items-center gap-3">
+              <button data-tour="help" onClick={abrirAyuda} className="text-slate-400 hover:text-forge-orange" aria-label="Ayuda / guía del módulo" title="Ayuda">
+                <IconHelp className="h-6 w-6" />
+              </button>
+              <NavLink to="/admin/notificaciones" className="relative text-forge-dark">
+                <Avatar nombre={usuario.nombre} color={usuario.color} size={38} />
+                {sinLeer > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-forge-orange px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                    {sinLeer}
+                  </span>
+                )}
+              </NavLink>
+            </div>
           </div>
           <div className="mt-5">
             <h1 className="text-xl font-extrabold text-forge-dark">
@@ -233,7 +264,10 @@ export default function AdminLayout() {
           <h1 className="text-xl font-bold text-forge-dark">{titulo}</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-400">{fechaCompleta(hoyISO())}</span>
-            <NavLink to="/admin/notificaciones" className="relative text-slate-400 hover:text-forge-dark">
+            <button data-tour="help" onClick={abrirAyuda} className="text-slate-400 hover:text-forge-orange" aria-label="Ayuda / guía del módulo" title="Ayuda de este módulo">
+              <IconHelp className="h-6 w-6" />
+            </button>
+            <NavLink to="/admin/notificaciones" data-tour="bell" className="relative text-slate-400 hover:text-forge-dark">
               <IconBell className="h-6 w-6" />
               {sinLeer > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-forge-orange px-1 text-[9px] font-bold text-white">
@@ -251,7 +285,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-8">
+        <main data-tour="content" className="flex-1 overflow-y-auto p-4 pb-24 lg:p-8">
           <Outlet />
         </main>
       </div>
@@ -276,6 +310,8 @@ export default function AdminLayout() {
           ))}
         </div>
       </nav>
+
+      {tour && <Tour tour={tour} onClose={() => setTour(null)} />}
     </div>
   );
 }

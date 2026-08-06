@@ -69,3 +69,76 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* En el editor en vivo, resaltar los elementos seleccionables al pasar el
+   ratón (fuera del editor no aplica: no lleva la clase .dosier-editable). */
+.dosier-editable [data-item-id] {
+  cursor: pointer;
+}
+.dosier-editable [data-item-id]:hover {
+  outline: 2px dashed rgb(var(--brand-orange) / 0.7);
+  outline-offset: 3px;
+}
+
+/* ─── Dosier corporativo: páginas A4 apaisadas (vista previa e impresión) ─── */
+/* Cada página es una hoja A4 horizontal (297×210mm). En pantalla se ven como
+   tarjetas apiladas; al imprimir, cada una salta a una hoja nueva. */
+.dosier-pagina {
+  width: 297mm;
+  min-height: 210mm;
+  padding: 14mm 16mm;
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Respetar fondos e imágenes al imprimir (colores de marca). */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+/* La portada/contra llevan su propio padding interno para el fondo a sangre. */
+.dosier-portada {
+  padding: 18mm;
+}
+/* En pantalla, tarjeta con sombra; en impresión se anula. */
+.dosier-lienzo .dosier-pagina {
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.25);
+}
+
+/* Escalado responsive de la vista previa en pantallas estrechas: la hoja
+   A4 apaisada (297mm ≈ 1123px) no cabe en muchas pantallas, así que se deja
+   scroll horizontal. No afecta a la impresión (media print lo ignora). */
+@media screen and (max-width: 1180px) {
+  .dosier-lienzo {
+    max-width: 100% !important;
+    align-items: flex-start;
+    overflow-x: auto;
+  }
+}
+
+@media print {
+  /* Solo el dosier en la hoja; se oculta todo lo demás de la app. */
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .dosier-lienzo {
+    max-width: none !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+  .dosier-lienzo .dosier-pagina {
+    box-shadow: none !important;
+  }
+  .dosier-pagina {
+    break-after: page;
+    page-break-after: always;
+  }
+  .dosier-pagina:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}

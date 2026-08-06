@@ -42,6 +42,8 @@ const Terminos = lazyConRecarga(() => import("@/features/marketing/Terminos"));
 const Funcionalidades = lazyConRecarga(() => import("@/features/marketing/Funcionalidades"));
 // Mini-web pública de cada cliente (en su subdominio).
 const WebCliente = lazyConRecarga(() => import("@/features/web/WebCliente"));
+// Vista previa del dosier a pantalla completa (imprimible a PDF).
+const DosierPreview = lazyConRecarga(() => import("@/features/dosier/DosierPreview"));
 
 /** Al cambiar de ruta, vuelve arriba (React Router conserva el scroll). */
 function ScrollArriba() {
@@ -80,6 +82,7 @@ import AdminRecursos from "@/features/admin/AdminRecursos";
 import AdminInformes from "@/features/admin/AdminInformes";
 import AdminHoras from "@/features/admin/AdminHoras";
 import AdminConfiguracion from "@/features/admin/AdminConfiguracion";
+import AdminDosier from "@/features/admin/AdminDosier";
 import AdminPerfil from "@/features/admin/AdminPerfil";
 import AdminNotificaciones from "@/features/admin/AdminNotificaciones";
 // Suite RRHH
@@ -193,6 +196,19 @@ export default function App() {
         }
       />
 
+      {/* Vista previa del dosier a pantalla completa (fuera del layout
+          admin para imprimirse limpia). Solo el admin de la empresa. */}
+      <Route
+        path="/dosier"
+        element={
+          <Guard rol="admin">
+            <Suspense fallback={<Cargando />}>
+              <DosierPreview />
+            </Suspense>
+          </Guard>
+        }
+      />
+
       {/* ── Trabajador ── */}
       <Route
         element={
@@ -248,6 +264,7 @@ export default function App() {
         <Route path="/admin/organigrama" element={<FuncionRoute clave="organigrama"><AdminOrganigrama /></FuncionRoute>} />
         <Route path="/admin/comunicados" element={<FuncionRoute clave="comunicados"><AdminComunicados /></FuncionRoute>} />
         <Route path="/admin/denuncias" element={<FuncionRoute clave="denuncias"><AdminDenuncias /></FuncionRoute>} />
+        <Route path="/admin/dosier" element={<FuncionRoute clave="dosier"><AdminDosier /></FuncionRoute>} />
         <Route path="/admin/notificaciones" element={<AdminNotificaciones />} />
         <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
         <Route path="/admin/perfil" element={<AdminPerfil />} />

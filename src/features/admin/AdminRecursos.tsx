@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { recursosApi, usuariosApi, obrasApi } from "@/services";
 import type { AlmacenItem, Herramienta, Usuario, Vehiculo, Obra } from "@/lib/types";
-import { Badge, Cargando, ProgressBar } from "@/components/ui";
+import { Badge, Cargando, EmptyState, ProgressBar } from "@/components/ui";
 import { IconTruck, IconWrench, IconWarehouse } from "@/components/icons";
 
 type Tab = "vehiculos" | "herramientas" | "almacen";
@@ -23,6 +23,9 @@ function Vehiculos() {
   const nombre = (id: string | null) => usuarios.find((u) => u.id === id)?.nombre ?? "Sin asignar";
   const badge = { disponible: "green", en_uso: "amber", taller: "red" } as const;
   const label = { disponible: "Disponible", en_uso: "En uso", taller: "En taller" };
+
+  if (items.length === 0)
+    return <EmptyState icon={<IconTruck className="h-10 w-10" />} titulo="Sin vehículos" texto="Aún no hay vehículos registrados." />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -52,6 +55,9 @@ function Herramientas() {
   }, []);
   if (!items) return <Cargando />;
   const ubic = (id: string) => (id === "almacen" ? "Almacén" : obras.find((o) => o.id === id)?.nombre ?? id);
+
+  if (items.length === 0)
+    return <EmptyState icon={<IconWrench className="h-10 w-10" />} titulo="Sin herramientas" texto="Aún no hay herramientas en el inventario." />;
 
   return (
     <div className="card overflow-hidden">
@@ -92,6 +98,9 @@ function Almacen() {
     recursosApi.listAlmacen().then(setItems);
   }, []);
   if (!items) return <Cargando />;
+
+  if (items.length === 0)
+    return <EmptyState icon={<IconWarehouse className="h-10 w-10" />} titulo="Almacén vacío" texto="Aún no hay material registrado en el almacén." />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
