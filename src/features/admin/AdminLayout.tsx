@@ -62,6 +62,20 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
     ],
   },
   {
+    titulo: "Comercial",
+    items: [
+      { to: "/admin/clientes", label: "Clientes", icon: IconBriefcase },
+      { to: "/admin/facturas", label: "Facturas", icon: IconReceipt },
+    ],
+  },
+  {
+    titulo: "Finanzas",
+    items: [
+      { to: "/admin/gastos", label: "Gastos", icon: IconEuro },
+      { to: "/admin/nomina", label: "Nómina", icon: IconReceipt },
+    ],
+  },
+  {
     titulo: "Obra",
     items: [
       { to: "/admin/partes", label: "Partes diarios", icon: IconClipboard },
@@ -82,13 +96,6 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
     ],
   },
   {
-    titulo: "Finanzas",
-    items: [
-      { to: "/admin/gastos", label: "Gastos", icon: IconEuro },
-      { to: "/admin/nomina", label: "Nómina", icon: IconReceipt },
-    ],
-  },
-  {
     titulo: "Talento",
     items: [
       { to: "/admin/evaluaciones", label: "Evaluaciones", icon: IconStar },
@@ -104,13 +111,6 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
       { to: "/admin/denuncias", label: "Canal de denuncias", icon: IconShield },
       { to: "/admin/documentos", label: "Documentos", icon: IconFolder },
       { to: "/admin/notificaciones", label: "Notificaciones", icon: IconBell },
-    ],
-  },
-  {
-    titulo: "Comercial",
-    items: [
-      { to: "/admin/clientes", label: "Clientes", icon: IconBriefcase },
-      { to: "/admin/facturas", label: "Facturas", icon: IconReceipt },
     ],
   },
   {
