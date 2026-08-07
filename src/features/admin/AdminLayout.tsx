@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { notificacionesApi } from "@/services";
 import { tenantActual } from "@/lib/branding";
-import { claveDeRutaAdmin, tenantTieneFuncion } from "@/lib/funciones";
+import { claveDeRutaAdmin, tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/ui";
 import { fechaCompleta, saludo } from "@/lib/format";
@@ -150,16 +150,20 @@ export default function AdminLayout() {
     setTour(tourDeRuta(location.pathname));
   }
 
-  // Filtra el menú por las funciones activas del cliente (tenant).
+  // Filtra el menú por las funciones activas del cliente (tenant) y por los
+  // módulos que un directivo le haya habilitado a este usuario admin.
   const funciones = tenantActual().funciones;
+  const puedeVer = (to: string) => {
+    const clave = claveDeRutaAdmin(to);
+    if (!tenantTieneFuncion(funciones, clave)) return false;
+    return usuario ? usuarioVeModulo(usuario.rol, usuario.modulos, clave) : true;
+  };
   const secciones = NAV_SECCIONES.map((s) => ({
     ...s,
-    items: s.items.filter((n) => tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to))),
+    items: s.items.filter((n) => puedeVer(n.to)),
   })).filter((s) => s.items.length > 0);
   const nav = secciones.flatMap((s) => s.items);
-  const tabsMobile = TABS_MOBILE.filter((n) =>
-    tenantTieneFuncion(funciones, claveDeRutaAdmin(n.to))
-  );
+  const tabsMobile = TABS_MOBILE.filter((n) => puedeVer(n.to));
 
   const titulo =
     nav.find((n) => n.to === location.pathname)?.label ??

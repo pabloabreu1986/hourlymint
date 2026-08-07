@@ -65,6 +65,7 @@ export const toUsuario = (r: any): Usuario => ({
   activo: r.activo,
   color: r.color,
   diasVacaciones: r.dias_vacaciones ?? undefined,
+  modulos: r.modulos ?? undefined,
 });
 export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.id !== undefined && { id: u.id }),
@@ -77,6 +78,7 @@ export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.activo !== undefined && { activo: u.activo }),
   ...(u.color !== undefined && { color: u.color }),
   ...(u.diasVacaciones !== undefined && { dias_vacaciones: u.diasVacaciones ?? null }),
+  ...(u.modulos !== undefined && { modulos: u.modulos ?? null }),
 });
 
 // ── Obra ──

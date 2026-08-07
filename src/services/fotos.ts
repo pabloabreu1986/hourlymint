@@ -61,7 +61,7 @@ export async function listFotosVisibles(usuario: Usuario): Promise<Foto[]> {
   const db = loadDB();
   const tid = tenantActivoId();
   let fotos = db.fotos.filter((f) => f.tenantId === tid);
-  if (usuario.rol !== "admin") {
+  if (usuario.rol !== "admin" && usuario.rol !== "directivo") {
     const visibles = new Set(
       db.obras
         .filter((o) => o.encargadoId === usuario.id || o.trabajadorIds.includes(usuario.id))

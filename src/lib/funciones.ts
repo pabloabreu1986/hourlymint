@@ -72,3 +72,49 @@ export function tenantTieneFuncion(funciones: string[], clave: string): boolean 
 export function tenantTieneAlguna(funciones: string[], claves: string[]): boolean {
   return claves.some((c) => tenantTieneFuncion(funciones, c));
 }
+
+// ─── Permisos por usuario (dentro de un cliente) ──────────────
+// Además del filtro por cliente (`tenant.funciones`), cada usuario `admin`
+// puede tener un subconjunto de módulos habilitado por un `directivo`.
+
+import type { Rol } from "@/lib/types";
+
+/** Todas las claves del catálogo (para distinguirlas de rutas sueltas
+ * como notificaciones/configuración/perfil, que nunca se restringen). */
+const CATALOGO = new Set(FUNCIONES_DISPONIBLES.map((f) => f.clave));
+
+/** ¿El rol es administrativo (ve el panel /admin completo por defecto)?
+ * Tanto `admin` como `directivo` usan el panel; `directivo` además
+ * gestiona permisos y siempre lo ve todo. */
+export function esAdministrativo(rol: Rol): boolean {
+  return rol === "admin" || rol === "directivo";
+}
+
+/**
+ * ¿Este usuario puede ver el módulo `clave`?
+ * - superadmin/directivo: todo.
+ * - Dashboard y rutas fuera del catálogo (notificaciones, configuración,
+ *   perfil): siempre.
+ * - admin con `modulos` = null/undefined (legado): todo.
+ * - admin con lista: solo las claves de su lista.
+ * Se combina con `tenantTieneFuncion` (el cliente tiene que tenerlo activo).
+ */
+export function usuarioVeModulo(
+  rol: Rol,
+  modulos: string[] | undefined | null,
+  clave: string
+): boolean {
+  if (rol === "superadmin" || rol === "directivo") return true;
+  if (clave === "dashboard") return true;
+  if (!CATALOGO.has(clave)) return true;
+  if (!modulos) return true;
+  return modulos.includes(clave);
+}
+
+/** Módulos que un directivo puede asignar a un admin: los del catálogo que
+ * el cliente tiene activos, salvo Dashboard (siempre accesible). */
+export function modulosAsignables(funciones: string[]): FuncionDef[] {
+  return FUNCIONES_DISPONIBLES.filter(
+    (f) => f.clave !== "dashboard" && tenantTieneFuncion(funciones, f.clave)
+  );
+}

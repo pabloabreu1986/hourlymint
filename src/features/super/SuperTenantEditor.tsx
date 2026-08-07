@@ -515,6 +515,7 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
         </Campo>
         <Campo label="Rol">
           <select className={inputCls} value={rol} onChange={(e) => setRol(e.target.value as Rol)}>
+            <option value="directivo">Directivo</option>
             <option value="admin">Administrador</option>
             <option value="trabajador">Trabajador</option>
           </select>

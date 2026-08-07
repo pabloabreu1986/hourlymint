@@ -4,7 +4,10 @@
 // entidades es la que mañana replicará la base de datos real.
 // ─────────────────────────────────────────────────────────────
 
-export type Rol = "superadmin" | "admin" | "trabajador";
+// Jerarquía dentro de un cliente: `directivo` es el responsable que
+// configura qué módulos ve cada `admin` (usuario administrativo). El
+// `admin` solo ve los módulos que su directivo le habilita.
+export type Rol = "superadmin" | "directivo" | "admin" | "trabajador";
 
 export type EstadoObra = "en_curso" | "pendiente" | "finalizada";
 
@@ -212,6 +215,14 @@ export interface Usuario {
   color: string;
   /** Días de vacaciones anuales (módulo Ausencias). Por defecto 22. */
   diasVacaciones?: number;
+  /**
+   * Módulos del panel que este usuario `admin` puede ver (claves de
+   * `FUNCIONES_DISPONIBLES`). Lo decide un `directivo`. `undefined`/null =
+   * acceso completo (legado y directivos/superadmin, que ven todo). Una
+   * lista, aunque esté vacía, limita al admin a esas claves (+ Dashboard,
+   * siempre accesible). Ver `usuarioVeModulo`.
+   */
+  modulos?: string[];
 }
 
 export interface Obra {

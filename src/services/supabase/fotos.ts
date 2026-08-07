@@ -92,7 +92,7 @@ export async function listFotosVisibles(usuario: Usuario): Promise<Foto[]> {
   const tid = tenantActivoId();
   let rows: unknown[] | null;
 
-  if (usuario.rol === "admin") {
+  if (usuario.rol === "admin" || usuario.rol === "directivo") {
     rows = check(
       await client
         .from("fotos")

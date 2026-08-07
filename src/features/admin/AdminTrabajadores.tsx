@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { usuariosApi, dashboardApi } from "@/services";
+import { useAuth } from "@/context/AuthContext";
+import { tenantActual } from "@/lib/branding";
+import { modulosAsignables } from "@/lib/funciones";
 import type { Rol, Usuario, Fichaje } from "@/lib/types";
 import {
   calcularJornada,
@@ -26,6 +29,8 @@ type Draft = {
   telefono: string;
   rol: Rol;
   activo: boolean;
+  /** Módulos habilitados cuando el rol es `admin` (lo fija un directivo). */
+  modulos: string[];
 };
 
 const vacio: Draft = {
@@ -35,6 +40,21 @@ const vacio: Draft = {
   telefono: "",
   rol: "trabajador",
   activo: true,
+  modulos: [],
+};
+
+// Etiqueta y color del badge por rol.
+const ROL_LABEL: Record<Rol, string> = {
+  superadmin: "Plataforma",
+  directivo: "Directivo",
+  admin: "Admin",
+  trabajador: "Trabajador",
+};
+const ROL_BADGE: Record<Rol, "violet" | "blue" | "slate"> = {
+  superadmin: "violet",
+  directivo: "violet",
+  admin: "blue",
+  trabajador: "slate",
 };
 
 export default function AdminTrabajadores() {
@@ -177,9 +197,7 @@ export default function AdminTrabajadores() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge color={u.rol === "admin" ? "blue" : "slate"}>
-                      {u.rol === "admin" ? "Admin" : "Trabajador"}
-                    </Badge>
+                    <Badge color={ROL_BADGE[u.rol]}>{ROL_LABEL[u.rol]}</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge color={u.activo ? "green" : "red"}>
@@ -196,7 +214,7 @@ export default function AdminTrabajadores() {
                       </button>
                       <button
                         onClick={() => setBorrar(u)}
-                        disabled={u.rol === "admin"}
+                        disabled={u.rol === "admin" || u.rol === "directivo"}
                         className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30"
                       >
                         <IconTrash className="h-4 w-4" />
@@ -292,7 +310,7 @@ function TrabajadorCard({
           </button>
           <button
             onClick={onBorrar}
-            disabled={u.rol === "admin"}
+            disabled={u.rol === "admin" || u.rol === "directivo"}
             className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30"
           >
             <IconTrash className="h-4 w-4" />
@@ -318,9 +336,7 @@ function TrabajadorCard({
         </div>
         <div>
           <p className="text-slate-400">Rol</p>
-          <Badge color={u.rol === "admin" ? "blue" : "slate"}>
-            {u.rol === "admin" ? "Admin" : "Trabajador"}
-          </Badge>
+          <Badge color={ROL_BADGE[u.rol]}>{ROL_LABEL[u.rol]}</Badge>
         </div>
         <div>
           <p className="text-slate-400">Contraseña</p>
@@ -351,6 +367,13 @@ function UsuarioForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  // Solo un directivo (o el super-admin) gestiona roles y permisos de
+  // módulos. Un admin normal edita a su plantilla, pero no asciende a nadie
+  // ni decide qué módulos ve otro usuario.
+  const { usuario: yo } = useAuth();
+  const soyDirectivo = yo?.rol === "directivo" || yo?.rol === "superadmin";
+  const asignables = modulosAsignables(tenantActual().funciones);
+
   const [d, setD] = useState<Draft>(
     usuario
       ? {
@@ -360,6 +383,9 @@ function UsuarioForm({
           telefono: usuario.telefono ?? "",
           rol: usuario.rol,
           activo: usuario.activo,
+          // Admin ya existente sin lista (legado) = acceso completo: lo
+          // reflejamos con todo marcado para no restringirlo al guardar.
+          modulos: usuario.modulos ?? asignables.map((f) => f.clave),
         }
       : vacio
   );
@@ -367,15 +393,35 @@ function UsuarioForm({
   const [verPass, setVerPass] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function toggleModulo(clave: string) {
+    setD((prev) => ({
+      ...prev,
+      modulos: prev.modulos.includes(clave)
+        ? prev.modulos.filter((c) => c !== clave)
+        : [...prev.modulos, clave],
+    }));
+  }
+
   async function guardar() {
     if (!d.nombre.trim()) return setError("El nombre de usuario es obligatorio.");
     if (!d.password.trim()) return setError("La contraseña es obligatoria.");
     setGuardando(true);
     try {
+      // Los permisos de módulos solo se persisten para usuarios admin. Para
+      // el resto de roles no se toca `modulos` (directivos ven todo).
+      const base = {
+        nombre: d.nombre,
+        password: d.password,
+        puesto: d.puesto,
+        telefono: d.telefono,
+        rol: d.rol,
+        activo: d.activo,
+      };
+      const patch = d.rol === "admin" ? { ...base, modulos: d.modulos } : base;
       if (usuario) {
-        await usuariosApi.actualizarUsuario(usuario.id, d);
+        await usuariosApi.actualizarUsuario(usuario.id, patch);
       } else {
-        await usuariosApi.crearUsuario(d);
+        await usuariosApi.crearUsuario(patch);
       }
       onSaved();
     } catch (e) {
@@ -439,13 +485,22 @@ function UsuarioForm({
           <div>
             <label className="label">Rol</label>
             <select
-              className="field mt-1.5"
+              className="field mt-1.5 disabled:opacity-60"
               value={d.rol}
+              disabled={!soyDirectivo}
               onChange={(e) => setD({ ...d, rol: e.target.value as Rol })}
             >
               <option value="trabajador">Trabajador</option>
               <option value="admin">Administrador</option>
+              {(soyDirectivo || d.rol === "directivo") && (
+                <option value="directivo">Directivo</option>
+              )}
             </select>
+            {!soyDirectivo && (
+              <p className="mt-1 text-xs text-slate-400">
+                Solo un directivo puede cambiar el rol.
+              </p>
+            )}
           </div>
           <div>
             <label className="label">Estado</label>
@@ -459,6 +514,53 @@ function UsuarioForm({
             </select>
           </div>
         </div>
+
+        {/* Permisos de módulos: qué ve este admin en el panel. Solo lo
+            edita un directivo; se aplica cuando el rol es Administrador. */}
+        {soyDirectivo && d.rol === "admin" && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center justify-between">
+              <label className="label">Módulos visibles</label>
+              <div className="flex gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setD({ ...d, modulos: asignables.map((f) => f.clave) })}
+                  className="font-semibold text-forge-orange hover:underline"
+                >
+                  Todos
+                </button>
+                <span className="text-slate-300">·</span>
+                <button
+                  type="button"
+                  onClick={() => setD({ ...d, modulos: [] })}
+                  className="font-semibold text-slate-500 hover:underline"
+                >
+                  Ninguno
+                </button>
+              </div>
+            </div>
+            <p className="mb-2 mt-1 text-xs text-slate-400">
+              El Dashboard siempre está visible. Marca el resto de módulos que
+              podrá usar {d.nombre.trim() || "este usuario"}.
+            </p>
+            <div className="grid max-h-56 grid-cols-2 gap-1.5 overflow-y-auto">
+              {asignables.map((f) => (
+                <label
+                  key={f.clave}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-sm text-forge-dark ring-1 ring-slate-200 hover:ring-forge-orange"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-forge-orange"
+                    checked={d.modulos.includes(f.clave)}
+                    onChange={() => toggleModulo(f.clave)}
+                  />
+                  {f.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 

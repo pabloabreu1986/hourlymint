@@ -20,7 +20,7 @@ export default function AdminOrganigrama() {
 
   if (!usuarios) return <Cargando />;
 
-  const admins = usuarios.filter((u) => u.rol === "admin" && u.activo);
+  const admins = usuarios.filter((u) => (u.rol === "admin" || u.rol === "directivo") && u.activo);
   const trabajadores = usuarios.filter((u) => u.rol === "trabajador" && u.activo);
   const activas = obras.filter((o) => o.estado !== "finalizada");
   const asignados = new Set(activas.flatMap((o) => [...o.trabajadorIds, o.encargadoId ?? ""]));

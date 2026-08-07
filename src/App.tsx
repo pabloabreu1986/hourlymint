@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Cargando } from "@/components/ui";
 import { alertasApi } from "@/services";
 import { tenantActual } from "@/lib/branding";
-import { tenantTieneFuncion } from "@/lib/funciones";
+import { tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
 import { esApex, recordarEspacio } from "@/lib/host";
 import type { Rol } from "@/lib/types";
 import type { ReactNode } from "react";
@@ -105,7 +105,9 @@ const INTERVALO_REVISION_FICHAJES = 5 * 60 * 1000; // 5 min
 
 /** Ruta de inicio según el rol del usuario. */
 function inicioDe(rol: Rol): string {
-  return rol === "superadmin" ? "/super" : rol === "admin" ? "/admin" : "/inicio";
+  if (rol === "superadmin") return "/super";
+  if (rol === "admin" || rol === "directivo") return "/admin";
+  return "/inicio";
 }
 
 /**
@@ -135,7 +137,7 @@ function LoginPublico() {
   return <RaizPublica />;
 }
 
-function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
+function Guard({ rol, children }: { rol: Rol | Rol[]; children: ReactNode }) {
   const { usuario, cargando } = useAuth();
 
   useEffect(() => {
@@ -151,15 +153,21 @@ function Guard({ rol, children }: { rol: Rol; children: ReactNode }) {
 
   if (cargando) return <Cargando />;
   if (!usuario) return <Navigate to="/" replace />;
-  if (usuario.rol !== rol) {
+  const permitidos = Array.isArray(rol) ? rol : [rol];
+  if (!permitidos.includes(usuario.rol)) {
     return <Navigate to={inicioDe(usuario.rol)} replace />;
   }
   return <>{children}</>;
 }
 
-/** Bloquea el acceso directo a un módulo admin desactivado para el tenant. */
+/** Bloquea el acceso directo a un módulo admin desactivado para el tenant
+ * o no habilitado para este usuario (permisos por directivo). */
 function FuncionRoute({ clave, children }: { clave: string; children: ReactNode }) {
+  const { usuario } = useAuth();
   if (!tenantTieneFuncion(tenantActual().funciones, clave)) {
+    return <Navigate to="/admin" replace />;
+  }
+  if (usuario && !usuarioVeModulo(usuario.rol, usuario.modulos, clave)) {
     return <Navigate to="/admin" replace />;
   }
   return <>{children}</>;
@@ -201,7 +209,7 @@ export default function App() {
       <Route
         path="/dosier"
         element={
-          <Guard rol="admin">
+          <Guard rol={["admin", "directivo"]}>
             <Suspense fallback={<Cargando />}>
               <DosierPreview />
             </Suspense>
@@ -235,14 +243,14 @@ export default function App() {
       {/* ── Admin ── */}
       <Route
         element={
-          <Guard rol="admin">
+          <Guard rol={["admin", "directivo"]}>
             <AdminLayout />
           </Guard>
         }
       >
         <Route path="/admin" element={<Dashboard />} />
-        <Route path="/admin/obras" element={<AdminObras />} />
-        <Route path="/admin/trabajadores" element={<AdminTrabajadores />} />
+        <Route path="/admin/obras" element={<FuncionRoute clave="obras"><AdminObras /></FuncionRoute>} />
+        <Route path="/admin/trabajadores" element={<FuncionRoute clave="trabajadores"><AdminTrabajadores /></FuncionRoute>} />
         <Route path="/admin/partes" element={<FuncionRoute clave="partes"><AdminPartes /></FuncionRoute>} />
         <Route path="/admin/fotografias" element={<FuncionRoute clave="fotografias"><AdminFotografias /></FuncionRoute>} />
         <Route path="/admin/materiales" element={<FuncionRoute clave="materiales"><AdminMateriales /></FuncionRoute>} />
