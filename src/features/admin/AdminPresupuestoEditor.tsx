@@ -316,58 +316,68 @@ export default function AdminPresupuestoEditor() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
-                <tr>
-                  <th className="py-2 pr-2 font-semibold">Concepto</th>
-                  <th className="py-2 px-2 font-semibold">Ud</th>
-                  <th className="py-2 px-2 text-right font-semibold">Cant.</th>
-                  <th className="py-2 px-2 text-right font-semibold">Coste ud</th>
-                  <th className="py-2 px-2 text-right font-semibold">Margen</th>
-                  <th className="py-2 px-2 text-right font-semibold">PVP ud</th>
-                  <th className="py-2 px-2 text-right font-semibold">Total</th>
-                  <th className="py-2 pl-2"></th>
+            <table className="w-full min-w-[760px] table-fixed text-sm">
+              <colgroup>
+                <col />
+                <col className="w-[62px]" />
+                <col className="w-[68px]" />
+                <col className="w-[92px]" />
+                <col className="w-[70px]" />
+                <col className="w-[92px]" />
+                <col className="w-[96px]" />
+                <col className="w-[38px]" />
+              </colgroup>
+              <thead className="text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-100">
+                  <th className="px-2 py-2 text-left font-semibold">Concepto</th>
+                  <th className="px-2 py-2 text-left font-semibold">Ud</th>
+                  <th className="px-2 py-2 text-right font-semibold">Cant.</th>
+                  <th className="px-2 py-2 text-right font-semibold">Coste ud</th>
+                  <th className="px-2 py-2 text-right font-semibold">Margen</th>
+                  <th className="px-2 py-2 text-right font-semibold">PVP ud</th>
+                  <th className="px-2 py-2 text-right font-semibold">Total</th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {p.lineas.map((l) => {
                   const t = totalesLinea(l, p.margenPct);
                   return (
-                    <tr key={l.id}>
-                      <td className="py-1.5 pr-2">
+                    <tr key={l.id} className="border-b border-slate-50">
+                      <td className="px-1 py-1">
                         <input
-                          className="field w-full min-w-[180px] py-1.5"
+                          className="field w-full px-2 py-1.5"
                           value={l.concepto}
                           onChange={(e) => updateLinea(l.id, { concepto: e.target.value })}
                         />
                       </td>
-                      <td className="py-1.5 px-2">
+                      <td className="px-1 py-1">
                         <input
-                          className="field w-16 py-1.5"
+                          className="field w-full px-2 py-1.5"
                           value={l.unidad}
                           onChange={(e) => updateLinea(l.id, { unidad: e.target.value })}
                         />
                       </td>
-                      <td className="py-1.5 px-2">
+                      <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-20 py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.cantidad}
                           onChange={(e) => updateLinea(l.id, { cantidad: Number(e.target.value) || 0 })}
                         />
                       </td>
-                      <td className="py-1.5 px-2">
+                      <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-24 py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.costeUnitario}
                           onChange={(e) => updateLinea(l.id, { costeUnitario: Number(e.target.value) || 0 })}
                         />
                       </td>
-                      <td className="py-1.5 px-2">
+                      <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-16 py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           placeholder={String(p.margenPct)}
                           value={l.margenPct ?? ""}
                           onChange={(e) =>
@@ -377,14 +387,14 @@ export default function AdminPresupuestoEditor() {
                           }
                         />
                       </td>
-                      <td className="py-1.5 px-2 text-right text-slate-500">{formatEuro(t.pvpUnitario)}</td>
-                      <td className="py-1.5 px-2 text-right font-semibold text-forge-dark">
+                      <td className="px-2 py-1 text-right text-slate-500">{formatEuro(t.pvpUnitario)}</td>
+                      <td className="px-2 py-1 text-right font-semibold text-forge-dark">
                         {formatEuro(t.pvpTotal)}
                       </td>
-                      <td className="py-1.5 pl-2 text-right">
+                      <td className="px-1 py-1 text-right">
                         <button
                           onClick={() => delLinea(l.id)}
-                          className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500"
+                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
                         >
                           <IconTrash className="h-4 w-4" />
                         </button>
