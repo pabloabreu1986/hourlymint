@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { comprasApi, catalogoApi, obrasApi } from "@/services";
 import { extraerFactura, fileADataUrl } from "@/lib/extraer-factura";
 import { formatEuro } from "@/lib/format";
 import { Cargando, Spinner } from "@/components/ui";
-import { IconChevronLeft, IconPlus, IconTrash } from "@/components/icons";
+import {
+  IconChevronLeft,
+  IconPlus,
+  IconTrash,
+  IconRefresh,
+  IconCheck,
+} from "@/components/icons";
 import type {
   Articulo,
   FacturaProveedor,
@@ -124,6 +130,33 @@ export default function AdminCompraEditor() {
     });
     setArticulos((a) => [...a, nuevo]);
     updateLinea(l.id, { articuloId: nuevo.id });
+  }
+
+  // Artículo del banco al que corresponde una línea: el mapeado, o uno con el
+  // mismo nombre (para detectar si ya existe y si su precio cambió).
+  const byArt = useMemo(() => new Map(articulos.map((a) => [a.id, a])), [articulos]);
+  const artPorNombre = useMemo(() => {
+    const m = new Map<string, Articulo>();
+    for (const a of articulos) m.set(a.nombre.toLowerCase().replace(/\s+/g, " ").trim(), a);
+    return m;
+  }, [articulos]);
+  const matchArticulo = (l: LineaCompra): Articulo | null =>
+    l.articuloId
+      ? byArt.get(l.articuloId) ?? null
+      : artPorNombre.get(l.descripcion.toLowerCase().replace(/\s+/g, " ").trim()) ?? null;
+
+  /** Añade la línea al banco, o actualiza su precio si ya existe, y la mapea. */
+  async function sincronizarBanco(l: LineaCompra) {
+    const art = matchArticulo(l);
+    if (!art) {
+      await crearArticuloDesde(l);
+      return;
+    }
+    if (art.coste !== l.precioUnitario && l.precioUnitario > 0) {
+      const upd = await catalogoApi.actualizarArticulo(art.id, { coste: l.precioUnitario });
+      setArticulos((a) => a.map((x) => (x.id === upd.id ? upd : x)));
+    }
+    if (l.articuloId !== art.id) updateLinea(l.id, { articuloId: art.id });
   }
 
   function updateLinea(lid_: string, patch: Partial<LineaCompra>) {
@@ -309,102 +342,132 @@ export default function AdminCompraEditor() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
-                <tr>
-                  <th className="py-2 pr-2 font-semibold">Descripción</th>
-                  <th className="py-2 px-2 text-right font-semibold">Cant.</th>
-                  <th className="py-2 px-2 font-semibold">Ud</th>
-                  <th className="py-2 px-2 text-right font-semibold">Precio</th>
-                  <th className="py-2 px-2 text-right font-semibold">Total</th>
-                  <th className="py-2 px-2 font-semibold">Artículo del banco</th>
-                  <th className="py-2 pl-2"></th>
+            <table className="w-full min-w-[780px] table-fixed text-sm">
+              <colgroup>
+                <col />
+                <col className="w-[68px]" />
+                <col className="w-[56px]" />
+                <col className="w-[100px]" />
+                <col className="w-[100px]" />
+                <col className="w-[248px]" />
+                <col className="w-[40px]" />
+              </colgroup>
+              <thead className="text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-100">
+                  <th className="px-2 py-2 text-left font-semibold">Descripción</th>
+                  <th className="px-2 py-2 text-right font-semibold">Cant.</th>
+                  <th className="px-2 py-2 text-left font-semibold">Ud</th>
+                  <th className="px-2 py-2 text-right font-semibold">Precio</th>
+                  <th className="px-2 py-2 text-right font-semibold">Total</th>
+                  <th className="px-2 py-2 text-left font-semibold">Artículo del banco</th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {c.lineas.map((l) => (
-                  <tr key={l.id}>
-                    <td className="py-1.5 pr-2">
-                      <input
-                        className="field w-full min-w-[200px] py-1.5"
-                        value={l.descripcion}
-                        disabled={bloqueada}
-                        onChange={(e) => updateLinea(l.id, { descripcion: e.target.value })}
-                      />
-                    </td>
-                    <td className="py-1.5 px-2">
-                      <input
-                        type="number"
-                        className="field w-20 py-1.5 text-right"
-                        value={l.cantidad}
-                        disabled={bloqueada}
-                        onChange={(e) => updateLinea(l.id, { cantidad: Number(e.target.value) || 0 })}
-                      />
-                    </td>
-                    <td className="py-1.5 px-2">
-                      <input
-                        className="field w-16 py-1.5"
-                        value={l.unidad}
-                        disabled={bloqueada}
-                        onChange={(e) => updateLinea(l.id, { unidad: e.target.value })}
-                      />
-                    </td>
-                    <td className="py-1.5 px-2">
-                      <input
-                        type="number"
-                        className="field w-24 py-1.5 text-right"
-                        value={l.precioUnitario}
-                        disabled={bloqueada}
-                        onChange={(e) => updateLinea(l.id, { precioUnitario: Number(e.target.value) || 0 })}
-                      />
-                    </td>
-                    <td className="py-1.5 px-2">
-                      <input
-                        type="number"
-                        className="field w-24 py-1.5 text-right"
-                        value={l.total}
-                        disabled={bloqueada}
-                        onChange={(e) => updateLinea(l.id, { total: Number(e.target.value) || 0 })}
-                      />
-                    </td>
-                    <td className="py-1.5 px-2">
-                      <div className="flex items-center gap-1">
-                        <select
-                          className="field min-w-[150px] py-1.5"
-                          value={l.articuloId ?? ""}
+              <tbody>
+                {c.lineas.map((l) => {
+                  const art = matchArticulo(l);
+                  return (
+                    <tr key={l.id} className="border-b border-slate-50">
+                      <td className="px-1 py-1">
+                        <input
+                          className="field w-full py-1.5"
+                          value={l.descripcion}
                           disabled={bloqueada}
-                          onChange={(e) => updateLinea(l.id, { articuloId: e.target.value || null })}
-                        >
-                          <option value="">— Sin mapear —</option>
-                          {articulos.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.nombre}
-                            </option>
-                          ))}
-                        </select>
-                        {!bloqueada && !l.articuloId && (
-                          <button
-                            onClick={() => crearArticuloDesde(l)}
-                            className="whitespace-nowrap rounded-lg px-2 py-1 text-xs font-semibold text-forge-orange hover:bg-orange-50"
-                            title="Crear artículo en el banco con este precio"
+                          onChange={(e) => updateLinea(l.id, { descripcion: e.target.value })}
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <input
+                          type="number"
+                          className="field w-full py-1.5 text-right"
+                          value={l.cantidad}
+                          disabled={bloqueada}
+                          onChange={(e) => updateLinea(l.id, { cantidad: Number(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <input
+                          className="field w-full py-1.5"
+                          value={l.unidad}
+                          disabled={bloqueada}
+                          onChange={(e) => updateLinea(l.id, { unidad: e.target.value })}
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <input
+                          type="number"
+                          className="field w-full py-1.5 text-right"
+                          value={l.precioUnitario}
+                          disabled={bloqueada}
+                          onChange={(e) =>
+                            updateLinea(l.id, { precioUnitario: Number(e.target.value) || 0 })
+                          }
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <input
+                          type="number"
+                          className="field w-full py-1.5 text-right"
+                          value={l.total}
+                          disabled={bloqueada}
+                          onChange={(e) => updateLinea(l.id, { total: Number(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            className="field w-full py-1.5"
+                            value={l.articuloId ?? ""}
+                            disabled={bloqueada}
+                            onChange={(e) => updateLinea(l.id, { articuloId: e.target.value || null })}
                           >
-                            + banco
+                            <option value="">— Sin mapear —</option>
+                            {articulos.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          {!bloqueada &&
+                            (art == null ? (
+                              <button
+                                onClick={() => sincronizarBanco(l)}
+                                title="Añadir al banco de precios"
+                                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-forge-orange hover:bg-orange-50"
+                              >
+                                <IconPlus className="h-4 w-4" />
+                              </button>
+                            ) : art.coste !== l.precioUnitario ? (
+                              <button
+                                onClick={() => sincronizarBanco(l)}
+                                title={`Actualizar precio en el banco: ${formatEuro(art.coste)} → ${formatEuro(l.precioUnitario)}`}
+                                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-50"
+                              >
+                                <IconRefresh className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <span
+                                title="Ya está en el banco al mismo precio"
+                                className="grid h-8 w-8 shrink-0 place-items-center text-green-500"
+                              >
+                                <IconCheck className="h-4 w-4" />
+                              </span>
+                            ))}
+                        </div>
+                      </td>
+                      <td className="px-1 py-1 text-right">
+                        {!bloqueada && (
+                          <button
+                            onClick={() => setLineas(c.lineas.filter((x) => x.id !== l.id))}
+                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
+                          >
+                            <IconTrash className="h-4 w-4" />
                           </button>
                         )}
-                      </div>
-                    </td>
-                    <td className="py-1.5 pl-2 text-right">
-                      {!bloqueada && (
-                        <button
-                          onClick={() => setLineas(c.lineas.filter((x) => x.id !== l.id))}
-                          className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500"
-                        >
-                          <IconTrash className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

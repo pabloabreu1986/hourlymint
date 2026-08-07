@@ -257,6 +257,12 @@ export const IconEuro = (p: P) => (
     <path d="M4 10.5h9M4 13.5h9" />
   </svg>
 );
+export const IconRefresh = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
+  </svg>
+);
+
 export const IconBriefcase = (p: P) => (
   <svg {...base(p)}>
     <rect x="2" y="7" width="20" height="14" rx="2" />

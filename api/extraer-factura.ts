@@ -15,7 +15,7 @@ Reglas:
 - "lineas": una por cada ARTÍCULO/producto de la factura. NO incluyas cabeceras, subtotales, impuestos, portes ni datos del cliente.
 - "precioUnitario" y "total": SIEMPRE SIN IVA (base imponible). Si la factura da precio con IVA y sin IVA, usa el SIN IVA.
 - Números en formato español (coma decimal, punto de miles) conviértelos a número (ej. "1.234,56" -> 1234.56).
-- "unidad": ud, m², ml, kg, h, saco… (por defecto "ud").
+- "unidad": forma corta en minúscula (UNID./UDS -> "ud", M2 -> "m²", ML -> "ml", KG -> "kg", H -> "h"). Por defecto "ud".
 - "fecha": formato YYYY-MM-DD.
 - Si no encuentras un dato, deja la cadena vacía o la lista vacía.`;
 
