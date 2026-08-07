@@ -37,6 +37,7 @@ import {
   IconMegaphone,
   IconShield,
   IconHelp,
+  IconBriefcase,
 } from "@/components/icons";
 import Tour from "@/features/onboarding/Tour";
 import { TOUR_BIENVENIDA, tourDeRuta, type DefTour } from "@/features/onboarding/tour-content";
@@ -103,6 +104,13 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
       { to: "/admin/denuncias", label: "Canal de denuncias", icon: IconShield },
       { to: "/admin/documentos", label: "Documentos", icon: IconFolder },
       { to: "/admin/notificaciones", label: "Notificaciones", icon: IconBell },
+    ],
+  },
+  {
+    titulo: "Comercial",
+    items: [
+      { to: "/admin/clientes", label: "Clientes", icon: IconBriefcase },
+      { to: "/admin/facturas", label: "Facturas", icon: IconReceipt },
     ],
   },
   {

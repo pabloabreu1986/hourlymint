@@ -2,6 +2,8 @@
 // Migrar a BD real = reimplementar estos módulos (p.ej. fetch a una API).
 export * as authApi from "./auth";
 export * as usuariosApi from "./usuarios";
+export * as clientesApi from "./clientes";
+export * as facturasApi from "./facturas";
 export * as obrasApi from "./obras";
 export * as fichajesApi from "./fichajes";
 export * as partesApi from "./partes";

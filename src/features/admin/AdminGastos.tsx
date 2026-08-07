@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { gastosApi, obrasApi, usuariosApi } from "@/services";
-import type { CategoriaGasto, EstadoGasto, Gasto, Obra, Usuario } from "@/lib/types";
+import { gastosApi, obrasApi, usuariosApi, clientesApi } from "@/services";
+import type { CategoriaGasto, Cliente, EstadoGasto, Gasto, Obra, Usuario } from "@/lib/types";
 import { Avatar, Badge, Cargando, EmptyState, Modal } from "@/components/ui";
 import { fechaCompleta } from "@/lib/format";
 import { IconEuro } from "@/components/icons";
@@ -27,6 +27,7 @@ export default function AdminGastos() {
   const [items, setItems] = useState<Gasto[] | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filtro, setFiltro] = useState<EstadoGasto | "todos">("todos");
   const [justificante, setJustificante] = useState<Gasto | null>(null);
 
@@ -37,12 +38,25 @@ export default function AdminGastos() {
     cargar();
     usuariosApi.listUsuarios().then(setUsuarios);
     obrasApi.listObras().then(setObras);
+    clientesApi.listClientes().then(setClientes);
   }, []);
 
   if (!items) return <Cargando />;
 
   const usuarioDe = (id: string) => usuarios.find((u) => u.id === id);
   const obraDe = (id: string | null) => obras.find((o) => o.id === id)?.nombre ?? "—";
+  // Cliente imputado: el explícito del gasto o, si no, el de su obra.
+  const clienteDeGasto = (g: Gasto): string =>
+    g.clienteId ?? obras.find((o) => o.id === g.obraId)?.clienteId ?? "";
+  const nombreCliente = (cid: string) => {
+    const c = clientes.find((x) => x.id === cid);
+    return c ? `${c.nombre} ${c.apellidos}`.trim() : null;
+  };
+
+  async function asignarCliente(id: string, clienteId: string) {
+    await gastosApi.actualizarGasto(id, { clienteId: clienteId || null });
+    cargar();
+  }
   const visibles = filtro === "todos" ? items : items.filter((g) => g.estado === filtro);
 
   const totalPendiente = items
@@ -108,6 +122,9 @@ export default function AdminGastos() {
                   </div>
                   <p className="text-sm text-slate-500">
                     {u?.nombre ?? "—"} · {obraDe(g.obraId)} · {fechaCompleta(g.fecha)}
+                    {nombreCliente(clienteDeGasto(g)) && (
+                      <> · Cliente: {nombreCliente(clienteDeGasto(g))}</>
+                    )}
                   </p>
                   {g.justificante && (
                     <button
@@ -119,17 +136,36 @@ export default function AdminGastos() {
                   )}
                 </div>
                 <p className="text-xl font-extrabold text-forge-dark">{eur(g.importe)}</p>
-                <select
-                  value={g.estado}
-                  onChange={(e) => cambiarEstado(g.id, e.target.value as EstadoGasto)}
-                  className="field w-full sm:w-40"
-                >
-                  {ESTADOS.map((e) => (
-                    <option key={e.value} value={e.value}>
-                      {e.label}
+                <div className="flex w-full flex-col gap-2 sm:w-44">
+                  <select
+                    value={g.estado}
+                    onChange={(e) => cambiarEstado(g.id, e.target.value as EstadoGasto)}
+                    className="field"
+                  >
+                    {ESTADOS.map((e) => (
+                      <option key={e.value} value={e.value}>
+                        {e.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={g.clienteId ?? ""}
+                    onChange={(e) => asignarCliente(g.id, e.target.value)}
+                    className="field text-sm"
+                    title="Imputar a un cliente"
+                  >
+                    <option value="">
+                      {clienteDeGasto(g) && !g.clienteId
+                        ? `Cliente (de la obra)`
+                        : "Sin cliente"}
                     </option>
-                  ))}
-                </select>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre} {c.apellidos}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             );
           })}

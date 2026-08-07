@@ -45,3 +45,10 @@ export async function cambiarEstadoGasto(id: string, estado: EstadoGasto): Promi
   );
   return toGasto(data);
 }
+
+export async function actualizarGasto(id: string, patch: Partial<Gasto>): Promise<Gasto> {
+  const data = check(
+    await sb().from("gastos").update(fromGasto(patch)).eq("id", id).select().single()
+  );
+  return toGasto(data);
+}

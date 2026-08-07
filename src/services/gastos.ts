@@ -52,3 +52,17 @@ export async function cambiarEstadoGasto(id: string, estado: EstadoGasto): Promi
   if (!out) throw new Error("Gasto no encontrado");
   return delay(out);
 }
+
+export async function actualizarGasto(id: string, patch: Partial<Gasto>): Promise<Gasto> {
+  if (isSupabaseEnabled) return sb.actualizarGasto(id, patch);
+  let out: Gasto | undefined;
+  updateDB((db) => {
+    const g = db.gastos.find((x) => x.id === id);
+    if (g) {
+      Object.assign(g, patch);
+      out = g;
+    }
+  });
+  if (!out) throw new Error("Gasto no encontrado");
+  return delay(out);
+}

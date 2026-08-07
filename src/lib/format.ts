@@ -1,5 +1,16 @@
 // Utilidades de formato (fechas, horas, iniciales) en es-ES.
 
+const EUR = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 2,
+});
+
+/** Importe en euros: 1234.5 → "1.234,50 €". */
+export function formatEuro(importe: number): string {
+  return EUR.format(Number.isFinite(importe) ? importe : 0);
+}
+
 export function iniciales(nombre: string): string {
   return nombre
     .trim()

@@ -74,6 +74,9 @@ import AdminLayout from "@/features/admin/AdminLayout";
 import Dashboard from "@/features/admin/Dashboard";
 import AdminObras from "@/features/admin/AdminObras";
 import AdminTrabajadores from "@/features/admin/AdminTrabajadores";
+import AdminClientes from "@/features/admin/AdminClientes";
+import AdminClienteDetalle from "@/features/admin/AdminClienteDetalle";
+import AdminFacturas from "@/features/admin/AdminFacturas";
 import AdminPartes from "@/features/admin/AdminPartes";
 import AdminFotografias from "@/features/admin/AdminFotografias";
 import AdminMateriales from "@/features/admin/AdminMateriales";
@@ -251,6 +254,9 @@ export default function App() {
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/obras" element={<FuncionRoute clave="obras"><AdminObras /></FuncionRoute>} />
         <Route path="/admin/trabajadores" element={<FuncionRoute clave="trabajadores"><AdminTrabajadores /></FuncionRoute>} />
+        <Route path="/admin/clientes" element={<FuncionRoute clave="clientes"><AdminClientes /></FuncionRoute>} />
+        <Route path="/admin/clientes/:id" element={<FuncionRoute clave="clientes"><AdminClienteDetalle /></FuncionRoute>} />
+        <Route path="/admin/facturas" element={<FuncionRoute clave="facturas"><AdminFacturas /></FuncionRoute>} />
         <Route path="/admin/partes" element={<FuncionRoute clave="partes"><AdminPartes /></FuncionRoute>} />
         <Route path="/admin/fotografias" element={<FuncionRoute clave="fotografias"><AdminFotografias /></FuncionRoute>} />
         <Route path="/admin/materiales" element={<FuncionRoute clave="materiales"><AdminMateriales /></FuncionRoute>} />

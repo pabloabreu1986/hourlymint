@@ -37,6 +37,9 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "organigrama", label: "Organigrama" },
   { clave: "comunicados", label: "Comunicados" },
   { clave: "denuncias", label: "Canal de denuncias" },
+  // ── Comercial / CRM ──
+  { clave: "clientes", label: "Clientes" },
+  { clave: "facturas", label: "Facturas" },
   // ── Marketing ──
   { clave: "dosier", label: "Dosier corporativo" },
 ];

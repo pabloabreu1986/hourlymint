@@ -225,6 +225,68 @@ export interface Usuario {
   modulos?: string[];
 }
 
+// ─── CRM: clientes finales (quien encarga las obras) ─────────
+// OJO: en otras partes "cliente" designa al tenant (la empresa white-label).
+// Aquí `Cliente` es el cliente final de la empresa: la persona o compañía
+// que contrata una obra. Se agrupa por `tenantId` como el resto.
+
+/** Cómo se captó el cliente (origen del lead). */
+export type CanalCaptacion =
+  | "redes"
+  | "referencia"
+  | "web"
+  | "llamada"
+  | "repeticion"
+  | "otro";
+
+export interface Cliente {
+  id: string;
+  tenantId: string;
+  nombre: string;
+  apellidos: string;
+  telefono: string;
+  email: string;
+  /** Dirección de oficinas del cliente. */
+  direccion: string;
+  /** Canal por el que llegó el cliente. */
+  canal: CanalCaptacion;
+  /** Detalle del canal: qué red, quién lo refirió, etc. */
+  canalDetalle: string;
+  notas: string;
+  activo: boolean;
+  createdAt: string; // ISO
+}
+
+export type EstadoFactura = "borrador" | "emitida" | "pagada" | "vencida";
+
+/** Factura emitida a un cliente (opcionalmente ligada a una obra). */
+export interface Factura {
+  id: string;
+  tenantId: string;
+  clienteId: string;
+  /** Obra a la que corresponde la factura; null = general del cliente. */
+  obraId: string | null;
+  /** Número de factura (lo pone el usuario, texto libre). */
+  numero: string;
+  /** Fecha de emisión YYYY-MM-DD. */
+  fecha: string;
+  concepto: string;
+  /** Base imponible en euros. */
+  base: number;
+  /** % de IVA aplicado (p. ej. 21). */
+  iva: number;
+  /** Total = base + IVA (se calcula al guardar). */
+  total: number;
+  estado: EstadoFactura;
+  /** Vencimiento del pago YYYY-MM-DD (null = sin fecha). */
+  fechaVencimiento: string | null;
+  /** Fecha de cobro YYYY-MM-DD (null = no cobrada). */
+  fechaPago: string | null;
+  /** PDF de la factura como data URL (opcional). */
+  archivo: string | null;
+  createdAt: string; // ISO
+}
+
 export interface Obra {
   id: string;
   /** Cliente (tenant) al que pertenece la obra. */
@@ -232,6 +294,10 @@ export interface Obra {
   nombre: string;
   direccion: string;
   estado: EstadoObra;
+  /** Cliente final (quien encarga la obra); null = sin asignar. Ver `Cliente`. */
+  clienteId?: string | null;
+  /** Importe contratado / presupuesto de la obra en euros (ingreso previsto). */
+  presupuesto?: number;
   /** Avance 0–100 */
   avance: number;
   /** Encargado asignado HOY (puede cambiar día a día) */
@@ -449,6 +515,9 @@ export interface Gasto {
   tenantId: string;
   trabajadorId: string;
   obraId: string | null;
+  /** Cliente al que se imputa el gasto; null = sin asignar (se puede
+   * derivar de la obra si esta tiene cliente). Ver `Cliente`. */
+  clienteId?: string | null;
   concepto: string;
   categoria: CategoriaGasto;
   /** Importe en euros. */
@@ -469,6 +538,9 @@ export interface Documento {
   tenantId: string;
   /** null = documento de empresa, visible para toda la plantilla. */
   usuarioId: string | null;
+  /** Cliente al que pertenece el documento (contratos, etc.); null = no es
+   * de un cliente. Ver `Cliente`. */
+  clienteId?: string | null;
   nombre: string;
   categoria: CategoriaDocumento;
   /** Contenido como data URL (mock y BD). */
@@ -563,6 +635,8 @@ export interface DBSchema {
    * los gestiona desde su panel. Hoy en mock; mañana en la BD. */
   tenants: Tenant[];
   usuarios: Usuario[];
+  clientes: Cliente[];
+  facturas: Factura[];
   obras: Obra[];
   fichajes: Fichaje[];
   partes: ParteDiario[];

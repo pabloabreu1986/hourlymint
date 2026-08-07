@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi } from "@/services";
-import type { Adjunto, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
+import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi, clientesApi } from "@/services";
+import type { Adjunto, Cliente, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
 import { calcularJornada, formatHoras, ESTILO_ESTADO_JORNADA } from "@/lib/horas";
 import { fechaLarga } from "@/lib/format";
@@ -54,6 +54,7 @@ function agruparFotosPorFecha(fotos: Foto[]): Array<{ fecha: string; fotos: Foto
 export default function AdminObras() {
   const [obras, setObras] = useState<Obra[] | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [editar, setEditar] = useState<Obra | null>(null);
   const [nuevo, setNuevo] = useState(false);
   const [borrar, setBorrar] = useState<Obra | null>(null);
@@ -61,9 +62,14 @@ export default function AdminObras() {
   const [ahora, setAhora] = useState(() => new Date());
 
   async function cargar() {
-    const [os, us] = await Promise.all([obrasApi.listObras(), usuariosApi.listTrabajadores()]);
+    const [os, us, cs] = await Promise.all([
+      obrasApi.listObras(),
+      usuariosApi.listTrabajadores(),
+      clientesApi.listClientes(),
+    ]);
     setObras(os);
     setUsuarios(us);
+    setClientes(cs);
   }
   async function cargarFichajes() {
     const data = await dashboardApi.getDashboard();
@@ -125,6 +131,7 @@ export default function AdminObras() {
         <ObraForm
           obra={editar}
           trabajadores={usuarios}
+          clientes={clientes}
           onClose={() => {
             setNuevo(false);
             setEditar(null);
@@ -393,16 +400,22 @@ function ObraCard({
 function ObraForm({
   obra,
   trabajadores,
+  clientes,
   onClose,
   onSaved,
 }: {
   obra: Obra | null;
   trabajadores: Usuario[];
+  clientes: Cliente[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [nombre, setNombre] = useState(obra?.nombre ?? "");
   const [direccion, setDireccion] = useState(obra?.direccion ?? "");
+  const [clienteId, setClienteId] = useState<string>(obra?.clienteId ?? "");
+  const [presupuesto, setPresupuesto] = useState<string>(
+    obra?.presupuesto != null ? String(obra.presupuesto) : ""
+  );
   const [estado, setEstado] = useState<EstadoObra>(obra?.estado ?? "pendiente");
   const [avance, setAvance] = useState(obra?.avance ?? 0);
   const [encargadoId, setEncargadoId] = useState<string | null>(obra?.encargadoId ?? null);
@@ -431,6 +444,8 @@ function ObraForm({
       const payload = {
         nombre,
         direccion,
+        clienteId: clienteId || null,
+        presupuesto: presupuesto === "" ? undefined : Number(presupuesto),
         estado,
         avance,
         encargadoId,
@@ -458,6 +473,33 @@ function ObraForm({
         <div>
           <label className="label">Dirección</label>
           <input className="field mt-1.5" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Cliente</label>
+            <select
+              className="field mt-1.5"
+              value={clienteId}
+              onChange={(e) => setClienteId(e.target.value)}
+            >
+              <option value="">— Sin asignar —</option>
+              {clientes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre} {c.apellidos}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Presupuesto (€)</label>
+            <input
+              type="number"
+              className="field mt-1.5"
+              placeholder="Importe contratado"
+              value={presupuesto}
+              onChange={(e) => setPresupuesto(e.target.value)}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
