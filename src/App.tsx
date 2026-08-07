@@ -82,6 +82,8 @@ import AdminFacturas from "@/features/admin/AdminFacturas";
 import AdminCatalogo from "@/features/admin/AdminCatalogo";
 import AdminPresupuestos from "@/features/admin/AdminPresupuestos";
 import AdminPresupuestoEditor from "@/features/admin/AdminPresupuestoEditor";
+import AdminCompras from "@/features/admin/AdminCompras";
+import AdminCompraEditor from "@/features/admin/AdminCompraEditor";
 import AdminPartes from "@/features/admin/AdminPartes";
 import AdminFotografias from "@/features/admin/AdminFotografias";
 import AdminMateriales from "@/features/admin/AdminMateriales";
@@ -277,6 +279,8 @@ export default function App() {
         <Route path="/admin/presupuestos" element={<FuncionRoute clave="presupuestos"><AdminPresupuestos /></FuncionRoute>} />
         <Route path="/admin/presupuestos/:id" element={<FuncionRoute clave="presupuestos"><AdminPresupuestoEditor /></FuncionRoute>} />
         <Route path="/admin/catalogo" element={<FuncionRoute clave="catalogo"><AdminCatalogo /></FuncionRoute>} />
+        <Route path="/admin/compras" element={<FuncionRoute clave="compras"><AdminCompras /></FuncionRoute>} />
+        <Route path="/admin/compras/:id" element={<FuncionRoute clave="compras"><AdminCompraEditor /></FuncionRoute>} />
         <Route path="/admin/partes" element={<FuncionRoute clave="partes"><AdminPartes /></FuncionRoute>} />
         <Route path="/admin/fotografias" element={<FuncionRoute clave="fotografias"><AdminFotografias /></FuncionRoute>} />
         <Route path="/admin/materiales" element={<FuncionRoute clave="materiales"><AdminMateriales /></FuncionRoute>} />

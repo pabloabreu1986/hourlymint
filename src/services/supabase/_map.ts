@@ -8,6 +8,7 @@ import type {
   Proveedor,
   Articulo,
   Partida,
+  FacturaProveedor,
   Presupuesto,
   PlantillaDisclaimer,
   Obra,
@@ -638,6 +639,33 @@ export const fromPresupuesto = (p: Partial<Presupuesto>): any => ({
   ...(p.disclaimers !== undefined && { disclaimers: p.disclaimers }),
   ...(p.notas !== undefined && { notas: p.notas }),
   ...(p.createdAt !== undefined && { created_at: p.createdAt }),
+});
+
+export const toCompra = (r: any): FacturaProveedor => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  proveedorId: r.proveedor_id ?? null,
+  obraId: r.obra_id ?? null,
+  numero: r.numero ?? "",
+  fecha: r.fecha,
+  archivo: r.archivo ?? null,
+  lineas: r.lineas ?? [],
+  estado: r.estado ?? "borrador",
+  total: Number(r.total ?? 0),
+  createdAt: r.created_at,
+});
+export const fromCompra = (c: Partial<FacturaProveedor>): any => ({
+  ...(c.id !== undefined && { id: c.id }),
+  ...(c.tenantId !== undefined && { tenant_id: c.tenantId }),
+  ...(c.proveedorId !== undefined && { proveedor_id: c.proveedorId ?? null }),
+  ...(c.obraId !== undefined && { obra_id: c.obraId ?? null }),
+  ...(c.numero !== undefined && { numero: c.numero }),
+  ...(c.fecha !== undefined && { fecha: c.fecha }),
+  ...(c.archivo !== undefined && { archivo: c.archivo ?? null }),
+  ...(c.lineas !== undefined && { lineas: c.lineas }),
+  ...(c.estado !== undefined && { estado: c.estado }),
+  ...(c.total !== undefined && { total: c.total }),
+  ...(c.createdAt !== undefined && { created_at: c.createdAt }),
 });
 
 export const toDisclaimer = (r: any): PlantillaDisclaimer => ({

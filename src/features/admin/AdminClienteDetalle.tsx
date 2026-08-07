@@ -6,6 +6,7 @@ import {
   gastosApi,
   facturasApi,
   documentosApi,
+  comprasApi,
 } from "@/services";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -31,6 +32,7 @@ import type {
   Cliente,
   Documento,
   Factura,
+  FacturaProveedor,
   Gasto,
   Obra,
 } from "@/lib/types";
@@ -45,6 +47,7 @@ export default function AdminClienteDetalle() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [compras, setCompras] = useState<FacturaProveedor[]>([]);
   const [cargando, setCargando] = useState(true);
 
   const [editar, setEditar] = useState(false);
@@ -54,18 +57,20 @@ export default function AdminClienteDetalle() {
   const [asignar, setAsignar] = useState(false);
 
   async function cargar() {
-    const [c, o, g, f, d] = await Promise.all([
+    const [c, o, g, f, d, cm] = await Promise.all([
       clientesApi.getCliente(id),
       obrasApi.listObras(),
       gastosApi.listGastos(),
       facturasApi.listFacturas(),
       documentosApi.listDocumentos(),
+      comprasApi.listCompras(),
     ]);
     setCliente(c);
     setObras(o);
     setGastos(g);
     setFacturas(f);
     setDocumentos(d);
+    setCompras(cm);
     setCargando(false);
   }
   useEffect(() => {
@@ -90,7 +95,7 @@ export default function AdminClienteDetalle() {
     .filter((f) => f.clienteId === cliente.id)
     .sort((a, b) => b.fecha.localeCompare(a.fecha));
   const docsCli = documentos.filter((d) => d.clienteId === cliente.id);
-  const r = resumenCliente(cliente.id, obras, gastos, facturas);
+  const r = resumenCliente(cliente.id, obras, gastos, facturas, compras);
   const sinAsignar = obras.filter((o) => !o.clienteId);
   const nombreObra = (obraId: string | null) =>
     obraId ? obras.find((o) => o.id === obraId)?.nombre ?? "—" : "General";
@@ -198,7 +203,7 @@ export default function AdminClienteDetalle() {
         ) : (
           <div className="divide-y divide-slate-100">
             {obrasCli.map((o) => {
-              const ro = resumenObra(o, gastos, facturas);
+              const ro = resumenObra(o, gastos, facturas, compras);
               return (
                 <div key={o.id} className="flex flex-wrap items-center gap-3 py-3">
                   <div className="min-w-0 flex-1">

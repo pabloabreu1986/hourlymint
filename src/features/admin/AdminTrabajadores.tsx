@@ -29,6 +29,8 @@ type Draft = {
   telefono: string;
   rol: Rol;
   activo: boolean;
+  /** Coste/hora (mano de obra en presupuestos). Texto para el input. */
+  costeHora: string;
   /** Módulos habilitados cuando el rol es `admin` (lo fija un directivo). */
   modulos: string[];
 };
@@ -40,6 +42,7 @@ const vacio: Draft = {
   telefono: "",
   rol: "trabajador",
   activo: true,
+  costeHora: "",
   modulos: [],
 };
 
@@ -383,6 +386,7 @@ function UsuarioForm({
           telefono: usuario.telefono ?? "",
           rol: usuario.rol,
           activo: usuario.activo,
+          costeHora: usuario.costeHora != null ? String(usuario.costeHora) : "",
           // Admin ya existente sin lista (legado) = acceso completo: lo
           // reflejamos con todo marcado para no restringirlo al guardar.
           modulos: usuario.modulos ?? asignables.map((f) => f.clave),
@@ -416,6 +420,7 @@ function UsuarioForm({
         telefono: d.telefono,
         rol: d.rol,
         activo: d.activo,
+        costeHora: Number(d.costeHora) || 0,
       };
       const patch = d.rol === "admin" ? { ...base, modulos: d.modulos } : base;
       if (usuario) {
@@ -480,6 +485,19 @@ function UsuarioForm({
               onChange={(e) => setD({ ...d, telefono: e.target.value })}
             />
           </div>
+        </div>
+        <div>
+          <label className="label">Coste por hora (€)</label>
+          <input
+            type="number"
+            className="field mt-1.5"
+            placeholder="0"
+            value={d.costeHora}
+            onChange={(e) => setD({ ...d, costeHora: e.target.value })}
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            Se usa como mano de obra en los presupuestos.
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

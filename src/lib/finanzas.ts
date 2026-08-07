@@ -1,7 +1,14 @@
 // Cálculos derivados de clientes/obras/facturas/gastos. Funciones puras:
 // no leen la BD, se les pasan las colecciones ya cargadas. Así las usan por
 // igual la lista de clientes, el perfil y la vista de facturas.
-import type { CanalCaptacion, EstadoFactura, Factura, Gasto, Obra } from "@/lib/types";
+import type {
+  CanalCaptacion,
+  EstadoFactura,
+  Factura,
+  FacturaProveedor,
+  Gasto,
+  Obra,
+} from "@/lib/types";
 
 /** Canales de captación con etiqueta legible. */
 export const CANALES: { valor: CanalCaptacion; label: string }[] = [
@@ -67,7 +74,8 @@ export function resumenCliente(
   clienteId: string,
   obras: Obra[],
   gastos: Gasto[],
-  facturas: Factura[]
+  facturas: Factura[],
+  compras: FacturaProveedor[] = []
 ): ResumenFinanzas {
   const obrasCli = obras.filter((o) => o.clienteId === clienteId);
   const obraIds = new Set(obrasCli.map((o) => o.id));
@@ -75,20 +83,38 @@ export function resumenCliente(
   const gastosCli = gastos.filter(
     (g) => g.clienteId === clienteId || (g.obraId != null && obraIds.has(g.obraId))
   );
-  return resumen(obrasCli, gastosCli, facturasCli);
+  const costeCompras = suma(
+    compras
+      .filter((c) => c.estado === "aprobada" && c.obraId != null && obraIds.has(c.obraId))
+      .map((c) => c.total)
+  );
+  return resumen(obrasCli, gastosCli, facturasCli, costeCompras);
 }
 
 /** Resumen económico de una obra concreta. */
-export function resumenObra(obra: Obra, gastos: Gasto[], facturas: Factura[]): ResumenFinanzas {
+export function resumenObra(
+  obra: Obra,
+  gastos: Gasto[],
+  facturas: Factura[],
+  compras: FacturaProveedor[] = []
+): ResumenFinanzas {
   const gastosObra = gastos.filter((g) => g.obraId === obra.id);
   const facturasObra = facturas.filter((f) => f.obraId === obra.id);
-  return resumen([obra], gastosObra, facturasObra);
+  const costeCompras = suma(
+    compras.filter((c) => c.estado === "aprobada" && c.obraId === obra.id).map((c) => c.total)
+  );
+  return resumen([obra], gastosObra, facturasObra, costeCompras);
 }
 
-function resumen(obras: Obra[], gastos: Gasto[], facturas: Factura[]): ResumenFinanzas {
+function resumen(
+  obras: Obra[],
+  gastos: Gasto[],
+  facturas: Factura[],
+  costeCompras = 0
+): ResumenFinanzas {
   const facturado = suma(facturas.filter(esFacturada).map((f) => f.total));
   const cobrado = suma(facturas.filter((f) => f.estado === "pagada").map((f) => f.total));
-  const totalGastos = suma(gastos.map((g) => g.importe));
+  const totalGastos = suma(gastos.map((g) => g.importe)) + costeCompras;
   const presupuesto = suma(obras.map((o) => o.presupuesto ?? 0));
   return {
     numObras: obras.length,

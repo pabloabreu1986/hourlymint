@@ -6,7 +6,10 @@ import {
   obrasApi,
   catalogoApi,
   usuariosApi,
+  facturasApi,
 } from "@/services";
+import { totalFactura } from "@/lib/finanzas";
+import { hoyISO } from "@/lib/seed";
 import {
   costePartida,
   totalesLinea,
@@ -97,6 +100,32 @@ export default function AdminPresupuestoEditor() {
   async function verPDF() {
     await guardar();
     window.open(`/presupuesto/${id}`, "_blank");
+  }
+
+  async function convertirEnFactura() {
+    if (!p || !p.clienteId) return;
+    const t = totalesPresupuesto(p);
+    if (!window.confirm(`Crear una factura de ${formatEuro(totalFactura(t.pvp, 21))} (IVA 21%) para este cliente y marcar el presupuesto como aceptado?`))
+      return;
+    await guardar();
+    await facturasApi.crearFactura({
+      clienteId: p.clienteId,
+      obraId: p.obraId,
+      numero: p.numero.replace(/^P-/, "F-") || p.numero,
+      fecha: hoyISO(),
+      concepto: `Presupuesto ${p.numero}`,
+      base: t.pvp,
+      iva: 21,
+      total: totalFactura(t.pvp, 21),
+      estado: "emitida",
+      fechaVencimiento: null,
+      fechaPago: null,
+      archivo: null,
+    });
+    set({ estado: "aceptado" });
+    await presupuestosApi.actualizarPresupuesto(p.id, { estado: "aceptado" });
+    setGuardado(true);
+    navigate(`/admin/clientes/${p.clienteId}`);
   }
 
   if (cargando) return <Cargando />;
@@ -190,6 +219,11 @@ export default function AdminPresupuestoEditor() {
           <button onClick={guardar} disabled={guardando} className="btn-ghost px-4 py-2 text-sm">
             Guardar
           </button>
+          {p.clienteId && p.estado !== "aceptado" && (
+            <button onClick={convertirEnFactura} className="btn-ghost px-4 py-2 text-sm">
+              Convertir a factura
+            </button>
+          )}
           <button onClick={verPDF} className="btn-primary px-4 py-2 text-sm">
             <IconClipboard className="h-4 w-4" /> Ver / PDF
           </button>

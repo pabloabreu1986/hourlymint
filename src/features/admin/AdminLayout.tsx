@@ -73,6 +73,7 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
     items: [
       { to: "/admin/presupuestos", label: "Presupuestos", icon: IconClipboard },
       { to: "/admin/catalogo", label: "Banco de precios", icon: IconBox },
+      { to: "/admin/compras", label: "Facturas de proveedor", icon: IconReceipt },
     ],
   },
   {
