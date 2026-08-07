@@ -44,6 +44,8 @@ const Funcionalidades = lazyConRecarga(() => import("@/features/marketing/Funcio
 const WebCliente = lazyConRecarga(() => import("@/features/web/WebCliente"));
 // Vista previa del dosier a pantalla completa (imprimible a PDF).
 const DosierPreview = lazyConRecarga(() => import("@/features/dosier/DosierPreview"));
+// Presupuesto imprimible (fuera del layout admin, para el cliente).
+const PresupuestoPDF = lazyConRecarga(() => import("@/features/presupuestos/PresupuestoPDF"));
 
 /** Al cambiar de ruta, vuelve arriba (React Router conserva el scroll). */
 function ScrollArriba() {
@@ -77,6 +79,9 @@ import AdminTrabajadores from "@/features/admin/AdminTrabajadores";
 import AdminClientes from "@/features/admin/AdminClientes";
 import AdminClienteDetalle from "@/features/admin/AdminClienteDetalle";
 import AdminFacturas from "@/features/admin/AdminFacturas";
+import AdminCatalogo from "@/features/admin/AdminCatalogo";
+import AdminPresupuestos from "@/features/admin/AdminPresupuestos";
+import AdminPresupuestoEditor from "@/features/admin/AdminPresupuestoEditor";
 import AdminPartes from "@/features/admin/AdminPartes";
 import AdminFotografias from "@/features/admin/AdminFotografias";
 import AdminMateriales from "@/features/admin/AdminMateriales";
@@ -220,6 +225,18 @@ export default function App() {
         }
       />
 
+      {/* Presupuesto imprimible (fuera del layout admin). Admin/directivo. */}
+      <Route
+        path="/presupuesto/:id"
+        element={
+          <Guard rol={["admin", "directivo"]}>
+            <Suspense fallback={<Cargando />}>
+              <PresupuestoPDF />
+            </Suspense>
+          </Guard>
+        }
+      />
+
       {/* ── Trabajador ── */}
       <Route
         element={
@@ -257,6 +274,9 @@ export default function App() {
         <Route path="/admin/clientes" element={<FuncionRoute clave="clientes"><AdminClientes /></FuncionRoute>} />
         <Route path="/admin/clientes/:id" element={<FuncionRoute clave="clientes"><AdminClienteDetalle /></FuncionRoute>} />
         <Route path="/admin/facturas" element={<FuncionRoute clave="facturas"><AdminFacturas /></FuncionRoute>} />
+        <Route path="/admin/presupuestos" element={<FuncionRoute clave="presupuestos"><AdminPresupuestos /></FuncionRoute>} />
+        <Route path="/admin/presupuestos/:id" element={<FuncionRoute clave="presupuestos"><AdminPresupuestoEditor /></FuncionRoute>} />
+        <Route path="/admin/catalogo" element={<FuncionRoute clave="catalogo"><AdminCatalogo /></FuncionRoute>} />
         <Route path="/admin/partes" element={<FuncionRoute clave="partes"><AdminPartes /></FuncionRoute>} />
         <Route path="/admin/fotografias" element={<FuncionRoute clave="fotografias"><AdminFotografias /></FuncionRoute>} />
         <Route path="/admin/materiales" element={<FuncionRoute clave="materiales"><AdminMateriales /></FuncionRoute>} />

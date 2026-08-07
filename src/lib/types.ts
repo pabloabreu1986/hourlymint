@@ -215,6 +215,9 @@ export interface Usuario {
   color: string;
   /** Días de vacaciones anuales (módulo Ausencias). Por defecto 22. */
   diasVacaciones?: number;
+  /** Coste por hora de este trabajador (para mano de obra en presupuestos y
+   * coste real de obra). Vacío = 0. */
+  costeHora?: number;
   /**
    * Módulos del panel que este usuario `admin` puede ver (claves de
    * `FUNCIONES_DISPONIBLES`). Lo decide un `directivo`. `undefined`/null =
@@ -285,6 +288,145 @@ export interface Factura {
   /** PDF de la factura como data URL (opcional). */
   archivo: string | null;
   createdAt: string; // ISO
+}
+
+// ─── Presupuestos: banco de precios + compras + presupuestos ──
+// Objetivo: cualquiera arma un presupuesto porque el conocimiento (precios,
+// recetas, márgenes) vive en el sistema, no en una persona.
+
+/** Proveedor de materiales (Obramat, Leroy Merlin, Bauhaus…). */
+export interface Proveedor {
+  id: string;
+  tenantId: string;
+  nombre: string;
+  cif: string;
+  telefono: string;
+  email: string;
+  notas: string;
+  createdAt: string; // ISO
+}
+
+export type CategoriaArticulo =
+  | "material"
+  | "mano_obra"
+  | "maquinaria"
+  | "subcontrata"
+  | "otro";
+
+/** Artículo del banco de precios: un coste unitario conocido. */
+export interface Articulo {
+  id: string;
+  tenantId: string;
+  /** Referencia del proveedor (código), libre. */
+  referencia: string;
+  nombre: string;
+  /** Proveedor habitual; null = genérico. */
+  proveedorId: string | null;
+  categoria: CategoriaArticulo;
+  /** Unidad de medida: ud, m², ml, kg, h, saco… */
+  unidad: string;
+  /** Coste unitario actual (se actualiza al aprobar compras). */
+  coste: number;
+  createdAt: string; // ISO
+}
+
+/** Un componente de una partida (receta): un artículo con su cantidad. */
+export interface ComponentePartida {
+  id: string;
+  articuloId: string;
+  /** Cantidad de ese artículo por unidad de la partida. */
+  cantidad: number;
+}
+
+/**
+ * Partida / receta descompuesta: "m² de suelo de baño", "Baño 4×4 con plato
+ * de ducha". Su coste = suma de los componentes. Presupuestar por unidades
+ * grandes sin desglosar a mano.
+ */
+export interface Partida {
+  id: string;
+  tenantId: string;
+  nombre: string;
+  /** Unidad de la partida (ud, m²…). */
+  unidad: string;
+  descripcion: string;
+  componentes: ComponentePartida[];
+  createdAt: string; // ISO
+}
+
+export type EstadoCompra = "borrador" | "revisada" | "aprobada";
+
+/** Una línea extraída/tecleada de una factura de proveedor. */
+export interface LineaCompra {
+  id: string;
+  descripcion: string;
+  cantidad: number;
+  unidad: string;
+  precioUnitario: number;
+  total: number;
+  /** Artículo del catálogo al que se mapea (para actualizar su precio). */
+  articuloId: string | null;
+}
+
+/** Factura/albarán de proveedor: entra el coste, alimenta el banco de precios. */
+export interface FacturaProveedor {
+  id: string;
+  tenantId: string;
+  proveedorId: string | null;
+  /** Obra a la que se imputa (coste real); null = general. */
+  obraId: string | null;
+  numero: string;
+  fecha: string; // YYYY-MM-DD
+  /** Escaneo (data URL) del documento original. */
+  archivo: string | null;
+  lineas: LineaCompra[];
+  estado: EstadoCompra;
+  total: number;
+  createdAt: string; // ISO
+}
+
+export type EstadoPresupuesto = "borrador" | "enviado" | "aceptado" | "rechazado";
+export type TipoLineaPresupuesto = "articulo" | "partida" | "mano_obra" | "libre";
+
+/** Una línea de un presupuesto. El PVP = coste × (1 + margen). */
+export interface LineaPresupuesto {
+  id: string;
+  tipo: TipoLineaPresupuesto;
+  /** Id del artículo o partida de origen (null en líneas libres). */
+  refId: string | null;
+  concepto: string;
+  unidad: string;
+  cantidad: number;
+  /** Coste unitario (interno). */
+  costeUnitario: number;
+  /** Margen % que sobrescribe el del presupuesto; null = usa el general. */
+  margenPct: number | null;
+}
+
+/** Presupuesto a un cliente/obra, con margen y disclaimers, exportable a PDF. */
+export interface Presupuesto {
+  id: string;
+  tenantId: string;
+  clienteId: string | null;
+  obraId: string | null;
+  numero: string;
+  fecha: string; // YYYY-MM-DD
+  estado: EstadoPresupuesto;
+  /** Margen % por defecto de todo el presupuesto (lo fija el directivo). */
+  margenPct: number;
+  lineas: LineaPresupuesto[];
+  /** Textos de aviso al pie (p. ej. "Pendiente de visita de obra"). */
+  disclaimers: string[];
+  notas: string;
+  createdAt: string; // ISO
+}
+
+/** Disclaimer pre-redactado reutilizable en presupuestos. */
+export interface PlantillaDisclaimer {
+  id: string;
+  tenantId: string;
+  titulo: string;
+  texto: string;
 }
 
 export interface Obra {
@@ -637,6 +779,12 @@ export interface DBSchema {
   usuarios: Usuario[];
   clientes: Cliente[];
   facturas: Factura[];
+  proveedores: Proveedor[];
+  articulos: Articulo[];
+  partidas: Partida[];
+  comprasProveedor: FacturaProveedor[];
+  presupuestos: Presupuesto[];
+  disclaimers: PlantillaDisclaimer[];
   obras: Obra[];
   fichajes: Fichaje[];
   partes: ParteDiario[];

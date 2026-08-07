@@ -5,6 +5,11 @@ import type {
   Usuario,
   Cliente,
   Factura,
+  Proveedor,
+  Articulo,
+  Partida,
+  Presupuesto,
+  PlantillaDisclaimer,
   Obra,
   Fichaje,
   ParteDiario,
@@ -67,6 +72,7 @@ export const toUsuario = (r: any): Usuario => ({
   activo: r.activo,
   color: r.color,
   diasVacaciones: r.dias_vacaciones ?? undefined,
+  costeHora: r.coste_hora != null ? Number(r.coste_hora) : undefined,
   modulos: r.modulos ?? undefined,
 });
 export const fromUsuario = (u: Partial<Usuario>): any => ({
@@ -80,6 +86,7 @@ export const fromUsuario = (u: Partial<Usuario>): any => ({
   ...(u.activo !== undefined && { activo: u.activo }),
   ...(u.color !== undefined && { color: u.color }),
   ...(u.diasVacaciones !== undefined && { dias_vacaciones: u.diasVacaciones ?? null }),
+  ...(u.costeHora !== undefined && { coste_hora: u.costeHora ?? null }),
   ...(u.modulos !== undefined && { modulos: u.modulos ?? null }),
 });
 
@@ -538,6 +545,112 @@ export const fromFactura = (f: Partial<Factura>): any => ({
   ...(f.fechaPago !== undefined && { fecha_pago: f.fechaPago ?? null }),
   ...(f.archivo !== undefined && { archivo: f.archivo ?? null }),
   ...(f.createdAt !== undefined && { created_at: f.createdAt }),
+});
+
+// ── Presupuestos: proveedor / artículo / partida / presupuesto / disclaimer ──
+export const toProveedor = (r: any): Proveedor => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  nombre: r.nombre,
+  cif: r.cif ?? "",
+  telefono: r.telefono ?? "",
+  email: r.email ?? "",
+  notas: r.notas ?? "",
+  createdAt: r.created_at,
+});
+export const fromProveedor = (p: Partial<Proveedor>): any => ({
+  ...(p.id !== undefined && { id: p.id }),
+  ...(p.tenantId !== undefined && { tenant_id: p.tenantId }),
+  ...(p.nombre !== undefined && { nombre: p.nombre }),
+  ...(p.cif !== undefined && { cif: p.cif }),
+  ...(p.telefono !== undefined && { telefono: p.telefono }),
+  ...(p.email !== undefined && { email: p.email }),
+  ...(p.notas !== undefined && { notas: p.notas }),
+  ...(p.createdAt !== undefined && { created_at: p.createdAt }),
+});
+
+export const toArticulo = (r: any): Articulo => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  referencia: r.referencia ?? "",
+  nombre: r.nombre,
+  proveedorId: r.proveedor_id ?? null,
+  categoria: r.categoria ?? "material",
+  unidad: r.unidad ?? "ud",
+  coste: Number(r.coste),
+  createdAt: r.created_at,
+});
+export const fromArticulo = (a: Partial<Articulo>): any => ({
+  ...(a.id !== undefined && { id: a.id }),
+  ...(a.tenantId !== undefined && { tenant_id: a.tenantId }),
+  ...(a.referencia !== undefined && { referencia: a.referencia }),
+  ...(a.nombre !== undefined && { nombre: a.nombre }),
+  ...(a.proveedorId !== undefined && { proveedor_id: a.proveedorId ?? null }),
+  ...(a.categoria !== undefined && { categoria: a.categoria }),
+  ...(a.unidad !== undefined && { unidad: a.unidad }),
+  ...(a.coste !== undefined && { coste: a.coste }),
+  ...(a.createdAt !== undefined && { created_at: a.createdAt }),
+});
+
+export const toPartida = (r: any): Partida => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  nombre: r.nombre,
+  unidad: r.unidad ?? "ud",
+  descripcion: r.descripcion ?? "",
+  componentes: r.componentes ?? [],
+  createdAt: r.created_at,
+});
+export const fromPartida = (p: Partial<Partida>): any => ({
+  ...(p.id !== undefined && { id: p.id }),
+  ...(p.tenantId !== undefined && { tenant_id: p.tenantId }),
+  ...(p.nombre !== undefined && { nombre: p.nombre }),
+  ...(p.unidad !== undefined && { unidad: p.unidad }),
+  ...(p.descripcion !== undefined && { descripcion: p.descripcion }),
+  ...(p.componentes !== undefined && { componentes: p.componentes }),
+  ...(p.createdAt !== undefined && { created_at: p.createdAt }),
+});
+
+export const toPresupuesto = (r: any): Presupuesto => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  clienteId: r.cliente_id ?? null,
+  obraId: r.obra_id ?? null,
+  numero: r.numero ?? "",
+  fecha: r.fecha,
+  estado: r.estado ?? "borrador",
+  margenPct: Number(r.margen_pct ?? 0),
+  lineas: r.lineas ?? [],
+  disclaimers: r.disclaimers ?? [],
+  notas: r.notas ?? "",
+  createdAt: r.created_at,
+});
+export const fromPresupuesto = (p: Partial<Presupuesto>): any => ({
+  ...(p.id !== undefined && { id: p.id }),
+  ...(p.tenantId !== undefined && { tenant_id: p.tenantId }),
+  ...(p.clienteId !== undefined && { cliente_id: p.clienteId ?? null }),
+  ...(p.obraId !== undefined && { obra_id: p.obraId ?? null }),
+  ...(p.numero !== undefined && { numero: p.numero }),
+  ...(p.fecha !== undefined && { fecha: p.fecha }),
+  ...(p.estado !== undefined && { estado: p.estado }),
+  ...(p.margenPct !== undefined && { margen_pct: p.margenPct }),
+  ...(p.lineas !== undefined && { lineas: p.lineas }),
+  ...(p.disclaimers !== undefined && { disclaimers: p.disclaimers }),
+  ...(p.notas !== undefined && { notas: p.notas }),
+  ...(p.createdAt !== undefined && { created_at: p.createdAt }),
+});
+
+export const toDisclaimer = (r: any): PlantillaDisclaimer => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  titulo: r.titulo ?? "",
+  texto: r.texto ?? "",
+});
+export const fromDisclaimer = (d: Partial<PlantillaDisclaimer>): any => ({
+  ...(d.id !== undefined && { id: d.id }),
+  ...(d.tenantId !== undefined && { tenant_id: d.tenantId }),
+  ...(d.titulo !== undefined && { titulo: d.titulo }),
+  ...(d.texto !== undefined && { texto: d.texto }),
 });
 
 /** Lanza un Error legible a partir del error de Supabase. */

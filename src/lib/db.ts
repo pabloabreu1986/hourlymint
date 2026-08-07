@@ -9,7 +9,7 @@ import { seedDB } from "./seed";
 
 const STORAGE_KEY = "forgevia.db";
 /** Subir esta versión fuerza un re-seed limpio al cargar. */
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 const VERSION_KEY = "forgevia.db.version";
 
 let cache: DBSchema | null = null;

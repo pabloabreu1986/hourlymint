@@ -40,6 +40,10 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   // ── Comercial / CRM ──
   { clave: "clientes", label: "Clientes" },
   { clave: "facturas", label: "Facturas" },
+  // ── Presupuestos ──
+  { clave: "presupuestos", label: "Presupuestos" },
+  { clave: "catalogo", label: "Banco de precios" },
+  { clave: "compras", label: "Facturas de proveedor" },
   // ── Marketing ──
   { clave: "dosier", label: "Dosier corporativo" },
 ];
