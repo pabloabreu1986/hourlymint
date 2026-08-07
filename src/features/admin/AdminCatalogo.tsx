@@ -89,12 +89,34 @@ function ArticulosTab({
 }) {
   const [editar, setEditar] = useState<Articulo | null>(null);
   const [nuevo, setNuevo] = useState(false);
+  const [filtroProv, setFiltroProv] = useState<string>("");
   const provNombre = (id: string | null) =>
     id ? proveedores.find((p) => p.id === id)?.nombre ?? "—" : "—";
 
+  const visibles = articulos.filter((a) =>
+    filtroProv === ""
+      ? true
+      : filtroProv === "__none__"
+        ? !a.proveedorId
+        : a.proveedorId === filtroProv
+  );
+
   return (
     <div>
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <select
+          className="field max-w-xs py-2 text-sm"
+          value={filtroProv}
+          onChange={(e) => setFiltroProv(e.target.value)}
+        >
+          <option value="">Todos los proveedores</option>
+          {proveedores.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+          <option value="__none__">Sin proveedor</option>
+        </select>
         <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
           <IconPlus className="h-4 w-4" /> Nuevo artículo
         </button>
@@ -116,7 +138,14 @@ function ArticulosTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {articulos.map((a) => (
+                {visibles.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">
+                      Ningún artículo de este proveedor.
+                    </td>
+                  </tr>
+                )}
+                {visibles.map((a) => (
                   <tr key={a.id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
                       <p className="font-semibold text-forge-dark">{a.nombre}</p>

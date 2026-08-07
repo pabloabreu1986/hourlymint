@@ -113,10 +113,10 @@ export default function AdminCompraEditor() {
   async function aprobar() {
     if (!c) return;
     await guardar();
-    await comprasApi.aprobarCompra(c.id);
+    const actualizada = await comprasApi.aprobarCompra(c.id);
     await cargarCatalogo();
-    setC({ ...c, estado: "aprobada" });
-    setAviso("Compra aprobada. Los artículos mapeados actualizaron su precio en el banco.");
+    setC(actualizada);
+    setAviso("Compra aprobada. Todas las líneas se subieron al banco de precios (con su proveedor y precio).");
   }
 
   // Coste real por unidad: el neto (después de descuento) = total / cantidad.

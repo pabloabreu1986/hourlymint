@@ -3,8 +3,12 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { tenantActivoId } from "@/lib/host";
-import type { FacturaProveedor } from "@/lib/types";
+import type { Articulo, FacturaProveedor } from "@/lib/types";
 import * as sb from "./supabase/compras";
+
+/** Coste real por unidad de una línea: neto (con descuento) = total / cantidad. */
+export const costeNetoLinea = (l: { cantidad: number; total: number; precioUnitario: number }) =>
+  l.cantidad > 0 ? Math.round((l.total / l.cantidad) * 100) / 100 : l.precioUnitario;
 
 export async function listCompras(): Promise<FacturaProveedor[]> {
   if (isSupabaseEnabled) return sb.listCompras();
@@ -65,20 +69,45 @@ export async function eliminarCompra(id: string): Promise<void> {
 }
 
 /**
- * Aprueba la compra y actualiza el coste de los artículos del catálogo que
- * estén mapeados en sus líneas (último precio conocido).
+ * Aprueba la compra y sube TODAS sus líneas al banco de precios: crea el
+ * artículo si no existe (con su proveedor y coste neto) o actualiza su precio
+ * si ya existe (mapeado o mismo nombre). Sin duplicar.
  */
 export async function aprobarCompra(id: string): Promise<FacturaProveedor> {
   if (isSupabaseEnabled) return sb.aprobarCompra(id);
   let out: FacturaProveedor | undefined;
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
   updateDB((db) => {
     const c = db.comprasProveedor.find((x) => x.id === id);
     if (!c) return;
     c.estado = "aprobada";
+    const porNombre = new Map(
+      db.articulos.filter((a) => a.tenantId === c.tenantId).map((a) => [norm(a.nombre), a])
+    );
     for (const l of c.lineas) {
-      if (l.articuloId) {
-        const art = db.articulos.find((a) => a.id === l.articuloId);
-        if (art && l.precioUnitario > 0) art.coste = l.precioUnitario;
+      const neto = costeNetoLinea(l);
+      const art = l.articuloId
+        ? db.articulos.find((a) => a.id === l.articuloId)
+        : porNombre.get(norm(l.descripcion));
+      if (art) {
+        if (neto > 0) art.coste = neto;
+        if (!art.proveedorId && c.proveedorId) art.proveedorId = c.proveedorId;
+        l.articuloId = art.id;
+      } else {
+        const nuevo: Articulo = {
+          id: uid("art"),
+          tenantId: c.tenantId,
+          referencia: "",
+          nombre: l.descripcion || "Artículo",
+          proveedorId: c.proveedorId ?? null,
+          categoria: "material",
+          unidad: l.unidad || "ud",
+          coste: neto,
+          createdAt: new Date().toISOString(),
+        };
+        db.articulos.push(nuevo);
+        porNombre.set(norm(nuevo.nombre), nuevo);
+        l.articuloId = nuevo.id;
       }
     }
     out = c;

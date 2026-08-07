@@ -255,6 +255,57 @@ export const TOURS_MODULO: Record<string, DefTour> = {
       { titulo: "2. Descargar el PDF", texto: "Cuando esté listo, pulsa “Previa / PDF” y guárdalo como PDF. Cada página del dosier será una hoja." },
     ],
   },
+  clientes: {
+    titulo: "Clientes",
+    pasos: [
+      { titulo: "Tu cartera de clientes", texto: "Aquí guardas a los clientes finales (quienes encargan las obras): sus datos, sus obras, sus facturas y su rentabilidad. No confundir con tu empresa." },
+      { titulo: "1. Nuevo cliente", texto: "Pulsa “Nuevo cliente” y rellena nombre, contacto y dirección. Anota también cómo llegó (redes, referencia, web…) para saber qué canales te funcionan." },
+      { titulo: "2. Su ficha", texto: "Entra en un cliente para verlo todo: obras asociadas, facturas con su estado de cobro, documentos (contratos) y los KPIs de facturado, cobrado, gastos y margen." },
+      { titulo: "3. Asociar obras", texto: "Desde la ficha puedes “asignar una obra existente” al cliente. Así cada obra suma sus gastos y facturas a la rentabilidad del cliente." },
+      { titulo: "Rentabilidad real", texto: "El margen se calcula solo: lo facturado y cobrado menos los gastos y las compras de proveedor de sus obras. Sabes al instante si un cliente es rentable." },
+    ],
+  },
+  facturas: {
+    titulo: "Facturas",
+    pasos: [
+      { titulo: "Las facturas a tus clientes", texto: "Aquí ves todas las facturas emitidas, con su total y estado. Es la cara de cobro del negocio." },
+      { titulo: "1. Nueva factura", texto: "Pulsa “Nueva factura”, elige el cliente (y la obra si aplica), pon base e IVA; el total se calcula solo." },
+      { titulo: "2. Estado de cobro", texto: "Marca cada factura como emitida, pagada o vencida. Con “Cobrada” la das por pagada en un clic." },
+      { titulo: "Filtra y controla", texto: "Filtra por estado para ver de un vistazo lo facturado, lo cobrado y lo que queda pendiente de cobro." },
+      { titulo: "Desde un presupuesto", texto: "Una factura también puede nacer de un presupuesto aceptado: en el presupuesto, pulsa “Convertir a factura”." },
+    ],
+  },
+  presupuestos: {
+    titulo: "Presupuestos",
+    pasos: [
+      { titulo: "Presupuestar en minutos", texto: "Arma presupuestos a partir de tu banco de precios: el sistema pone los costes y el margen, tú solo eliges qué incluir." },
+      { titulo: "1. Nuevo y margen", texto: "Pulsa “Nuevo presupuesto” y elige el cliente. Arriba fijas el margen por defecto (lo decide el directivo); puedes ajustarlo por presupuesto o por línea." },
+      { titulo: "2. Añadir líneas", texto: "Con los botones de arriba: “+ Artículo” (un material), “+ Grupo” (despliega una receta en varias líneas, p. ej. los básicos de un baño), “+ Receta” (una partida como una sola línea), “+ Mano de obra” (un trabajador por su coste/hora) o “+ Línea libre”." },
+      { titulo: "3. Coste vs. PVP", texto: "Cada línea muestra su coste, el margen y el PVP (precio de venta al cliente). Abajo ves el coste total, el beneficio y el PVP." },
+      { titulo: "4. Disclaimers", texto: "Añade avisos al pie (p. ej. “Pendiente de confirmar con visita de obra”), al momento o desde una plantilla que guardes." },
+      { titulo: "5. PDF y factura", texto: "“Ver / PDF” genera la hoja para el cliente con tu marca (solo PVP), lista para imprimir o guardar. Y “Convertir a factura” lo pasa a factura cuando lo acepten." },
+    ],
+  },
+  catalogo: {
+    titulo: "Banco de precios",
+    pasos: [
+      { titulo: "El cerebro de los presupuestos", texto: "Aquí viven tus costes: artículos (materiales, mano de obra, maquinaria), recetas (grupos) y proveedores. Con esto presupuestas sin saber pricing." },
+      { titulo: "Artículos", texto: "Cada artículo es un coste unitario conocido (p. ej. m² de gres a 18,50€). Puedes filtrarlos por proveedor. Se crean a mano o, mejor, aprobando facturas de proveedor." },
+      { titulo: "Recetas (grupos)", texto: "Agrupa artículos en un conjunto reutilizable con sus cantidades: “Baño 4×4”, “Básicos de cocina”, “Pintura”… Luego los sueltas enteros en un presupuesto con “+ Grupo”." },
+      { titulo: "Proveedores", texto: "Da de alta a tus proveedores (Obramat, Leroy, IFOSAN…). Cada artículo se puede asociar a uno, y al aprobar una factura sus artículos quedan etiquetados con ese proveedor." },
+      { titulo: "Se llena solo", texto: "No hace falta teclear: sube facturas de proveedor y, al aprobarlas, sus líneas entran aquí automáticamente con su precio neto y su proveedor." },
+    ],
+  },
+  compras: {
+    titulo: "Facturas de proveedor",
+    pasos: [
+      { titulo: "Meter costes sin teclear", texto: "Sube las facturas de tus proveedores y el sistema extrae las líneas con IA. Es lo que alimenta tu banco de precios." },
+      { titulo: "1. Subir y extraer", texto: "Pulsa “Nueva factura” → “Subir y extraer” un PDF o una foto. En segundos tienes las líneas (descripción, cantidad, precio, descuento) en una tabla editable." },
+      { titulo: "2. Revisar", texto: "Comprueba las líneas y corrige lo que haga falta. Elige el proveedor y, si es de una obra, asígnala (así cuenta como coste real de esa obra)." },
+      { titulo: "3. Aprobar", texto: "Al pulsar “Aprobar”, TODAS las líneas suben al banco de precios: crea el artículo si no existe (con su proveedor y precio neto) o actualiza su precio si ya estaba." },
+      { titulo: "Precio siempre al día", texto: "Cada factura que apruebes mantiene tus precios actualizados, así tus presupuestos usan siempre el coste real más reciente." },
+    ],
+  },
   perfil: {
     titulo: "Perfil",
     pasos: [
