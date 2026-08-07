@@ -44,23 +44,75 @@ function parseNum(s: string): number {
 }
 
 const NUM_RE = /-?\d{1,3}(?:[.\s]\d{3})*(?:,\d+)?|-?\d+(?:[.,]\d+)?/g;
+const UNIDAD_RE = /\b(unid|uds?|m2|m²|ml|kg|l|h|saco|caja|bote|palet|rollo|bolsa)\b/i;
 
-/** ¿La línea es cabecera/total/pie y hay que ignorarla? */
+/** ¿La línea es cabecera/total/pie/dirección y hay que ignorarla? */
 function esRuido(l: string): boolean {
   const t = l.toLowerCase();
-  return /(^|\s)(total|subtotal|base imponible|i\.?v\.?a|iban|cif|nif|factura|fecha|cliente|forma de pago|vencimiento|descripci[óo]n|referencia|importe)\b/.test(
+  return /(^|\s)(total|subtotal|base imponible|i\.?v\.?a|iban|cif|nif|factura|fecha|cliente|forma de pago|forma de venta|condiciones|vencimiento|descripci[óo]n|designacion|referencia|importe|tel[eé]fono|tlf|calle|avda|avenida|c\/|n[º°]\s|numero de cuenta|ticket|modos? de pago|efectivo|cambio|razon social|espa[ñn]a|madrid|observaciones|duplicado|ejemplar)\b/.test(
     t
   );
 }
 
 function detectarProveedor(texto: string): string | null {
   const t = texto.toLowerCase();
+  if (/obramat|bricoman|b-?84406289/.test(t)) return "Obramat";
   const hit = PROVEEDORES_CONOCIDOS.find((p) => t.includes(p));
   if (!hit) return null;
   return hit
     .split(" ")
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+/** Plantilla de parseo específica por proveedor, si la reconocemos. */
+function plantillaDe(texto: string): "obramat" | null {
+  const t = texto.toLowerCase();
+  if (/obramat|bricoman|b-?84406289/.test(t)) return "obramat";
+  return null;
+}
+
+/**
+ * Parser específico de facturas Obramat / Bricoman. Cada producto ocupa 3
+ * renglones: "Nº Descripción" · "Referencia" · "Cantidad UNID. prec.SI descu
+ * total.SI tasaIVA precioTTI importeTTI". Anclamos en la fila con "UNID." y
+ * tomamos el precio unitario SIN IVA (primera cifra tras la cantidad).
+ */
+function parsearObramat(texto: string): LineaCompra[] {
+  const lineas = texto.split("\n").map((s) => s.trim());
+  const out: LineaCompra[] = [];
+  for (let i = 0; i < lineas.length; i++) {
+    const m = lineas[i].match(/^(\d+(?:[.,]\d+)?)\s+unid\.?\s+(.+)/i);
+    if (!m) continue;
+    const cantidad = parseNum(m[1]);
+    const nums = (m[2].match(NUM_RE) ?? []).map(parseNum);
+    if (nums.length < 2 || cantidad <= 0) continue;
+    const precioUnitario = nums[0]; // Prec. unidad SIN IVA
+    // Descripción: subir saltando la línea de referencia (solo dígitos).
+    let descripcion = "";
+    let referencia = "";
+    for (let k = i - 1; k >= Math.max(0, i - 3); k--) {
+      const prev = lineas[k];
+      if (!prev) continue;
+      if (/^\d{4,}$/.test(prev)) {
+        referencia = prev;
+        continue;
+      }
+      descripcion = prev.replace(/^\d+\s+/, "").trim();
+      break;
+    }
+    if (descripcion.length < 2) continue;
+    out.push({
+      id: nuevaLinea(),
+      descripcion: referencia ? `${descripcion} (ref. ${referencia})` : descripcion,
+      cantidad,
+      unidad: "ud",
+      precioUnitario,
+      total: Math.round(cantidad * precioUnitario * 100) / 100,
+      articuloId: null,
+    });
+  }
+  return out;
 }
 
 function detectarNumero(texto: string): string | null {
@@ -87,10 +139,16 @@ function parsearLineas(texto: string): LineaCompra[] {
     if (linea.length < 4 || esRuido(linea)) continue;
     const nums = linea.match(NUM_RE);
     if (!nums || nums.length < 2) continue;
+    // Solo aceptamos líneas que parezcan de producto: con unidad de medida
+    // o cuyo importe final tenga decimales (evita direcciones/teléfonos).
+    const tieneUnidad = UNIDAD_RE.test(linea);
+    const importeConDecimales = /,\d/.test(nums[nums.length - 1]);
+    if (!tieneUnidad && !importeConDecimales) continue;
     // Descripción = texto antes del primer número.
     const idx = linea.search(NUM_RE);
     const descripcion = linea.slice(0, idx).trim().replace(/[.\-·]+$/, "").trim();
-    if (descripcion.length < 2) continue;
+    // La descripción debe tener letras (no ser otra cifra/código).
+    if (descripcion.length < 3 || !/[a-záéíóúñ]/i.test(descripcion)) continue;
     const valores = nums.map(parseNum);
     let cantidad = 1;
     let precioUnitario = 0;
@@ -203,11 +261,15 @@ export async function extraerFactura(file: File): Promise<ResultadoExtraccion> {
     metodo = "ocr";
   }
 
+  // Parser específico por proveedor si lo reconocemos; si no, genérico.
+  const plantilla = plantillaDe(texto);
+  const lineas = plantilla === "obramat" ? parsearObramat(texto) : parsearLineas(texto);
+
   return {
     proveedorNombre: detectarProveedor(texto),
     numero: detectarNumero(texto),
     fecha: detectarFecha(texto),
-    lineas: parsearLineas(texto),
+    lineas,
     textoCrudo: texto,
     metodo,
   };
