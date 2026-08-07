@@ -80,11 +80,12 @@ export default function AdminCompraEditor() {
       });
       setLineas(res.lineas);
       setTextoCrudo(res.textoCrudo);
-      setAviso(
+      const motor = res.metodo === "ia" ? "IA" : res.metodo === "ocr" ? "OCR (escaneo)" : "lectura de PDF";
+      const base =
         res.lineas.length > 0
-          ? `Extraídas ${res.lineas.length} líneas por ${res.metodo === "ocr" ? "OCR (escaneo)" : "lectura de PDF"}. Revisa y corrige antes de aprobar.`
-          : `Leí el documento (${res.metodo === "ocr" ? "OCR" : "PDF"}) pero no reconocí líneas automáticamente. Añádelas a mano, o mira el "texto extraído" de abajo.`
-      );
+          ? `Extraídas ${res.lineas.length} líneas por ${motor}. Revisa y corrige antes de aprobar.`
+          : `Leí el documento (${motor}) pero no reconocí líneas automáticamente. Añádelas a mano, o mira el "texto extraído" de abajo.`;
+      setAviso(res.avisoIA ? `${base} (IA: ${res.avisoIA})` : base);
     } catch (e) {
       setAviso("No se pudo leer el archivo: " + (e instanceof Error ? e.message : String(e)));
     } finally {

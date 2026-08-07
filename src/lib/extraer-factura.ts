@@ -12,7 +12,9 @@ export interface ResultadoExtraccion {
   fecha: string | null; // YYYY-MM-DD
   lineas: LineaCompra[];
   textoCrudo: string;
-  metodo: "pdf" | "ocr";
+  metodo: "ia" | "pdf" | "ocr";
+  /** Si la IA falló y caímos al método local, el motivo. */
+  avisoIA?: string | null;
 }
 
 let lid = 0;
@@ -256,7 +258,94 @@ async function ocr(imagen: HTMLCanvasElement | File): Promise<string> {
   return data.text ?? "";
 }
 
+// ── Base64 para enviar el documento a la IA ──
+function bufABase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+  }
+  return btoa(bin);
+}
+
+/** Convierte el File a base64; reduce las imágenes grandes para no exceder
+ * el límite de tamaño de la función serverless. */
+async function fileABase64IA(file: File): Promise<{ mimeType: string; data: string }> {
+  if (file.type.startsWith("image/") && file.size > 1_500_000) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = url;
+      });
+      const max = 1800;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      return { mimeType: "image/jpeg", data: dataUrl.split(",")[1] };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+  const buf = await file.arrayBuffer();
+  return { mimeType: file.type || "application/octet-stream", data: bufABase64(buf) };
+}
+
+/** Extrae con IA (Gemini) vía la función serverless /api/extraer-factura. */
+async function extraerConIA(file: File): Promise<ResultadoExtraccion> {
+  const { mimeType, data } = await fileABase64IA(file);
+  const r = await fetch("/api/extraer-factura", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mimeType, data }),
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json?.error || `Error ${r.status} de la IA`);
+  const lineas: LineaCompra[] = (Array.isArray(json.lineas) ? json.lineas : []).map((l: any) => {
+    const cantidad = Number(l.cantidad) || 0;
+    const precioUnitario = Number(l.precioUnitario) || 0;
+    return {
+      id: nuevaLinea(),
+      descripcion: String(l.descripcion ?? ""),
+      cantidad,
+      unidad: String(l.unidad || "ud"),
+      precioUnitario,
+      total: Number(l.total) || Math.round(cantidad * precioUnitario * 100) / 100,
+      articuloId: null,
+    };
+  });
+  return {
+    proveedorNombre: json.proveedorNombre ?? null,
+    numero: json.numero ?? null,
+    fecha: json.fecha ?? null,
+    lineas,
+    textoCrudo: "",
+    metodo: "ia",
+  };
+}
+
+/** Punto de entrada: IA primero; si falla o no saca líneas, método local. */
 export async function extraerFactura(file: File): Promise<ResultadoExtraccion> {
+  try {
+    const ia = await extraerConIA(file);
+    if (ia.lineas.length > 0) return ia;
+    const local = await extraerLocal(file);
+    return local.lineas.length > 0
+      ? { ...local, avisoIA: "La IA no reconoció líneas; se usó la lectura local." }
+      : ia;
+  } catch (e) {
+    const local = await extraerLocal(file);
+    return { ...local, avisoIA: e instanceof Error ? e.message : "IA no disponible" };
+  }
+}
+
+async function extraerLocal(file: File): Promise<ResultadoExtraccion> {
   const esPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   let texto = "";
   let metodo: "pdf" | "ocr" = "pdf";
