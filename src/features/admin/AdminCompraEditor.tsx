@@ -28,6 +28,7 @@ export default function AdminCompraEditor() {
   const [cargando, setCargando] = useState(true);
   const [extrayendo, setExtrayendo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [textoCrudo, setTextoCrudo] = useState<string>("");
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(true);
 
@@ -78,11 +79,14 @@ export default function AdminCompraEditor() {
         fecha: res.fecha ?? c?.fecha ?? "",
       });
       setLineas(res.lineas);
+      setTextoCrudo(res.textoCrudo);
       setAviso(
-        `Extraídas ${res.lineas.length} líneas por ${res.metodo === "ocr" ? "OCR (escaneo)" : "lectura de PDF"}. Revisa y corrige antes de aprobar.`
+        res.lineas.length > 0
+          ? `Extraídas ${res.lineas.length} líneas por ${res.metodo === "ocr" ? "OCR (escaneo)" : "lectura de PDF"}. Revisa y corrige antes de aprobar.`
+          : `Leí el documento (${res.metodo === "ocr" ? "OCR" : "PDF"}) pero no reconocí líneas automáticamente. Añádelas a mano, o mira el "texto extraído" de abajo.`
       );
     } catch (e) {
-      setAviso("No se pudo leer el archivo: " + (e instanceof Error ? e.message : "error"));
+      setAviso("No se pudo leer el archivo: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setExtrayendo(false);
     }
@@ -211,6 +215,16 @@ export default function AdminCompraEditor() {
             )}
           </div>
           {aviso && <p className="mt-2 text-xs text-slate-500">{aviso}</p>}
+          {textoCrudo && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-forge-dark">
+                Ver texto extraído
+              </summary>
+              <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-500">
+                {textoCrudo}
+              </pre>
+            </details>
+          )}
         </div>
       )}
 

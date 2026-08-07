@@ -199,36 +199,50 @@ async function textoDePdf(file: File): Promise<{ texto: string; pagina1?: HTMLCa
   for (let n = 1; n <= pdf.numPages; n++) {
     const page = await pdf.getPage(n);
     const content = await page.getTextContent();
-    // Agrupar items por su posición vertical (misma línea).
-    const filas = new Map<number, { x: number; s: string }[]>();
+    // Agrupar items por fila con TOLERANCIA: los ítems de una misma línea
+    // pueden variar unos píxeles en `y`; si redondeamos a entero, una fila
+    // "6 UNID. 0,61 …" se parte y el parser no la reconoce.
+    type Fila = { y: number; items: { x: number; s: string }[] };
+    const filas: Fila[] = [];
     for (const it of content.items as any[]) {
-      if (!("str" in it) || !it.str.trim()) continue;
-      const y = Math.round(it.transform[5]);
-      const arr = filas.get(y) ?? [];
-      arr.push({ x: it.transform[4], s: it.str });
-      filas.set(y, arr);
+      const s = "str" in it ? String(it.str) : "";
+      if (!s.trim()) continue;
+      const y = it.transform[5];
+      const x = it.transform[4];
+      let fila = filas.find((f) => Math.abs(f.y - y) <= 3);
+      if (!fila) {
+        fila = { y, items: [] };
+        filas.push(fila);
+      }
+      fila.items.push({ x, s });
     }
-    [...filas.entries()]
-      .sort((a, b) => b[0] - a[0])
-      .forEach(([, arr]) => {
-        lineas.push(
-          arr
-            .sort((a, b) => a.x - b.x)
-            .map((i) => i.s)
-            .join(" ")
-        );
-      });
+    filas.sort((a, b) => b.y - a.y);
+    for (const f of filas) {
+      lineas.push(
+        f.items
+          .sort((a, b) => a.x - b.x)
+          .map((i) => i.s)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim()
+      );
+    }
 
     if (n === 1) {
-      // Renderizamos la página 1 por si hay que hacer OCR (PDF escaneado).
-      const viewport = page.getViewport({ scale: 2 });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        pagina1 = canvas;
+      // Página 1 renderizada por si hay que hacer OCR (PDF escaneado). Si el
+      // render falla, seguimos con el texto que ya tengamos.
+      try {
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+          pagina1 = canvas;
+        }
+      } catch {
+        /* sin OCR de respaldo */
       }
     }
   }
