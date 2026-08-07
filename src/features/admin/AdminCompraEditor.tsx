@@ -356,8 +356,8 @@ export default function AdminCompraEditor() {
             <table className="w-full min-w-[820px] table-fixed text-sm">
               <colgroup>
                 <col />
-                <col className="w-[70px]" />
-                <col className="w-[54px]" />
+                <col className="w-[68px]" />
+                <col className="w-[62px]" />
                 <col className="w-[86px]" />
                 <col className="w-[64px]" />
                 <col className="w-[92px]" />
@@ -383,7 +383,7 @@ export default function AdminCompraEditor() {
                     <tr key={l.id} className="border-b border-slate-50">
                       <td className="px-1 py-1">
                         <input
-                          className="field w-full py-1.5"
+                          className="field w-full px-2 py-1.5"
                           value={l.descripcion}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { descripcion: e.target.value })}
@@ -392,7 +392,7 @@ export default function AdminCompraEditor() {
                       <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-full py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.cantidad}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { cantidad: Number(e.target.value) || 0 })}
@@ -400,7 +400,7 @@ export default function AdminCompraEditor() {
                       </td>
                       <td className="px-1 py-1">
                         <input
-                          className="field w-full py-1.5"
+                          className="field w-full px-2 py-1.5"
                           value={l.unidad}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { unidad: e.target.value })}
@@ -409,7 +409,7 @@ export default function AdminCompraEditor() {
                       <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-full py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.precioUnitario}
                           disabled={bloqueada}
                           onChange={(e) =>
@@ -420,7 +420,7 @@ export default function AdminCompraEditor() {
                       <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-full py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.descuento ?? 0}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { descuento: Number(e.target.value) || 0 })}
@@ -429,7 +429,7 @@ export default function AdminCompraEditor() {
                       <td className="px-1 py-1">
                         <input
                           type="number"
-                          className="field w-full py-1.5 text-right"
+                          className="field w-full px-2 py-1.5 text-right"
                           value={l.total}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { total: Number(e.target.value) || 0 })}
@@ -438,7 +438,7 @@ export default function AdminCompraEditor() {
                       <td className="px-1 py-1">
                         <div className="flex items-center gap-1.5">
                           <select
-                            className="field w-full py-1.5"
+                            className="field w-full px-2 py-1.5"
                             value={l.articuloId ?? ""}
                             disabled={bloqueada}
                             onChange={(e) => updateLinea(l.id, { articuloId: e.target.value || null })}
