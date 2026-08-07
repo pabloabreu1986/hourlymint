@@ -119,6 +119,10 @@ export default function AdminCompraEditor() {
     setAviso("Compra aprobada. Los artículos mapeados actualizaron su precio en el banco.");
   }
 
+  // Coste real por unidad: el neto (después de descuento) = total / cantidad.
+  const costeNeto = (l: LineaCompra): number =>
+    l.cantidad > 0 ? Math.round((l.total / l.cantidad) * 100) / 100 : l.precioUnitario;
+
   async function crearArticuloDesde(l: LineaCompra) {
     const nuevo = await catalogoApi.crearArticulo({
       referencia: "",
@@ -126,7 +130,7 @@ export default function AdminCompraEditor() {
       proveedorId: c?.proveedorId ?? null,
       categoria: "material",
       unidad: l.unidad || "ud",
-      coste: l.precioUnitario,
+      coste: costeNeto(l),
     });
     setArticulos((a) => [...a, nuevo]);
     updateLinea(l.id, { articuloId: nuevo.id });
@@ -152,8 +156,9 @@ export default function AdminCompraEditor() {
       await crearArticuloDesde(l);
       return;
     }
-    if (art.coste !== l.precioUnitario && l.precioUnitario > 0) {
-      const upd = await catalogoApi.actualizarArticulo(art.id, { coste: l.precioUnitario });
+    const neto = costeNeto(l);
+    if (art.coste !== neto && neto > 0) {
+      const upd = await catalogoApi.actualizarArticulo(art.id, { coste: neto });
       setArticulos((a) => a.map((x) => (x.id === upd.id ? upd : x)));
     }
     if (l.articuloId !== art.id) updateLinea(l.id, { articuloId: art.id });
@@ -164,9 +169,15 @@ export default function AdminCompraEditor() {
       (c?.lineas ?? []).map((l) => {
         if (l.id !== lid_) return l;
         const merged = { ...l, ...patch };
-        // Recalcular total si cambian cantidad/precio (salvo que venga total explícito).
-        if (patch.total === undefined && (patch.cantidad !== undefined || patch.precioUnitario !== undefined)) {
-          merged.total = r2(merged.cantidad * merged.precioUnitario);
+        // Recalcular total si cambian cantidad/precio/descuento (salvo que
+        // venga total explícito). total = cant × precio × (1 − dto/100).
+        if (
+          patch.total === undefined &&
+          (patch.cantidad !== undefined ||
+            patch.precioUnitario !== undefined ||
+            patch.descuento !== undefined)
+        ) {
+          merged.total = r2(merged.cantidad * merged.precioUnitario * (1 - (merged.descuento ?? 0) / 100));
         }
         return merged;
       })
@@ -326,7 +337,7 @@ export default function AdminCompraEditor() {
               onClick={() =>
                 setLineas([
                   ...c.lineas,
-                  { id: lid(), descripcion: "", cantidad: 1, unidad: "ud", precioUnitario: 0, total: 0, articuloId: null },
+                  { id: lid(), descripcion: "", cantidad: 1, unidad: "ud", precioUnitario: 0, descuento: 0, total: 0, articuloId: null },
                 ])
               }
               className="btn-ghost px-3 py-1.5 text-sm"
@@ -342,15 +353,16 @@ export default function AdminCompraEditor() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px] table-fixed text-sm">
+            <table className="w-full min-w-[820px] table-fixed text-sm">
               <colgroup>
                 <col />
-                <col className="w-[68px]" />
-                <col className="w-[56px]" />
-                <col className="w-[100px]" />
-                <col className="w-[100px]" />
-                <col className="w-[248px]" />
-                <col className="w-[40px]" />
+                <col className="w-[70px]" />
+                <col className="w-[54px]" />
+                <col className="w-[86px]" />
+                <col className="w-[64px]" />
+                <col className="w-[92px]" />
+                <col className="w-[230px]" />
+                <col className="w-[38px]" />
               </colgroup>
               <thead className="text-xs uppercase tracking-wide text-slate-400">
                 <tr className="border-b border-slate-100">
@@ -358,6 +370,7 @@ export default function AdminCompraEditor() {
                   <th className="px-2 py-2 text-right font-semibold">Cant.</th>
                   <th className="px-2 py-2 text-left font-semibold">Ud</th>
                   <th className="px-2 py-2 text-right font-semibold">Precio</th>
+                  <th className="px-2 py-2 text-right font-semibold">Dto %</th>
                   <th className="px-2 py-2 text-right font-semibold">Total</th>
                   <th className="px-2 py-2 text-left font-semibold">Artículo del banco</th>
                   <th className="px-2 py-2"></th>
@@ -408,6 +421,15 @@ export default function AdminCompraEditor() {
                         <input
                           type="number"
                           className="field w-full py-1.5 text-right"
+                          value={l.descuento ?? 0}
+                          disabled={bloqueada}
+                          onChange={(e) => updateLinea(l.id, { descuento: Number(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <input
+                          type="number"
+                          className="field w-full py-1.5 text-right"
                           value={l.total}
                           disabled={bloqueada}
                           onChange={(e) => updateLinea(l.id, { total: Number(e.target.value) || 0 })}
@@ -437,10 +459,10 @@ export default function AdminCompraEditor() {
                               >
                                 <IconPlus className="h-4 w-4" />
                               </button>
-                            ) : art.coste !== l.precioUnitario ? (
+                            ) : art.coste !== costeNeto(l) ? (
                               <button
                                 onClick={() => sincronizarBanco(l)}
-                                title={`Actualizar precio en el banco: ${formatEuro(art.coste)} → ${formatEuro(l.precioUnitario)}`}
+                                title={`Actualizar precio en el banco: ${formatEuro(art.coste)} → ${formatEuro(costeNeto(l))}`}
                                 className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-50"
                               >
                                 <IconRefresh className="h-4 w-4" />

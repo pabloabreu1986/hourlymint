@@ -362,7 +362,11 @@ export interface LineaCompra {
   descripcion: string;
   cantidad: number;
   unidad: string;
+  /** Precio unitario SIN IVA y ANTES de descuento (precio de tarifa). */
   precioUnitario: number;
+  /** % de descuento de la línea (0 si no hay). */
+  descuento?: number;
+  /** Importe total de la línea SIN IVA y DESPUÉS de descuento. */
   total: number;
   /** Artículo del catálogo al que se mapea (para actualizar su precio). */
   articuloId: string | null;

@@ -310,13 +310,16 @@ async function extraerConIA(file: File): Promise<ResultadoExtraccion> {
   const lineas: LineaCompra[] = (Array.isArray(json.lineas) ? json.lineas : []).map((l: any) => {
     const cantidad = Number(l.cantidad) || 0;
     const precioUnitario = Number(l.precioUnitario) || 0;
+    const descuento = Number(l.descuento) || 0;
     return {
       id: nuevaLinea(),
       descripcion: String(l.descripcion ?? ""),
       cantidad,
       unidad: String(l.unidad || "ud"),
       precioUnitario,
-      total: Number(l.total) || Math.round(cantidad * precioUnitario * 100) / 100,
+      descuento,
+      total:
+        Number(l.total) || Math.round(cantidad * precioUnitario * (1 - descuento / 100) * 100) / 100,
       articuloId: null,
     };
   });

@@ -12,8 +12,11 @@
 const PROMPT = `Eres un extractor de facturas de proveedores de material de construcción (Obramat, Leroy Merlin, Bauhaus, etc.).
 Devuelve SOLO los datos de la factura en JSON según el esquema.
 Reglas:
-- "lineas": una por cada ARTÍCULO/producto de la factura. NO incluyas cabeceras, subtotales, impuestos, portes ni datos del cliente.
-- "precioUnitario" y "total": SIEMPRE SIN IVA (base imponible). Si la factura da precio con IVA y sin IVA, usa el SIN IVA.
+- "lineas": una por cada ARTÍCULO/producto de la factura. Incluye también los PORTES/transporte como una línea normal (concepto "Portes"). NO incluyas cabeceras, subtotales, impuestos ni datos del cliente.
+- "precioUnitario": precio unitario SIN IVA y ANTES de descuento (precio de tarifa / columna "Importe" o "Precio").
+- "descuento": porcentaje de descuento de la línea (columna "% Dto"); 0 si no hay.
+- "total": importe total de la línea SIN IVA y DESPUÉS de descuento (columna "Importe Total" / "Importe"). Debe cuadrar con cantidad × precioUnitario × (1 − descuento/100).
+- Todos los importes SIN IVA (base imponible).
 - Números en formato español (coma decimal, punto de miles) conviértelos a número (ej. "1.234,56" -> 1234.56).
 - "unidad": forma corta en minúscula (UNID./UDS -> "ud", M2 -> "m²", ML -> "ml", KG -> "kg", H -> "h"). Por defecto "ud".
 - "fecha": formato YYYY-MM-DD.
@@ -34,6 +37,7 @@ const SCHEMA = {
           cantidad: { type: "number" },
           unidad: { type: "string" },
           precioUnitario: { type: "number" },
+          descuento: { type: "number" },
           total: { type: "number" },
         },
         required: ["descripcion", "cantidad", "precioUnitario", "total"],
