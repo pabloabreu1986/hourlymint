@@ -61,7 +61,7 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Falta el documento (mimeType/data)." });
   }
 
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = String(body.model || process.env.GEMINI_MODEL || "gemini-2.5-flash");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
   try {
