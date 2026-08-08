@@ -317,7 +317,79 @@ export default function AdminPresupuestoEditor() {
             Añade líneas desde tu banco de precios o crea líneas libres.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Móvil: una tarjeta por línea */}
+          <div className="space-y-3 md:hidden">
+            {p.lineas.map((l) => {
+              const t = totalesLinea(l, p.margenPct);
+              return (
+                <div key={l.id} className="rounded-xl border border-slate-200 p-3">
+                  <div className="flex items-start gap-2">
+                    <input
+                      className="field w-full px-3 py-2"
+                      value={l.concepto}
+                      onChange={(e) => updateLinea(l.id, { concepto: e.target.value })}
+                    />
+                    <button
+                      onClick={() => delLinea(l.id)}
+                      className="mt-1 shrink-0 rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500"
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    <label className="text-[10px] font-semibold uppercase text-slate-400">
+                      Cant.
+                      <input
+                        type="number"
+                        className="field mt-0.5 px-2 py-1.5 text-right"
+                        value={l.cantidad}
+                        onChange={(e) => updateLinea(l.id, { cantidad: Number(e.target.value) || 0 })}
+                      />
+                    </label>
+                    <label className="text-[10px] font-semibold uppercase text-slate-400">
+                      Ud
+                      <input
+                        className="field mt-0.5 px-2 py-1.5"
+                        value={l.unidad}
+                        onChange={(e) => updateLinea(l.id, { unidad: e.target.value })}
+                      />
+                    </label>
+                    <label className="text-[10px] font-semibold uppercase text-slate-400">
+                      Coste ud
+                      <input
+                        type="number"
+                        className="field mt-0.5 px-2 py-1.5 text-right"
+                        value={l.costeUnitario}
+                        onChange={(e) => updateLinea(l.id, { costeUnitario: Number(e.target.value) || 0 })}
+                      />
+                    </label>
+                    <label className="text-[10px] font-semibold uppercase text-slate-400">
+                      Margen
+                      <input
+                        type="number"
+                        className="field mt-0.5 px-2 py-1.5 text-right"
+                        placeholder={String(p.margenPct)}
+                        value={l.margenPct ?? ""}
+                        onChange={(e) =>
+                          updateLinea(l.id, {
+                            margenPct: e.target.value === "" ? null : Number(e.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                    <span className="text-xs text-slate-400">PVP {formatEuro(t.pvpUnitario)}/ud</span>
+                    <span className="font-bold text-forge-dark">{formatEuro(t.pvpTotal)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Escritorio: tabla */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] table-fixed text-sm">
               <colgroup>
                 <col />
@@ -407,6 +479,7 @@ export default function AdminPresupuestoEditor() {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Totales */}
