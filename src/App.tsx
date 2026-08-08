@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Toaster } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { Cargando } from "@/components/ui";
 import { alertasApi } from "@/services";
@@ -193,6 +194,7 @@ export default function App() {
   return (
     <>
     <ScrollArriba />
+    <Toaster position="bottom-right" richColors closeButton toastOptions={{ style: { borderRadius: "0.75rem" } }} />
     <Routes>
       {/* Raíz pública: web de marketing (apex) o login de cliente (subdominio) */}
       <Route path="/" element={<RaizPublica />} />

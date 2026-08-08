@@ -5,6 +5,7 @@ import { extraerFactura, fileADataUrl } from "@/lib/extraer-factura";
 import { margenDefecto } from "./AdminPresupuestos";
 import { formatEuro } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
+import { toast } from "sonner";
 import { Cargando, Spinner } from "@/components/ui";
 import {
   IconChevronLeft,
@@ -107,6 +108,9 @@ export default function AdminCompraEditor() {
     try {
       await comprasApi.actualizarCompra(c.id, c);
       setGuardado(true);
+      toast.success("Guardado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
     } finally {
       setGuardando(false);
     }
@@ -119,6 +123,7 @@ export default function AdminCompraEditor() {
     await cargarCatalogo();
     setC(actualizada);
     setAviso("Compra aprobada. Todas las líneas se subieron al banco de precios (con su proveedor y precio).");
+    toast.success("Compra aprobada · líneas subidas al banco");
   }
 
   /** Genera un presupuesto de cliente a partir de las líneas de esta factura,

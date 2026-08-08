@@ -18,6 +18,8 @@ import {
 } from "@/lib/presupuestos-calc";
 import { formatEuro } from "@/lib/format";
 import { Cargando } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
+import { toast } from "sonner";
 import {
   IconChevronLeft,
   IconPlus,
@@ -91,7 +93,11 @@ export default function AdminPresupuestoEditor() {
     try {
       const saved = await presupuestosApi.actualizarPresupuesto(p.id, p);
       setGuardado(true);
+      toast.success("Presupuesto guardado");
       return saved;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
+      return null;
     } finally {
       setGuardando(false);
     }
@@ -125,6 +131,7 @@ export default function AdminPresupuestoEditor() {
     set({ estado: "aceptado" });
     await presupuestosApi.actualizarPresupuesto(p.id, { estado: "aceptado" });
     setGuardado(true);
+    toast.success("Factura creada desde el presupuesto");
     navigate(`/admin/clientes/${p.clienteId}`);
   }
 
@@ -306,9 +313,9 @@ export default function AdminPresupuestoEditor() {
       <div className="card p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h3 className="mr-auto font-bold text-forge-dark">Líneas</h3>
-          <AddDropdown label="+ Artículo" items={articulos.map((a) => ({ id: a.id, label: `${a.nombre} · ${formatEuro(a.coste)}/${a.unidad}` }))} onPick={(id) => { const a = byArt.get(id); if (a) addArticulo(a); }} />
-          <AddDropdown label="+ Pack" items={partidas.map((pa) => ({ id: pa.id, label: `${pa.nombre} · ${pa.componentes.length} art. · ${formatEuro(costePartida(pa, articulos))}` }))} onPick={(id) => { const pa = partidas.find((x) => x.id === id); if (pa) addGrupo(pa); }} />
-          <AddDropdown label="+ Mano de obra" items={usuarios.map((u) => ({ id: u.id, label: `${u.nombre} · ${formatEuro(u.costeHora ?? 0)}/h` }))} onPick={(id) => { const u = usuarios.find((x) => x.id === id); if (u) addManoObra(u); }} />
+          <Combobox label="+ Artículo" items={articulos.map((a) => ({ id: a.id, label: `${a.nombre} · ${formatEuro(a.coste)}/${a.unidad}` }))} onPick={(id) => { const a = byArt.get(id); if (a) addArticulo(a); }} />
+          <Combobox label="+ Pack" items={partidas.map((pa) => ({ id: pa.id, label: `${pa.nombre} · ${pa.componentes.length} art. · ${formatEuro(costePartida(pa, articulos))}` }))} onPick={(id) => { const pa = partidas.find((x) => x.id === id); if (pa) addGrupo(pa); }} />
+          <Combobox label="+ Mano de obra" items={usuarios.map((u) => ({ id: u.id, label: `${u.nombre} · ${formatEuro(u.costeHora ?? 0)}/h` }))} onPick={(id) => { const u = usuarios.find((x) => x.id === id); if (u) addManoObra(u); }} />
           <button onClick={addLibre} className="btn-ghost px-3 py-1.5 text-sm">+ Línea libre</button>
         </div>
 
@@ -527,34 +534,6 @@ function Tot({ label, valor, tono, grande }: { label: string; valor: string; ton
         {valor}
       </p>
     </div>
-  );
-}
-
-function AddDropdown({
-  label,
-  items,
-  onPick,
-}: {
-  label: string;
-  items: { id: string; label: string }[];
-  onPick: (id: string) => void;
-}) {
-  return (
-    <select
-      className="btn-ghost cursor-pointer px-3 py-1.5 text-sm"
-      value=""
-      onChange={(e) => {
-        if (e.target.value) onPick(e.target.value);
-        e.target.value = "";
-      }}
-    >
-      <option value="">{label}</option>
-      {items.map((it) => (
-        <option key={it.id} value={it.id}>
-          {it.label}
-        </option>
-      ))}
-    </select>
   );
 }
 
