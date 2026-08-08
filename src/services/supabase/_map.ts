@@ -579,6 +579,7 @@ export const toArticulo = (r: any): Articulo => ({
   categoria: r.categoria ?? "material",
   unidad: r.unidad ?? "ud",
   coste: Number(r.coste),
+  especificaciones: r.especificaciones ?? undefined,
   createdAt: r.created_at,
 });
 export const fromArticulo = (a: Partial<Articulo>): any => ({
@@ -590,6 +591,7 @@ export const fromArticulo = (a: Partial<Articulo>): any => ({
   ...(a.categoria !== undefined && { categoria: a.categoria }),
   ...(a.unidad !== undefined && { unidad: a.unidad }),
   ...(a.coste !== undefined && { coste: a.coste }),
+  ...(a.especificaciones !== undefined && { especificaciones: a.especificaciones ?? null }),
   ...(a.createdAt !== undefined && { created_at: a.createdAt }),
 });
 

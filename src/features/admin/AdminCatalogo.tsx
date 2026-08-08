@@ -44,7 +44,7 @@ export default function AdminCatalogo() {
 
   const tabs: { id: Tab; label: string; n: number }[] = [
     { id: "articulos", label: "Artículos", n: articulos.length },
-    { id: "recetas", label: "Recetas", n: partidas.length },
+    { id: "recetas", label: "Packs", n: partidas.length },
     { id: "proveedores", label: "Proveedores", n: proveedores.length },
   ];
 
@@ -150,6 +150,9 @@ function ArticulosTab({
                     <td className="px-4 py-3">
                       <p className="font-semibold text-forge-dark">{a.nombre}</p>
                       {a.referencia && <p className="text-xs text-slate-400">Ref. {a.referencia}</p>}
+                      {a.especificaciones && (
+                        <p className="mt-0.5 text-xs italic text-slate-400">{a.especificaciones}</p>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Badge color="slate">{labelCategoria(a.categoria)}</Badge>
@@ -222,6 +225,7 @@ function ArticuloForm({
   const [unidad, setUnidad] = useState(articulo?.unidad ?? "ud");
   const [coste, setCoste] = useState(articulo ? String(articulo.coste) : "");
   const [proveedorId, setProveedorId] = useState(articulo?.proveedorId ?? "");
+  const [especificaciones, setEspecificaciones] = useState(articulo?.especificaciones ?? "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -236,6 +240,7 @@ function ArticuloForm({
         unidad: unidad.trim() || "ud",
         coste: Number(coste) || 0,
         proveedorId: proveedorId || null,
+        especificaciones: especificaciones.trim() || undefined,
       };
       if (articulo) await catalogoApi.actualizarArticulo(articulo.id, data);
       else await catalogoApi.crearArticulo(data);
@@ -313,6 +318,28 @@ function ArticuloForm({
             </select>
           </div>
         </div>
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="label">Ficha técnica / especificaciones</label>
+            {(nombre.trim() || referencia.trim()) && (
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(`${nombre} ${referencia} ficha técnica`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold text-forge-orange hover:underline"
+              >
+                Buscar en la web ↗
+              </a>
+            )}
+          </div>
+          <textarea
+            className="field mt-1.5"
+            rows={2}
+            placeholder="Fabricante, medidas, espesor, normas… (la IA lo rellena al escanear facturas)"
+            value={especificaciones}
+            onChange={(e) => setEspecificaciones(e.target.value)}
+          />
+        </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="btn-ghost flex-1">
@@ -344,7 +371,8 @@ function RecetasTab({
     <div>
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          Recetas: agrupan materiales y mano de obra en una unidad (p. ej. "Baño 4×4").
+          Packs: agrupan materiales y mano de obra (baño, cocina, fontanería, electricidad…) para
+          soltarlos de golpe en un presupuesto.
         </p>
         <button
           onClick={() => setNuevo(true)}
@@ -352,11 +380,11 @@ function RecetasTab({
           className="btn-primary px-4 py-2.5 text-sm disabled:opacity-50"
           title={articulos.length === 0 ? "Crea antes artículos" : undefined}
         >
-          <IconPlus className="h-4 w-4" /> Nueva receta
+          <IconPlus className="h-4 w-4" /> Nuevo pack
         </button>
       </div>
       {partidas.length === 0 ? (
-        <Vacio texto="Sin recetas. Crea artículos y combínalos en partidas reutilizables." />
+        <Vacio texto="Sin packs. Agrupa artículos (baño, cocina, fontanería…) para añadirlos de golpe a un presupuesto." />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {partidas.map((p) => (
@@ -472,7 +500,7 @@ function RecetaForm({
   }
 
   return (
-    <Modal open onClose={onClose} title={partida ? "Editar receta" : "Nueva receta"} maxWidth="max-w-2xl">
+    <Modal open onClose={onClose} title={partida ? "Editar pack" : "Nuevo pack"} maxWidth="max-w-2xl">
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">

@@ -92,6 +92,7 @@ export async function aprobarCompra(id: string): Promise<FacturaProveedor> {
       if (art) {
         if (neto > 0) art.coste = neto;
         if (!art.proveedorId && c.proveedorId) art.proveedorId = c.proveedorId;
+        if (!art.especificaciones && l.especificaciones) art.especificaciones = l.especificaciones;
         l.articuloId = art.id;
       } else {
         const nuevo: Articulo = {
@@ -103,6 +104,7 @@ export async function aprobarCompra(id: string): Promise<FacturaProveedor> {
           categoria: "material",
           unidad: l.unidad || "ud",
           coste: neto,
+          especificaciones: l.especificaciones,
           createdAt: new Date().toISOString(),
         };
         db.articulos.push(nuevo);

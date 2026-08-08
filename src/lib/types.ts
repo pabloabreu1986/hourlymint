@@ -327,6 +327,8 @@ export interface Articulo {
   unidad: string;
   /** Coste unitario actual (se actualiza al aprobar compras). */
   coste: number;
+  /** Ficha técnica: fabricante, medidas, espesor, normas… (texto libre). */
+  especificaciones?: string;
   createdAt: string; // ISO
 }
 
@@ -362,6 +364,8 @@ export interface LineaCompra {
   descripcion: string;
   cantidad: number;
   unidad: string;
+  /** Ficha técnica detectada por la IA (fabricante, medidas, normas…). */
+  especificaciones?: string;
   /** Precio unitario SIN IVA y ANTES de descuento (precio de tarifa). */
   precioUnitario: number;
   /** % de descuento de la línea (0 si no hay). */

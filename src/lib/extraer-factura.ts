@@ -314,6 +314,7 @@ async function extraerConIA(file: File): Promise<ResultadoExtraccion> {
     return {
       id: nuevaLinea(),
       descripcion: String(l.descripcion ?? ""),
+      especificaciones: l.especificaciones ? String(l.especificaciones) : undefined,
       cantidad,
       unidad: String(l.unidad || "ud"),
       precioUnitario,

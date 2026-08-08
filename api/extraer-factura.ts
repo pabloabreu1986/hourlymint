@@ -15,6 +15,7 @@ Reglas:
 - "lineas": una por cada ARTÍCULO/producto de la factura. Incluye también los PORTES/transporte como una línea normal (concepto "Portes"). NO incluyas cabeceras, subtotales, impuestos ni datos del cliente.
 - "precioUnitario": precio unitario SIN IVA y ANTES de descuento (precio de tarifa / columna "Importe" o "Precio").
 - "descuento": porcentaje de descuento de la línea (columna "% Dto"); 0 si no hay.
+- "especificaciones": ficha técnica que aparezca en la descripción del artículo — fabricante/marca, medidas, potencia, espesor, normas (EN…), material, modelo… Resúmelo en una frase corta; vacío si no hay. Ej.: "STAYER · 750W · Ø225mm" o "3M · 19mm x 20m".
 - "total": importe total de la línea SIN IVA y DESPUÉS de descuento (columna "Importe Total" / "Importe"). Debe cuadrar con cantidad × precioUnitario × (1 − descuento/100).
 - Todos los importes SIN IVA (base imponible).
 - Números en formato español (coma decimal, punto de miles) conviértelos a número (ej. "1.234,56" -> 1234.56).
@@ -34,6 +35,7 @@ const SCHEMA = {
         type: "object",
         properties: {
           descripcion: { type: "string" },
+          especificaciones: { type: "string" },
           cantidad: { type: "number" },
           unidad: { type: "string" },
           precioUnitario: { type: "number" },

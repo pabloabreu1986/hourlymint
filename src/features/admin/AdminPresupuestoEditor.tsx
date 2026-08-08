@@ -159,22 +159,7 @@ export default function AdminPresupuestoEditor() {
       },
     ]);
   }
-  function addPartida(part: Partida) {
-    setLineas([
-      ...p!.lineas,
-      {
-        id: lid(),
-        tipo: "partida",
-        refId: part.id,
-        concepto: part.nombre,
-        unidad: part.unidad,
-        cantidad: 1,
-        costeUnitario: costePartida(part, articulos),
-        margenPct: null,
-      },
-    ]);
-  }
-  /** Inserta cada artículo del grupo/receta como su propia línea editable. */
+  /** Inserta cada artículo del pack como su propia línea editable. */
   function addGrupo(part: Partida) {
     const nuevas: LineaPresupuesto[] = part.componentes.map((comp) => {
       const art = articulos.find((a) => a.id === comp.articuloId);
@@ -322,8 +307,7 @@ export default function AdminPresupuestoEditor() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h3 className="mr-auto font-bold text-forge-dark">Líneas</h3>
           <AddDropdown label="+ Artículo" items={articulos.map((a) => ({ id: a.id, label: `${a.nombre} · ${formatEuro(a.coste)}/${a.unidad}` }))} onPick={(id) => { const a = byArt.get(id); if (a) addArticulo(a); }} />
-          <AddDropdown label="+ Receta" items={partidas.map((pa) => ({ id: pa.id, label: `${pa.nombre} · ${formatEuro(costePartida(pa, articulos))}/${pa.unidad}` }))} onPick={(id) => { const pa = partidas.find((x) => x.id === id); if (pa) addPartida(pa); }} />
-          <AddDropdown label="+ Grupo" items={partidas.map((pa) => ({ id: pa.id, label: `${pa.nombre} · ${pa.componentes.length} art.` }))} onPick={(id) => { const pa = partidas.find((x) => x.id === id); if (pa) addGrupo(pa); }} />
+          <AddDropdown label="+ Pack" items={partidas.map((pa) => ({ id: pa.id, label: `${pa.nombre} · ${pa.componentes.length} art. · ${formatEuro(costePartida(pa, articulos))}` }))} onPick={(id) => { const pa = partidas.find((x) => x.id === id); if (pa) addGrupo(pa); }} />
           <AddDropdown label="+ Mano de obra" items={usuarios.map((u) => ({ id: u.id, label: `${u.nombre} · ${formatEuro(u.costeHora ?? 0)}/h` }))} onPick={(id) => { const u = usuarios.find((x) => x.id === id); if (u) addManoObra(u); }} />
           <button onClick={addLibre} className="btn-ghost px-3 py-1.5 text-sm">+ Línea libre</button>
         </div>

@@ -70,6 +70,7 @@ export async function aprobarCompra(id: string): Promise<FacturaProveedor> {
       const patch: Partial<Articulo> = {};
       if (neto > 0 && art.coste !== neto) patch.coste = neto;
       if (!art.proveedorId && c.proveedorId) patch.proveedorId = c.proveedorId;
+      if (!art.especificaciones && l.especificaciones) patch.especificaciones = l.especificaciones;
       if (Object.keys(patch).length) {
         check(await client.from("articulos").update(fromArticulo(patch)).eq("id", art.id));
       }
@@ -84,6 +85,7 @@ export async function aprobarCompra(id: string): Promise<FacturaProveedor> {
         categoria: "material",
         unidad: l.unidad || "ud",
         coste: neto,
+        especificaciones: l.especificaciones,
         createdAt: new Date().toISOString(),
       };
       check(await client.from("articulos").insert(fromArticulo(nuevo)));
