@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { comprasApi, catalogoApi, obrasApi } from "@/services";
+import { comprasApi, catalogoApi, obrasApi, presupuestosApi } from "@/services";
 import { extraerFactura, fileADataUrl } from "@/lib/extraer-factura";
+import { margenDefecto } from "./AdminPresupuestos";
 import { formatEuro } from "@/lib/format";
+import { hoyISO } from "@/lib/seed";
 import { Cargando, Spinner } from "@/components/ui";
 import {
   IconChevronLeft,
@@ -119,6 +121,35 @@ export default function AdminCompraEditor() {
     setAviso("Compra aprobada. Todas las líneas se subieron al banco de precios (con su proveedor y precio).");
   }
 
+  /** Genera un presupuesto de cliente a partir de las líneas de esta factura,
+   * aplicando el sobreprecio (margen por defecto). Cada línea entra a su coste
+   * neto; el PVP lo calcula el presupuesto. */
+  async function crearPresupuesto() {
+    if (!c) return;
+    const anio = (c.fecha || hoyISO()).slice(0, 4);
+    const nuevo = await presupuestosApi.crearPresupuesto({
+      clienteId: null,
+      obraId: c.obraId,
+      numero: `P-${anio}-${String(Date.now()).slice(-4)}`,
+      fecha: hoyISO(),
+      estado: "borrador",
+      margenPct: margenDefecto(),
+      lineas: c.lineas.map((l) => ({
+        id: lid(),
+        tipo: "articulo" as const,
+        refId: l.articuloId ?? null,
+        concepto: l.descripcion,
+        unidad: l.unidad,
+        cantidad: l.cantidad,
+        costeUnitario: costeNeto(l),
+        margenPct: null,
+      })),
+      disclaimers: [],
+      notas: `Generado desde la factura de proveedor ${c.numero || ""}`.trim(),
+    });
+    navigate(`/admin/presupuestos/${nuevo.id}`);
+  }
+
   // Coste real por unidad: el neto (después de descuento) = total / cantidad.
   const costeNeto = (l: LineaCompra): number =>
     l.cantidad > 0 ? Math.round((l.total / l.cantidad) * 100) / 100 : l.precioUnitario;
@@ -207,10 +238,19 @@ export default function AdminCompraEditor() {
         >
           <IconChevronLeft className="h-4 w-4" /> Facturas de proveedor
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-400">
             {guardando ? "Guardando…" : guardado ? "Guardado" : "Sin guardar"}
           </span>
+          {c.lineas.length > 0 && (
+            <button
+              onClick={crearPresupuesto}
+              className="btn-ghost px-4 py-2 text-sm"
+              title="Crear un presupuesto de cliente con estas líneas y tu sobreprecio"
+            >
+              Crear presupuesto
+            </button>
+          )}
           {!bloqueada && (
             <>
               <button onClick={guardar} disabled={guardando} className="btn-ghost px-4 py-2 text-sm">
