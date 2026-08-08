@@ -38,6 +38,8 @@ import {
   IconShield,
   IconHelp,
   IconBriefcase,
+  IconMenu,
+  IconX,
 } from "@/components/icons";
 import Tour from "@/features/onboarding/Tour";
 import { TOUR_BIENVENIDA, tourDeRuta, type DefTour } from "@/features/onboarding/tour-content";
@@ -146,7 +148,13 @@ export default function AdminLayout() {
   const { usuario, logout } = useAuth();
   const [sinLeer, setSinLeer] = useState(0);
   const [tour, setTour] = useState<DefTour | null>(null);
+  const [menu, setMenu] = useState(false); // drawer del menú en móvil
   const location = useLocation();
+
+  // Cierra el menú móvil al cambiar de ruta.
+  useEffect(() => {
+    setMenu(false);
+  }, [location.pathname]);
 
   // Lanza el tour de bienvenida la primera vez que este usuario entra.
   useEffect(() => {
@@ -216,6 +224,7 @@ export default function AdminLayout() {
                   key={to}
                   to={to}
                   end={end}
+                  onClick={() => setMenu(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                       isActive
@@ -246,6 +255,23 @@ export default function AdminLayout() {
       {/* Sidebar escritorio */}
       <div className="hidden lg:block">{Sidebar}</div>
 
+      {/* Menú lateral en móvil (drawer). z alto para tapar el mapa Leaflet. */}
+      {menu && (
+        <div className="fixed inset-0 z-[1200] flex lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMenu(false)} />
+          <div className="relative z-10 h-full">
+            {Sidebar}
+            <button
+              onClick={() => setMenu(false)}
+              className="absolute right-3 top-4 text-white/60 hover:text-white"
+              aria-label="Cerrar menú"
+            >
+              <IconX className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Contenido */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header móvil: mismo look & feel que la vista de trabajador
@@ -256,7 +282,16 @@ export default function AdminLayout() {
           style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}
         >
           <div className="flex items-center justify-between">
-            <Logo />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMenu(true)}
+                className="text-forge-dark hover:text-forge-orange"
+                aria-label="Menú"
+              >
+                <IconMenu className="h-6 w-6" />
+              </button>
+              <Logo />
+            </div>
             <div className="flex items-center gap-3">
               <button data-tour="help" onClick={abrirAyuda} className="text-slate-400 hover:text-forge-orange" aria-label="Ayuda / guía del módulo" title="Ayuda">
                 <IconHelp className="h-6 w-6" />
