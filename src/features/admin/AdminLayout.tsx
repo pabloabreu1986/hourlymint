@@ -181,10 +181,12 @@ export default function AdminLayout() {
   const nav = secciones.flatMap((s) => s.items);
   const tabsMobile = TABS_MOBILE.filter((n) => puedeVer(n.to));
 
-  const titulo =
-    nav.find((n) => n.to === location.pathname)?.label ??
-    tabsMobile.find((n) => n.to === location.pathname)?.label ??
-    "Panel";
+  // Título de la cabecera: coincidencia exacta, o por prefijo para las rutas
+  // de detalle/editor (p. ej. /admin/clientes/:id → "Clientes").
+  const enRuta = (n: NavItem) =>
+    location.pathname === n.to ||
+    (n.to !== "/admin" && location.pathname.startsWith(n.to + "/"));
+  const titulo = [...nav, ...tabsMobile].find(enRuta)?.label ?? "Panel";
 
   useEffect(() => {
     if (!usuario) return;
