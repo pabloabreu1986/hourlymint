@@ -4,7 +4,8 @@ import { diasDeAusencia, diasVacacionesUsados } from "@/services/ausencias";
 import type { Ausencia, EstadoAusencia, TipoAusencia, Usuario } from "@/lib/types";
 import { Avatar, Badge, Cargando, EmptyState, Modal } from "@/components/ui";
 import { fechaLarga, fechaHora } from "@/lib/format";
-import { IconCalendar, IconCheck, IconX } from "@/components/icons";
+import { IconCalendar, IconCheck, IconX, IconShield } from "@/components/icons";
+import GuiaLaboral from "./GuiaLaboral";
 
 export const ETIQUETA_TIPO_AUSENCIA: Record<TipoAusencia, string> = {
   vacaciones: "Vacaciones",
@@ -31,6 +32,7 @@ export default function AdminAusencias() {
   const [items, setItems] = useState<Ausencia[] | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [filtro, setFiltro] = useState<EstadoAusencia | "todas">("todas");
+  const [verGuia, setVerGuia] = useState(false);
   // Ausencia que se está resolviendo (modal de aprobar/rechazar).
   const [resolviendo, setResolviendo] = useState<{
     ausencia: Ausencia;
@@ -81,6 +83,14 @@ export default function AdminAusencias() {
 
   return (
     <div>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-slate-500">Solicitudes de vacaciones, permisos y bajas de tu equipo.</p>
+        <button onClick={() => setVerGuia(true)} className="btn-ghost px-4 py-2.5 text-sm">
+          <IconShield className="h-4 w-4" /> Guía laboral
+        </button>
+      </div>
+      <GuiaLaboral open={verGuia} onClose={() => setVerGuia(false)} />
+
       {/* Saldo de vacaciones por trabajador */}
       <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {trabajadores.map((t) => {

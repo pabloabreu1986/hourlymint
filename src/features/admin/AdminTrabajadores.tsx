@@ -20,7 +20,9 @@ import {
   IconTrash,
   IconEye,
   IconEyeOff,
+  IconShield,
 } from "@/components/icons";
+import GuiaLaboral from "./GuiaLaboral";
 
 type Draft = {
   nombre: string;
@@ -64,6 +66,7 @@ export default function AdminTrabajadores() {
   const [usuarios, setUsuarios] = useState<Usuario[] | null>(null);
   const [editar, setEditar] = useState<Usuario | null>(null);
   const [nuevo, setNuevo] = useState(false);
+  const [verGuia, setVerGuia] = useState(false);
   const [borrar, setBorrar] = useState<Usuario | null>(null);
   const [verPass, setVerPass] = useState<Record<string, boolean>>({});
   const [fichajesPorTrabajador, setFichajesPorTrabajador] = useState<Record<string, Fichaje[]>>({});
@@ -120,10 +123,16 @@ export default function AdminTrabajadores() {
         <p className="text-sm text-slate-500">
           {usuarios.filter((u) => u.rol === "trabajador").length} trabajadores · alta y baja manual
         </p>
-        <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
-          <IconPlus className="h-4 w-4" /> Nuevo usuario
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setVerGuia(true)} className="btn-ghost px-4 py-2.5 text-sm">
+            <IconShield className="h-4 w-4" /> Guía laboral
+          </button>
+          <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
+            <IconPlus className="h-4 w-4" /> Nuevo usuario
+          </button>
+        </div>
       </div>
+      <GuiaLaboral open={verGuia} onClose={() => setVerGuia(false)} />
 
       {/* Móvil: tarjetas */}
       <div className="space-y-3 md:hidden">
