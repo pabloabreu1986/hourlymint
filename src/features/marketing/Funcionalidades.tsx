@@ -364,7 +364,7 @@ function Seccion({ n, titulo, sub, grupos }: { n: string; titulo: ReactNode; sub
 export default function Funcionalidades() {
   return (
     <div className="min-h-full bg-[#F5F3EE] text-[#101418] selection:bg-[#E8721C] selection:text-white">
-      <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-4 sm:px-8">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={logoLight} alt="" className="h-8 w-auto" />

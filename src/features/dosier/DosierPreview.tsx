@@ -44,7 +44,7 @@ export default function DosierPreview() {
   return (
     <div className="min-h-full bg-slate-200">
       {/* Barra de acciones (no sale en el PDF) */}
-      <div className="no-print sticky top-0 z-40 flex items-center justify-between border-b border-black/10 bg-white/90 px-5 py-3 backdrop-blur">
+      <div className="no-print sticky top-0 z-40 flex items-center justify-between border-b border-black/10 bg-white/90 px-5 pb-3 backdrop-blur" style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
         <button
           onClick={() => navigate("/admin/dosier")}
           className="btn-ghost gap-2 px-3 py-2 text-sm"

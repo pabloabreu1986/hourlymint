@@ -45,7 +45,7 @@ export default function WebCliente() {
   return (
     <div className="min-h-full bg-forge-canvas text-forge-dark">
       {/* Cabecera minimalista: solo la marca del cliente */}
-      <header className="sticky top-0 z-40 border-b border-black/10 bg-forge-canvas/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-forge-canvas/90 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex max-w-[1300px] items-center px-5 py-4 sm:px-8">
           <Logo />
         </div>

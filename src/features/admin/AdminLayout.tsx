@@ -207,7 +207,7 @@ export default function AdminLayout() {
 
   const Sidebar = (
     <aside className="flex h-full w-64 flex-col bg-forge-dark text-white">
-      <div className="px-5 py-5">
+      <div className="px-5 pb-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}>
         <Logo variant="light" />
       </div>
       <nav data-tour="nav" className="flex-1 overflow-y-auto px-3 py-2">
@@ -263,7 +263,8 @@ export default function AdminLayout() {
             {Sidebar}
             <button
               onClick={() => setMenu(false)}
-              className="absolute right-3 top-4 text-white/60 hover:text-white"
+              className="absolute right-3 text-white/60 hover:text-white"
+              style={{ top: "calc(env(safe-area-inset-top) + 1rem)" }}
               aria-label="Cerrar menú"
             >
               <IconX className="h-6 w-6" />

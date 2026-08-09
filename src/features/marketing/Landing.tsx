@@ -73,7 +73,7 @@ function Flecha() {
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-4 sm:px-8">
         <Marca />
         <nav className="hidden items-center gap-8 text-[13px] font-semibold uppercase tracking-[0.12em] md:flex">
