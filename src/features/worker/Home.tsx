@@ -178,7 +178,10 @@ export default function Home() {
   return (
     <div>
       {/* Header */}
-      <header className="rounded-b-3xl bg-white px-5 pb-6 pt-8 shadow-card">
+      <header
+        className="rounded-b-3xl bg-white px-5 pb-6 pt-8 shadow-card"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 2rem)" }}
+      >
         <div className="flex items-center justify-between">
           <Logo />
           <Avatar nombre={usuario.nombre} color={usuario.color} size={40} />

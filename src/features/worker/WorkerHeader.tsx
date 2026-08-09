@@ -16,7 +16,10 @@ export function WorkerHeader({
   const navigate = useNavigate();
   const onBack = typeof back === "function" ? back : () => navigate(-1);
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
+    <header
+      className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-100 bg-white/95 px-4 pb-3 backdrop-blur"
+      style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+    >
       {back && (
         <button
           onClick={onBack}

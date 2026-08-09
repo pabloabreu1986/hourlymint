@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { comprasApi, catalogoApi, obrasApi, presupuestosApi } from "@/services";
+import { comprasApi, catalogoApi, obrasApi, presupuestosApi, clientesApi } from "@/services";
 import { extraerFactura, fileADataUrl } from "@/lib/extraer-factura";
 import { margenDefecto } from "./AdminPresupuestos";
 import { formatEuro } from "@/lib/format";
@@ -17,6 +17,7 @@ import {
 } from "@/components/icons";
 import type {
   Articulo,
+  Cliente,
   FacturaProveedor,
   LineaCompra,
   Obra,
@@ -44,6 +45,7 @@ export default function AdminCompraEditor() {
   const [guardado, setGuardado] = useState(true);
   const [presModal, setPresModal] = useState(false);
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
 
   async function cargarCatalogo() {
     const [ps, ar] = await Promise.all([catalogoApi.listProveedores(), catalogoApi.listArticulos()]);
@@ -159,9 +161,17 @@ export default function AdminCompraEditor() {
 
   async function abrirDialogoPresupuesto() {
     setPresModal(true);
-    const todos = await presupuestosApi.listPresupuestos();
+    const [todos, cs] = await Promise.all([
+      presupuestosApi.listPresupuestos(),
+      clientesApi.listClientes(),
+    ]);
     setPresupuestos(todos.filter((p) => p.estado === "borrador"));
+    setClientes(cs);
   }
+  const nombreClientePres = (clienteId: string | null) => {
+    const cl = clienteId ? clientes.find((x) => x.id === clienteId) : null;
+    return cl ? `${cl.nombre} ${cl.apellidos}`.trim() : "Sin cliente";
+  };
 
   async function crearPresupuesto() {
     if (!c) return;
@@ -295,10 +305,15 @@ export default function AdminCompraEditor() {
                   <button
                     key={pre.id}
                     onClick={() => anadirAPresupuesto(pre)}
-                    className="flex w-full items-center justify-between rounded-md border border-border p-3 text-left text-sm hover:border-primary hover:bg-accent"
+                    className="flex w-full items-center justify-between gap-3 rounded-md border border-border p-3 text-left text-sm hover:border-primary hover:bg-accent"
                   >
-                    <span className="font-semibold text-foreground">{pre.numero || "Sin número"}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-foreground">{pre.numero || "Sin número"}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {nombreClientePres(pre.clienteId)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {pre.lineas.length} línea{pre.lineas.length === 1 ? "" : "s"} · {pre.fecha}
                     </span>
                   </button>
