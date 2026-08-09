@@ -72,15 +72,24 @@ export default function AdminCompraEditor() {
     try {
       const archivo = await fileADataUrl(file);
       const res = await extraerFactura(file);
-      // Casar proveedor por nombre si lo detectó.
+      // Casar proveedor por nombre si lo detectó; si no existe, crearlo y asignarlo.
       let proveedorId = c?.proveedorId ?? null;
-      if (res.proveedorNombre) {
-        const p = proveedores.find(
+      const nombreDet = res.proveedorNombre?.trim();
+      if (nombreDet) {
+        let p = proveedores.find(
           (x) =>
-            x.nombre.toLowerCase().includes(res.proveedorNombre!.toLowerCase()) ||
-            res.proveedorNombre!.toLowerCase().includes(x.nombre.toLowerCase())
+            x.nombre.toLowerCase().includes(nombreDet.toLowerCase()) ||
+            nombreDet.toLowerCase().includes(x.nombre.toLowerCase())
         );
-        if (p) proveedorId = p.id;
+        if (!p) {
+          // El proveedor detectado no está en el banco: lo damos de alta
+          // automáticamente para que la factura (y sus artículos al aprobar)
+          // queden asociados a él.
+          p = await catalogoApi.crearProveedor({ nombre: nombreDet, cif: "", telefono: "", email: "", notas: "" });
+          setProveedores((prev) => [...prev, p!]);
+          toast.success(`Proveedor "${nombreDet}" creado y asignado`);
+        }
+        proveedorId = p.id;
       }
       set({
         archivo,
