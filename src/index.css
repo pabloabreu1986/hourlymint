@@ -14,6 +14,30 @@
     --brand-orange-600: 168 91 46;
     --brand-orange-400: 208 136 83;
     --brand-canvas: 244 245 247;
+
+    /* ── Tokens shadcn/ui (canales RGB), enganchados a la marca ──
+       Semántica de shadcn sobre la paleta FORGEVIA. El white-label repinta
+       la marca cambiando --brand-*, y estos tokens la heredan. */
+    --background: var(--brand-canvas);
+    --foreground: var(--brand-dark);
+    --card: 255 255 255;
+    --card-foreground: var(--brand-dark);
+    --popover: 255 255 255;
+    --popover-foreground: var(--brand-dark);
+    --primary: var(--brand-orange);
+    --primary-foreground: 255 255 255;
+    --secondary: 241 245 249; /* slate-100 */
+    --secondary-foreground: var(--brand-dark);
+    --muted: 241 245 249; /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    --accent: 241 245 249; /* slate-100 */
+    --accent-foreground: var(--brand-dark);
+    --destructive: 220 38 38; /* red-600 */
+    --destructive-foreground: 255 255 255;
+    --border: 226 232 240; /* slate-200 */
+    --input: 226 232 240; /* slate-200 */
+    --ring: var(--brand-orange);
+    --radius: 0.65rem;
   }
   html,
   body,
@@ -33,31 +57,36 @@
 }
 
 @layer components {
+  /* ── Componentes al estilo shadcn/ui (sobre tokens de marca) ── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition
-      active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium
+      ring-offset-background transition-colors
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-forge-orange text-white hover:bg-forge-orange-600 px-5 py-3;
+    @apply btn h-10 bg-primary px-4 py-2 text-primary-foreground shadow-sm hover:bg-primary/90;
   }
   .btn-dark {
-    @apply btn bg-forge-dark text-white hover:bg-forge-slate px-5 py-3;
+    @apply btn h-10 bg-forge-dark px-4 py-2 text-white shadow-sm hover:bg-forge-slate;
   }
   .btn-ghost {
-    @apply btn border border-slate-200 bg-white text-forge-dark hover:bg-slate-50 px-5 py-3;
+    @apply btn h-10 border border-input bg-background px-4 py-2 text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground;
   }
   .card {
-    @apply rounded-2xl bg-white shadow-card;
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
   }
   .field {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-forge-dark
-      placeholder:text-slate-400 outline-none focus:border-forge-orange focus:ring-2 focus:ring-forge-orange/20;
+    @apply flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm
+      transition-colors placeholder:text-muted-foreground
+      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+      disabled:cursor-not-allowed disabled:opacity-50;
   }
   .label {
-    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+    @apply text-sm font-medium leading-none text-foreground;
   }
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold;
   }
 }
 
