@@ -4,6 +4,7 @@ import { gastosApi, obrasApi } from "@/services";
 import type { CategoriaGasto, EstadoGasto, Gasto, Obra } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { fechaCompleta } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { fileToThumbDataURL } from "@/lib/image";
@@ -196,14 +197,16 @@ export default function MisGastos() {
           </div>
           <div>
             <label className="label">Obra (opcional)</label>
-            <select className="field mt-1.5" value={obraId} onChange={(e) => setObraId(e.target.value)}>
-              <option value="">Sin obra concreta</option>
-              {obras.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nombre}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field mt-1.5 flex w-full items-center justify-between text-left"
+              label={obras.find((o) => o.id === obraId)?.nombre ?? "Sin obra concreta"}
+              placeholder="Buscar obra…"
+              items={[
+                { id: "", label: "Sin obra concreta" },
+                ...obras.map((o) => ({ id: o.id, label: o.nombre })),
+              ]}
+              onPick={(id) => setObraId(id)}
+            />
           </div>
           <div>
             <label className="label">Foto del ticket (opcional)</label>

@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { documentosApi, usuariosApi } from "@/services";
 import type { CategoriaDocumento, Documento, Usuario } from "@/lib/types";
 import { Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { confirmar } from "@/components/confirm";
 import { fechaCompleta } from "@/lib/format";
 import { errorDeTamano } from "@/lib/files";
@@ -117,19 +118,23 @@ export default function AdminDocumentos() {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <select
-          className="field w-full sm:w-64"
-          value={filtroUsuario}
-          onChange={(e) => setFiltroUsuario(e.target.value)}
-        >
-          <option value="todos">Todos los documentos</option>
-          <option value="empresa">De empresa</option>
-          {trabajadores.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
-            </option>
-          ))}
-        </select>
+        <Combobox
+          className="field flex w-full items-center justify-between text-left sm:w-64"
+          label={
+            filtroUsuario === "todos"
+              ? "Todos los documentos"
+              : filtroUsuario === "empresa"
+                ? "De empresa"
+                : trabajadores.find((t) => t.id === filtroUsuario)?.nombre ?? "Todos los documentos"
+          }
+          placeholder="Buscar…"
+          items={[
+            { id: "todos", label: "Todos los documentos" },
+            { id: "empresa", label: "De empresa" },
+            ...trabajadores.map((t) => ({ id: t.id, label: t.nombre })),
+          ]}
+          onPick={(id) => setFiltroUsuario(id)}
+        />
         <button onClick={() => setAbierto(true)} className="btn-primary px-4 py-2.5">
           <IconPlus className="h-5 w-5" /> Subir documento
         </button>
@@ -206,18 +211,16 @@ export default function AdminDocumentos() {
             </div>
             <div>
               <label className="label">Para</label>
-              <select
-                className="field mt-1.5"
-                value={destinatario}
-                onChange={(e) => setDestinatario(e.target.value)}
-              >
-                <option value="">Toda la empresa</option>
-                {trabajadores.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                className="field mt-1.5 flex w-full items-center justify-between text-left"
+                label={trabajadores.find((t) => t.id === destinatario)?.nombre ?? "Toda la empresa"}
+                placeholder="Buscar trabajador…"
+                items={[
+                  { id: "", label: "Toda la empresa" },
+                  ...trabajadores.map((t) => ({ id: t.id, label: t.nombre })),
+                ]}
+                onPick={(id) => setDestinatario(id)}
+              />
             </div>
           </div>
           <div>

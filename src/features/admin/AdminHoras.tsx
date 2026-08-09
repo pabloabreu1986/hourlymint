@@ -5,6 +5,7 @@ import { calcularJornada, formatHoras } from "@/lib/horas";
 import { diaCorto, hora } from "@/lib/format";
 import { coordText } from "@/lib/geo";
 import { Avatar, Cargando, Modal } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { WorkerMap } from "@/components/WorkerMap";
 import { IconChevronLeft, IconChevronRight, IconMapPin } from "@/components/icons";
 
@@ -122,17 +123,13 @@ export default function AdminHoras() {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <select
-          className="field w-full sm:w-64"
-          value={trabajadorId}
-          onChange={(e) => setTrabajadorId(e.target.value)}
-        >
-          {trabajadores.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
-            </option>
-          ))}
-        </select>
+        <Combobox
+          className="field flex w-full items-center justify-between text-left sm:w-64"
+          label={trabajadores.find((t) => t.id === trabajadorId)?.nombre ?? "Selecciona trabajador"}
+          placeholder="Buscar trabajador…"
+          items={trabajadores.map((t) => ({ id: t.id, label: t.nombre }))}
+          onPick={(id) => setTrabajadorId(id)}
+        />
 
         <div className="ml-auto flex items-center gap-2">
           <button

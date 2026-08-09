@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { obrasApi, turnosApi, usuariosApi } from "@/services";
 import type { Obra, Turno, Usuario } from "@/lib/types";
 import { Avatar, Cargando, Modal, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { diaCorto } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { IconChevronLeft, IconChevronRight, IconTrash } from "@/components/icons";
@@ -239,14 +240,16 @@ export default function AdminTurnos() {
         <div className="space-y-4">
           <div>
             <label className="label">Obra</label>
-            <select className="field mt-1.5" value={obraId} onChange={(e) => setObraId(e.target.value)}>
-              <option value="">Sin obra concreta</option>
-              {obras.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nombre}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field mt-1.5 flex w-full items-center justify-between text-left"
+              label={obras.find((o) => o.id === obraId)?.nombre ?? "Sin obra concreta"}
+              placeholder="Buscar obra…"
+              items={[
+                { id: "", label: "Sin obra concreta" },
+                ...obras.map((o) => ({ id: o.id, label: o.nombre })),
+              ]}
+              onPick={(id) => setObraId(id)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

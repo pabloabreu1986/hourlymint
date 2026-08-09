@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fotosApi, obrasApi, usuariosApi } from "@/services";
 import type { Foto, Obra, Usuario } from "@/lib/types";
 import { Avatar, Cargando, EmptyState, Modal } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { fechaHora } from "@/lib/format";
 import { IconCamera } from "@/components/icons";
 
@@ -38,18 +39,16 @@ export default function AdminFotografias() {
         <p className="text-sm text-slate-500">
           {fotos.length} fotos subidas por los trabajadores
         </p>
-        <select
-          value={obraFiltro}
-          onChange={(e) => setObraFiltro(e.target.value)}
-          className="field w-full sm:w-64"
-        >
-          <option value="todas">Todas las obras</option>
-          {obras.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nombre}
-            </option>
-          ))}
-        </select>
+        <Combobox
+          className="field flex w-full items-center justify-between text-left sm:w-64"
+          label={obraFiltro === "todas" ? "Todas las obras" : obras.find((o) => o.id === obraFiltro)?.nombre ?? "Todas las obras"}
+          placeholder="Buscar obra…"
+          items={[
+            { id: "todas", label: "Todas las obras" },
+            ...obras.map((o) => ({ id: o.id, label: o.nombre })),
+          ]}
+          onPick={(id) => setObraFiltro(id)}
+        />
       </div>
 
       {visibles.length === 0 ? (

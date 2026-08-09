@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi, clientesApi } from "@/services";
+import { Combobox } from "@/components/Combobox";
 import type { Adjunto, Cliente, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
 import { calcularJornada, formatHoras, ESTILO_ESTADO_JORNADA } from "@/lib/horas";
@@ -477,18 +478,19 @@ function ObraForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Cliente</label>
-            <select
-              className="field mt-1.5"
-              value={clienteId}
-              onChange={(e) => setClienteId(e.target.value)}
-            >
-              <option value="">— Sin asignar —</option>
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre} {c.apellidos}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field mt-1.5 flex w-full items-center justify-between text-left"
+              label={(() => {
+                const c = clientes.find((x) => x.id === clienteId);
+                return c ? `${c.nombre} ${c.apellidos}`.trim() : "— Sin asignar —";
+              })()}
+              placeholder="Buscar cliente…"
+              items={[
+                { id: "", label: "— Sin asignar —" },
+                ...clientes.map((c) => ({ id: c.id, label: `${c.nombre} ${c.apellidos}`.trim() })),
+              ]}
+              onPick={(id) => setClienteId(id)}
+            />
           </div>
           <div>
             <label className="label">Presupuesto (€)</label>
@@ -586,18 +588,16 @@ function ObraForm({
 
         <div>
           <label className="label">Encargado del día</label>
-          <select
-            className="field mt-1.5"
-            value={encargadoId ?? ""}
-            onChange={(e) => setEncargadoId(e.target.value || null)}
-          >
-            <option value="">Sin asignar</option>
-            {trabajadores.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nombre}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            className="field mt-1.5 flex w-full items-center justify-between text-left"
+            label={trabajadores.find((u) => u.id === encargadoId)?.nombre ?? "Sin asignar"}
+            placeholder="Buscar trabajador…"
+            items={[
+              { id: "", label: "Sin asignar" },
+              ...trabajadores.map((u) => ({ id: u.id, label: u.nombre })),
+            ]}
+            onPick={(id) => setEncargadoId(id || null)}
+          />
           <p className="mt-1 text-xs text-slate-400">
             El encargado puede cambiar cada día según a quién asignes a la obra.
           </p>
