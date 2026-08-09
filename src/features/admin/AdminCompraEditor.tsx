@@ -6,7 +6,7 @@ import { margenDefecto } from "./AdminPresupuestos";
 import { formatEuro } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { toast } from "sonner";
-import { Cargando, Spinner, Tooltip } from "@/components/ui";
+import { Cargando, EmptyState, Modal, Spinner, Tooltip } from "@/components/ui";
 import { Combobox } from "@/components/Combobox";
 import {
   IconChevronLeft,
@@ -20,6 +20,7 @@ import type {
   FacturaProveedor,
   LineaCompra,
   Obra,
+  Presupuesto,
   Proveedor,
 } from "@/lib/types";
 
@@ -41,6 +42,8 @@ export default function AdminCompraEditor() {
   const [textoCrudo, setTextoCrudo] = useState<string>("");
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(true);
+  const [presModal, setPresModal] = useState(false);
+  const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
 
   async function cargarCatalogo() {
     const [ps, ar] = await Promise.all([catalogoApi.listProveedores(), catalogoApi.listArticulos()]);
@@ -139,6 +142,27 @@ export default function AdminCompraEditor() {
   /** Genera un presupuesto de cliente a partir de las líneas de esta factura,
    * aplicando el sobreprecio (margen por defecto). Cada línea entra a su coste
    * neto; el PVP lo calcula el presupuesto. */
+  /** Convierte las líneas de la factura en líneas de presupuesto. El margen
+   *  queda a null en cada línea para que herede el % del presupuesto. */
+  function lineasParaPresupuesto() {
+    return c!.lineas.map((l) => ({
+      id: lid(),
+      tipo: "articulo" as const,
+      refId: l.articuloId ?? null,
+      concepto: l.descripcion,
+      unidad: l.unidad,
+      cantidad: l.cantidad,
+      costeUnitario: costeNeto(l),
+      margenPct: null,
+    }));
+  }
+
+  async function abrirDialogoPresupuesto() {
+    setPresModal(true);
+    const todos = await presupuestosApi.listPresupuestos();
+    setPresupuestos(todos.filter((p) => p.estado === "borrador"));
+  }
+
   async function crearPresupuesto() {
     if (!c) return;
     const anio = (c.fecha || hoyISO()).slice(0, 4);
@@ -149,20 +173,23 @@ export default function AdminCompraEditor() {
       fecha: hoyISO(),
       estado: "borrador",
       margenPct: margenDefecto(),
-      lineas: c.lineas.map((l) => ({
-        id: lid(),
-        tipo: "articulo" as const,
-        refId: l.articuloId ?? null,
-        concepto: l.descripcion,
-        unidad: l.unidad,
-        cantidad: l.cantidad,
-        costeUnitario: costeNeto(l),
-        margenPct: null,
-      })),
+      lineas: lineasParaPresupuesto(),
       disclaimers: [],
       notas: `Generado desde la factura de proveedor ${c.numero || ""}`.trim(),
     });
+    setPresModal(false);
+    toast.success(`Presupuesto creado con tu margen por defecto (${margenDefecto()}%)`);
     navigate(`/admin/presupuestos/${nuevo.id}`);
+  }
+
+  async function anadirAPresupuesto(pre: Presupuesto) {
+    if (!c) return;
+    await presupuestosApi.actualizarPresupuesto(pre.id, {
+      lineas: [...pre.lineas, ...lineasParaPresupuesto()],
+    });
+    setPresModal(false);
+    toast.success(`Líneas añadidas a ${pre.numero || "el presupuesto"}`);
+    navigate(`/admin/presupuestos/${pre.id}`);
   }
 
   // Coste real por unidad: el neto (después de descuento) = total / cantidad.
@@ -249,6 +276,38 @@ export default function AdminCompraEditor() {
 
   return (
     <div className="space-y-5 pb-16">
+      <Modal open={presModal} onClose={() => setPresModal(false)} title="Añadir a presupuesto">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Se llevarán {c.lineas.length} línea{c.lineas.length === 1 ? "" : "s"} con tu margen por
+            defecto ({margenDefecto()}%). Elige el destino:
+          </p>
+          <button onClick={crearPresupuesto} className="btn-primary w-full py-2.5 text-sm">
+            <IconPlus className="h-4 w-4" /> Crear un presupuesto nuevo
+          </button>
+          <div>
+            <p className="label mb-2">O añadir a uno en borrador</p>
+            {presupuestos.length === 0 ? (
+              <EmptyState titulo="Sin borradores" texto="No tienes presupuestos en borrador todavía." />
+            ) : (
+              <div className="max-h-64 space-y-1.5 overflow-y-auto">
+                {presupuestos.map((pre) => (
+                  <button
+                    key={pre.id}
+                    onClick={() => anadirAPresupuesto(pre)}
+                    className="flex w-full items-center justify-between rounded-md border border-border p-3 text-left text-sm hover:border-primary hover:bg-accent"
+                  >
+                    <span className="font-semibold text-foreground">{pre.numero || "Sin número"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {pre.lineas.length} línea{pre.lineas.length === 1 ? "" : "s"} · {pre.fecha}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={() => navigate("/admin/compras")}
@@ -262,11 +321,11 @@ export default function AdminCompraEditor() {
           </span>
           {c.lineas.length > 0 && (
             <button
-              onClick={crearPresupuesto}
+              onClick={abrirDialogoPresupuesto}
               className="btn-ghost px-4 py-2 text-sm"
-              title="Crear un presupuesto de cliente con estas líneas y tu sobreprecio"
+              title="Llevar estas líneas a un presupuesto de cliente con tu sobreprecio"
             >
-              Crear presupuesto
+              Añadir a presupuesto
             </button>
           )}
           {!bloqueada && (
