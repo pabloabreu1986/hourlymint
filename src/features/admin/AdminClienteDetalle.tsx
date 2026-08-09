@@ -17,6 +17,7 @@ import {
 } from "@/lib/finanzas";
 import { formatEuro, fechaCompleta } from "@/lib/format";
 import { Badge, Cargando, Modal, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import {
   IconChevronLeft,
   IconEdit,
@@ -101,6 +102,7 @@ export default function AdminClienteDetalle() {
     obraId ? obras.find((o) => o.id === obraId)?.nombre ?? "—" : "General";
 
   async function eliminarCliente() {
+    if (!(await confirmar({ titulo: "Eliminar cliente", mensaje: `Se eliminará a ${cliente!.nombre} ${cliente!.apellidos}. Sus obras, gastos y facturas quedarán sin cliente asignado.` }))) return;
     await clientesApi.eliminarCliente(cliente!.id);
     navigate("/admin/clientes");
   }
@@ -123,6 +125,7 @@ export default function AdminClienteDetalle() {
     cargar();
   }
   async function eliminarFactura(f: Factura) {
+    if (!(await confirmar({ titulo: "Eliminar factura", mensaje: `Se eliminará la factura ${f.numero || ""}.`.trim() }))) return;
     await facturasApi.eliminarFactura(f.id);
     cargar();
   }
@@ -541,6 +544,7 @@ function DocumentosCliente({
               </a>
               <button
                 onClick={async () => {
+                  if (!(await confirmar({ titulo: "Eliminar documento", mensaje: `Se eliminará "${d.nombre}".` }))) return;
                   await documentosApi.eliminarDocumento(d.id);
                   onCambio();
                 }}

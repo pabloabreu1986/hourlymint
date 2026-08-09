@@ -5,6 +5,7 @@ import { obrasApi, partesApi, fotosApi } from "@/services";
 import type { Foto, MaterialPendiente, Obra, ParteDiario as Parte } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Cargando, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { uid } from "@/lib/db";
 import { fechaLarga } from "@/lib/format";
 import { errorDeTamano } from "@/lib/files";
@@ -61,6 +62,7 @@ export default function ParteDiario() {
   }
 
   async function borrarFoto(foto: Foto) {
+    if (!(await confirmar({ titulo: "Eliminar foto", mensaje: "Se eliminará esta foto del parte." }))) return;
     await fotosApi.eliminarFoto(foto);
     setFotos((f) => f.filter((x) => x.id !== foto.id));
   }

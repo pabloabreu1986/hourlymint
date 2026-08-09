@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi, clientesApi } from "@/services";
 import { Combobox } from "@/components/Combobox";
+import { confirmar } from "@/components/confirm";
 import type { Adjunto, Cliente, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
 import { calcularJornada, formatHoras, ESTILO_ESTADO_JORNADA } from "@/lib/horas";
@@ -686,6 +687,7 @@ function AdjuntosObra({ obraId }: { obraId: string }) {
   }
 
   async function eliminar(a: Adjunto) {
+    if (!(await confirmar({ titulo: "Eliminar archivo", mensaje: "Se eliminará este archivo adjunto." }))) return;
     await adjuntosApi.eliminarAdjunto(a);
     cargar();
   }

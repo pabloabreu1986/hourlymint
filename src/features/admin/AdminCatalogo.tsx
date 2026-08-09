@@ -7,6 +7,8 @@ import {
 } from "@/lib/presupuestos-calc";
 import { formatEuro } from "@/lib/format";
 import { Badge, Cargando, Modal, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
+import { Combobox } from "@/components/Combobox";
 import { IconPlus, IconEdit, IconTrash } from "@/components/icons";
 import type {
   Articulo,
@@ -104,19 +106,23 @@ function ArticulosTab({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <select
-          className="field max-w-xs py-2 text-sm"
-          value={filtroProv}
-          onChange={(e) => setFiltroProv(e.target.value)}
-        >
-          <option value="">Todos los proveedores</option>
-          {proveedores.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-          <option value="__none__">Sin proveedor</option>
-        </select>
+        <Combobox
+          className="field flex max-w-xs items-center justify-between py-2 text-left text-sm"
+          label={
+            filtroProv === ""
+              ? "Todos los proveedores"
+              : filtroProv === "__none__"
+                ? "Sin proveedor"
+                : proveedores.find((p) => p.id === filtroProv)?.nombre ?? "Todos los proveedores"
+          }
+          placeholder="Buscar proveedor…"
+          items={[
+            { id: "", label: "Todos los proveedores" },
+            ...proveedores.map((p) => ({ id: p.id, label: p.nombre })),
+            { id: "__none__", label: "Sin proveedor" },
+          ]}
+          onPick={(id) => setFiltroProv(id)}
+        />
         <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
           <IconPlus className="h-4 w-4" /> Nuevo artículo
         </button>
@@ -172,6 +178,7 @@ function ArticulosTab({
                         </button>
                         <button
                           onClick={async () => {
+                            if (!(await confirmar({ titulo: "Eliminar artículo", mensaje: `Se eliminará "${a.nombre}" del banco de precios.` }))) return;
                             await catalogoApi.eliminarArticulo(a.id);
                             onCambio();
                           }}
@@ -304,18 +311,16 @@ function ArticuloForm({
           </div>
           <div>
             <label className="label">Proveedor</label>
-            <select
-              className="field mt-1.5"
-              value={proveedorId}
-              onChange={(e) => setProveedorId(e.target.value)}
-            >
-              <option value="">—</option>
-              {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field mt-1.5 flex w-full items-center justify-between text-left"
+              label={proveedores.find((p) => p.id === proveedorId)?.nombre ?? "—"}
+              placeholder="Buscar proveedor…"
+              items={[
+                { id: "", label: "—" },
+                ...proveedores.map((p) => ({ id: p.id, label: p.nombre })),
+              ]}
+              onPick={(id) => setProveedorId(id)}
+            />
           </div>
         </div>
         <div>
@@ -405,6 +410,7 @@ function RecetasTab({
                   </button>
                   <button
                     onClick={async () => {
+                      if (!(await confirmar({ titulo: "Eliminar pack", mensaje: `Se eliminará el pack "${p.nombre}".` }))) return;
                       await catalogoApi.eliminarPartida(p.id);
                       onCambio();
                     }}
@@ -529,14 +535,19 @@ function RecetaForm({
         <div className="rounded-xl border border-slate-200 p-3">
           <label className="label">Componentes</label>
           <div className="mt-2 flex gap-2">
-            <select className="field flex-1" value={addId} onChange={(e) => setAddId(e.target.value)}>
-              <option value="">— Añadir artículo —</option>
-              {articulos.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.nombre} ({formatEuro(a.coste)}/{a.unidad})
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field flex flex-1 items-center justify-between text-left"
+              label={(() => {
+                const a = articulos.find((x) => x.id === addId);
+                return a ? `${a.nombre} (${formatEuro(a.coste)}/${a.unidad})` : "— Añadir artículo —";
+              })()}
+              placeholder="Buscar artículo…"
+              items={[
+                { id: "", label: "— Añadir artículo —" },
+                ...articulos.map((a) => ({ id: a.id, label: `${a.nombre} (${formatEuro(a.coste)}/${a.unidad})` })),
+              ]}
+              onPick={(id) => setAddId(id)}
+            />
             <button onClick={addComponente} className="btn-ghost px-3 py-2 text-sm">
               <IconPlus className="h-4 w-4" />
             </button>
@@ -636,6 +647,7 @@ function ProveedoresTab({
                   </button>
                   <button
                     onClick={async () => {
+                      if (!(await confirmar({ titulo: "Eliminar proveedor", mensaje: `Se eliminará "${p.nombre}".` }))) return;
                       await catalogoApi.eliminarProveedor(p.id);
                       onCambio();
                     }}

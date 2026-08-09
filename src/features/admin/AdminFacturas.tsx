@@ -4,6 +4,7 @@ import { clientesApi, obrasApi, facturasApi } from "@/services";
 import { ESTADOS_FACTURA, infoEstadoFactura } from "@/lib/finanzas";
 import { formatEuro, fechaCompleta } from "@/lib/format";
 import { Badge, Cargando } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { IconPlus, IconEdit, IconTrash, IconReceipt } from "@/components/icons";
 import FacturaForm from "./FacturaForm";
 import type { Cliente, EstadoFactura, Factura, Obra } from "@/lib/types";
@@ -59,6 +60,7 @@ export default function AdminFacturas() {
     cargar();
   }
   async function eliminar(f: Factura) {
+    if (!(await confirmar({ titulo: "Eliminar factura", mensaje: `Se eliminará la factura ${f.numero || ""}.`.trim() }))) return;
     await facturasApi.eliminarFactura(f.id);
     cargar();
   }
