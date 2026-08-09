@@ -19,12 +19,15 @@ export function Combobox({
   onPick,
   placeholder = "Buscar…",
   vacio = "Sin resultados.",
+  className,
 }: {
   label: string;
   items: OpcionCombo[];
   onPick: (id: string) => void;
   placeholder?: string;
   vacio?: string;
+  /** Clase del botón disparador (por defecto, estilo botón compacto). */
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -33,10 +36,13 @@ export function Combobox({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-forge-dark hover:border-forge-orange"
+          className={
+            className ??
+            "inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-forge-dark hover:border-forge-orange"
+          }
         >
-          {label}
-          <IconChevronDown className="h-4 w-4 text-slate-400" />
+          <span className="truncate">{label}</span>
+          <IconChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
         </button>
       </Popover.Trigger>
       <Popover.Portal>

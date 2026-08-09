@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as RadixTooltip from "@radix-ui/react-tooltip";
 import { iniciales } from "@/lib/format";
 import type { EstadoObra } from "@/lib/types";
 import { IconX } from "./icons";
@@ -162,7 +164,7 @@ export function EmptyState({
   );
 }
 
-// ── Modal ──
+// ── Modal (Radix Dialog: foco atrapado, Escape para cerrar, aria) ──
 export function Modal({
   open,
   onClose,
@@ -176,20 +178,45 @@ export function Modal({
   children: ReactNode;
   maxWidth?: string;
 }) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-      <div
-        className={`card w-full ${maxWidth} max-h-[92vh] overflow-y-auto rounded-b-none rounded-t-2xl sm:rounded-2xl`}
-      >
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
-          <h3 className="text-lg font-bold text-forge-dark">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
-            <IconX className="h-5 w-5" />
-          </button>
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+          <Dialog.Content
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            className={`card w-full ${maxWidth} max-h-[92vh] overflow-y-auto rounded-b-none rounded-t-2xl focus:outline-none sm:rounded-2xl`}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+              <Dialog.Title className="text-lg font-bold text-forge-dark">{title}</Dialog.Title>
+              <Dialog.Close className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+                <IconX className="h-5 w-5" />
+              </Dialog.Close>
+            </div>
+            <div className="p-5">{children}</div>
+          </Dialog.Content>
         </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+// ── Tooltip (Radix): etiqueta accesible para botones de solo icono ──
+export function Tooltip({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <RadixTooltip.Provider delayDuration={200}>
+      <RadixTooltip.Root>
+        <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
+        <RadixTooltip.Portal>
+          <RadixTooltip.Content
+            sideOffset={6}
+            className="z-[1400] rounded-lg bg-forge-dark px-2.5 py-1.5 text-xs font-medium text-white shadow-card"
+          >
+            {label}
+            <RadixTooltip.Arrow className="fill-forge-dark" />
+          </RadixTooltip.Content>
+        </RadixTooltip.Portal>
+      </RadixTooltip.Root>
+    </RadixTooltip.Provider>
   );
 }

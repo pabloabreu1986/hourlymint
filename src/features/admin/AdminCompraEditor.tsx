@@ -6,7 +6,8 @@ import { margenDefecto } from "./AdminPresupuestos";
 import { formatEuro } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { toast } from "sonner";
-import { Cargando, Spinner } from "@/components/ui";
+import { Cargando, Spinner, Tooltip } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import {
   IconChevronLeft,
   IconPlus,
@@ -482,43 +483,47 @@ export default function AdminCompraEditor() {
                       </td>
                       <td className="px-1 py-1">
                         <div className="flex items-center gap-1.5">
-                          <select
-                            className="field w-full px-2 py-1.5"
-                            value={l.articuloId ?? ""}
-                            disabled={bloqueada}
-                            onChange={(e) => updateLinea(l.id, { articuloId: e.target.value || null })}
-                          >
-                            <option value="">— Sin mapear —</option>
-                            {articulos.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.nombre}
-                              </option>
-                            ))}
-                          </select>
+                          {bloqueada ? (
+                            <span className="w-full truncate rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-500">
+                              {art?.nombre ?? "— Sin mapear —"}
+                            </span>
+                          ) : (
+                            <Combobox
+                              className="flex w-full items-center justify-between gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-left text-sm text-forge-dark hover:border-forge-orange"
+                              label={art?.nombre ?? "— Sin mapear —"}
+                              placeholder="Buscar artículo…"
+                              items={[
+                                { id: "", label: "— Sin mapear —" },
+                                ...articulos.map((a) => ({ id: a.id, label: a.nombre })),
+                              ]}
+                              onPick={(id) => updateLinea(l.id, { articuloId: id || null })}
+                            />
+                          )}
                           {!bloqueada &&
                             (art == null ? (
-                              <button
-                                onClick={() => sincronizarBanco(l)}
-                                title="Añadir al banco de precios"
-                                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-forge-orange hover:bg-orange-50"
-                              >
-                                <IconPlus className="h-4 w-4" />
-                              </button>
+                              <Tooltip label="Añadir al banco de precios">
+                                <button
+                                  onClick={() => sincronizarBanco(l)}
+                                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-forge-orange hover:bg-orange-50"
+                                >
+                                  <IconPlus className="h-4 w-4" />
+                                </button>
+                              </Tooltip>
                             ) : art.coste !== costeNeto(l) ? (
-                              <button
-                                onClick={() => sincronizarBanco(l)}
-                                title={`Actualizar precio en el banco: ${formatEuro(art.coste)} → ${formatEuro(costeNeto(l))}`}
-                                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-50"
-                              >
-                                <IconRefresh className="h-4 w-4" />
-                              </button>
+                              <Tooltip label={`Actualizar en el banco: ${formatEuro(art.coste)} → ${formatEuro(costeNeto(l))}`}>
+                                <button
+                                  onClick={() => sincronizarBanco(l)}
+                                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-50"
+                                >
+                                  <IconRefresh className="h-4 w-4" />
+                                </button>
+                              </Tooltip>
                             ) : (
-                              <span
-                                title="Ya está en el banco al mismo precio"
-                                className="grid h-8 w-8 shrink-0 place-items-center text-green-500"
-                              >
-                                <IconCheck className="h-4 w-4" />
-                              </span>
+                              <Tooltip label="Ya está en el banco al mismo precio">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center text-green-500">
+                                  <IconCheck className="h-4 w-4" />
+                                </span>
+                              </Tooltip>
                             ))}
                         </div>
                       </td>
