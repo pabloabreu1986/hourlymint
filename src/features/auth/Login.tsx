@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
+import { tenantActual } from "@/lib/branding";
 
 // Login de cliente (se muestra en su subdominio: nombreempresa.fichaloop.com),
 // pintado con la marca del tenant activo.
@@ -12,8 +13,10 @@ export default function Login() {
 
       {/* Logo */}
       <div className="relative z-10 flex flex-col items-center justify-center">
-        <Logo variant="light" className="scale-125" />
-        <h1 className="mt-10 text-lg font-semibold text-white/90">Iniciar sesión</h1>
+        <Logo variant="light" showText={false} markClassName="h-24 w-24" />
+        <h1 className="mt-8 text-center text-lg font-semibold text-white/90">
+          Inicia tu sesión en {tenantActual().nombreCorto}
+        </h1>
       </div>
 
       {/* Formulario */}

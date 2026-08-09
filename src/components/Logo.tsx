@@ -7,6 +7,8 @@ interface LogoProps {
   variant?: "dark" | "light";
   showText?: boolean;
   className?: string;
+  /** Tamaño del logotipo/imagen (por defecto h-9 w-9). */
+  markClassName?: string;
 }
 
 export function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
@@ -20,16 +22,16 @@ export function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
   );
 }
 
-export function Logo({ variant = "dark", showText = true, className = "" }: LogoProps) {
+export function Logo({ variant = "dark", showText = true, className = "", markClassName = "h-9 w-9" }: LogoProps) {
   const textColor = variant === "light" ? "text-white" : "text-forge-dark";
   const t = tenantActual();
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       {t.logoUrl ? (
-        <img src={t.logoUrl} alt={t.nombreCorto} className="h-9 w-9 object-contain" />
+        <img src={t.logoUrl} alt={t.nombreCorto} className={`${markClassName} object-contain`} />
       ) : (
         <span className={textColor}>
-          <LogoMark className="h-9 w-9" />
+          <LogoMark className={markClassName} />
         </span>
       )}
       {showText && (

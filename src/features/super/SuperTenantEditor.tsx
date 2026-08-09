@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { tenantApi, usuariosApi, plataformaApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
 import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
+import { slugify } from "@/lib/tenant-default";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
 import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
@@ -34,6 +35,7 @@ export default function SuperTenantEditor() {
   const [borrarOpen, setBorrarOpen] = useState(false);
   const [confirmNombre, setConfirmNombre] = useState("");
   const [borrando, setBorrando] = useState(false);
+  const [slugsOcupados, setSlugsOcupados] = useState<string[]>([]);
 
   async function eliminarCliente() {
     if (!t || confirmNombre.trim() !== t.nombreCorto) return;
@@ -63,11 +65,17 @@ export default function SuperTenantEditor() {
       if (res) setT(res);
       else setNoEncontrado(true);
     });
+    // Slugs de las demás empresas, para evitar enlaces duplicados.
+    tenantApi.listTenants().then((ts) =>
+      setSlugsOcupados(ts.filter((x) => x.id !== id).map((x) => x.slug))
+    );
   }, [id]);
 
   if (noEncontrado)
     return <EmptyState titulo="Cliente no encontrado" texto="Vuelve a la lista de clientes." />;
   if (!t) return <Cargando />;
+
+  const slugDuplicado = !!slugify(t.slug) && slugsOcupados.includes(slugify(t.slug));
 
   const set = <K extends keyof Tenant>(k: K, v: Tenant[K]) => {
     setGuardado(false);
@@ -90,12 +98,23 @@ export default function SuperTenantEditor() {
 
   async function guardar() {
     if (!t) return;
+    const slug = slugify(t.slug);
+    if (!slug) {
+      alert("El enlace (subdominio) no puede estar vacío.");
+      return;
+    }
+    if (slugsOcupados.includes(slug)) {
+      alert("Ese enlace ya lo usa otra empresa. Elige otro antes de guardar.");
+      return;
+    }
+    const limpio = slug !== t.slug ? { ...t, slug } : t;
     setGuardando(true);
     try {
-      await tenantApi.guardarTenant(t);
+      await tenantApi.guardarTenant(limpio);
+      if (limpio !== t) setT(limpio);
       // Actualiza caché local + re-aplica el tema si es el tenant activo
       // (p. ej. FORGEVIA en local se repinta al instante).
-      fijarTenant(t);
+      fijarTenant(limpio);
       setGuardado(true);
     } finally {
       setGuardando(false);
@@ -293,11 +312,30 @@ export default function SuperTenantEditor() {
 
       {/* Dominio */}
       <Seccion titulo="Dominio">
+        <Campo label="Enlace (subdominio)">
+          <div className="flex items-center gap-2">
+            <input
+              className={inputCls}
+              value={t.slug}
+              onChange={(e) => set("slug", e.target.value)}
+              onBlur={() => set("slug", slugify(t.slug))}
+              placeholder="miempresa"
+            />
+            <span className="whitespace-nowrap font-mono text-sm text-slate-500">.fichaloop.com</span>
+          </div>
+        </Campo>
+        {!slugify(t.slug) && (
+          <p className="text-sm text-red-600">El enlace no puede estar vacío.</p>
+        )}
+        {slugDuplicado && (
+          <p className="text-sm text-red-600">Ese enlace ya lo usa otra empresa. Elige otro.</p>
+        )}
         <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-          <span className="font-mono text-sm text-slate-700">{t.slug}.fichaloop.com</span>
+          <span className="font-mono text-sm text-slate-700">{slugify(t.slug) || "…"}.fichaloop.com</span>
           <button
             onClick={publicarSubdominio}
-            disabled={publicando}
+            disabled={publicando || !slugify(t.slug) || slugDuplicado || !guardado}
+            title={!guardado ? "Guarda los cambios antes de publicar" : undefined}
             className="flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60"
           >
             {publicando ? <Spinner className="h-4 w-4" /> : null}
@@ -308,8 +346,9 @@ export default function SuperTenantEditor() {
           <p className={`text-sm ${pubMsg.ok ? "text-green-600" : "text-red-600"}`}>{pubMsg.texto}</p>
         )}
         <p className="text-xs text-slate-400">
-          Publica el subdominio del cliente en Vercel automáticamente. El DNS comodín ya enruta
-          todos los subdominios; esto solo registra el dominio y emite su certificado.
+          Cambia el subdominio del cliente. Tras editarlo, pulsa <b>Guardar</b> arriba y luego
+          <b> Publicar en Vercel</b> para registrar el nuevo dominio y emitir su certificado. El
+          enlace anterior dejará de funcionar. El DNS comodín ya enruta todos los subdominios.
         </p>
       </Seccion>
 
