@@ -11,6 +11,7 @@ import type {
   Usuario,
 } from "@/lib/types";
 import { Avatar, Badge, Cargando, EmptyState, Modal, ProgressBar, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { confirmar } from "@/components/confirm";
 import { fechaCompleta } from "@/lib/format";
 import {
@@ -167,14 +168,16 @@ function Evaluaciones() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Trabajador</label>
-              <select className="field mt-1.5" value={trabajadorId} onChange={(e) => setTrabajadorId(e.target.value)}>
-                <option value="">Elegir…</option>
-                {trabajadores.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                className="field mt-1.5 flex w-full items-center justify-between text-left"
+                label={trabajadores.find((t) => t.id === trabajadorId)?.nombre ?? "Elegir…"}
+                placeholder="Buscar trabajador…"
+                items={[
+                  { id: "", label: "Elegir…" },
+                  ...trabajadores.map((t) => ({ id: t.id, label: t.nombre })),
+                ]}
+                onPick={(id) => setTrabajadorId(id)}
+              />
             </div>
             <div>
               <label className="label">Periodo</label>
@@ -380,14 +383,16 @@ function Metas() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Asignada a</label>
-              <select className="field mt-1.5" value={trabajadorId} onChange={(e) => setTrabajadorId(e.target.value)}>
-                <option value="">Empresa (todos)</option>
-                {trabajadores.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                className="field mt-1.5 flex w-full items-center justify-between text-left"
+                label={trabajadores.find((t) => t.id === trabajadorId)?.nombre ?? "Empresa (todos)"}
+                placeholder="Buscar trabajador…"
+                items={[
+                  { id: "", label: "Empresa (todos)" },
+                  ...trabajadores.map((t) => ({ id: t.id, label: t.nombre })),
+                ]}
+                onPick={(id) => setTrabajadorId(id)}
+              />
             </div>
             <div>
               <label className="label">Fecha objetivo</label>
@@ -532,14 +537,16 @@ function Onboarding() {
         <div className="space-y-4">
           <div>
             <label className="label">Empleado</label>
-            <select className="field mt-1.5" value={usuarioId} onChange={(e) => setUsuarioId(e.target.value)}>
-              <option value="">Elegir…</option>
-              {trabajadores.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className="field mt-1.5 flex w-full items-center justify-between text-left"
+              label={trabajadores.find((t) => t.id === usuarioId)?.nombre ?? "Elegir…"}
+              placeholder="Buscar empleado…"
+              items={[
+                { id: "", label: "Elegir…" },
+                ...trabajadores.map((t) => ({ id: t.id, label: t.nombre })),
+              ]}
+              onPick={(id) => setUsuarioId(id)}
+            />
           </div>
           <div>
             <label className="label">Tipo de proceso</label>
