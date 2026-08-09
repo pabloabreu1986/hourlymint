@@ -4,6 +4,7 @@ import { tenantApi, usuariosApi, plataformaApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
 import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
 import { slugify } from "@/lib/tenant-default";
+import { generarUsuario } from "@/lib/usuario-handle";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
 import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
@@ -476,6 +477,11 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
+  const usuarioLogin = generarUsuario(
+    nombre,
+    (usuarios ?? []).map((u) => u.usuario || u.nombre)
+  );
+
   async function crear() {
     if (!nombre.trim() || !password.trim()) {
       setError("El nombre y la contraseña son obligatorios.");
@@ -486,6 +492,7 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
     try {
       await usuariosApi.crearUsuarioParaTenant(tenantId, {
         nombre: nombre.trim(),
+        usuario: usuarioLogin,
         password: password.trim(),
         rol,
         puesto: puesto.trim() || undefined,
@@ -547,8 +554,13 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
       )}
 
       <div className="grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2">
-        <Campo label="Nombre de usuario">
-          <input className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre y apellido" />
+        <Campo label="Nombre completo">
+          <input className={inputCls} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="p. ej. Pablo Luis Abreu" />
+          {nombre.trim() && (
+            <p className="mt-1 text-xs text-slate-500">
+              Usuario para entrar: <span className="font-mono font-semibold text-slate-700">{usuarioLogin}</span>
+            </p>
+          )}
         </Campo>
         <Campo label="Contraseña">
           <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" />

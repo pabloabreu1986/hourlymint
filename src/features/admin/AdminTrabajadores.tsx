@@ -3,6 +3,7 @@ import { usuariosApi, dashboardApi } from "@/services";
 import { useAuth } from "@/context/AuthContext";
 import { tenantActual } from "@/lib/branding";
 import { modulosAsignables } from "@/lib/funciones";
+import { generarUsuario } from "@/lib/usuario-handle";
 import type { Rol, Usuario, Fichaje } from "@/lib/types";
 import {
   calcularJornada,
@@ -243,6 +244,7 @@ export default function AdminTrabajadores() {
       {(nuevo || editar) && (
         <UsuarioForm
           usuario={editar}
+          usuarios={usuarios ?? []}
           onClose={() => {
             setNuevo(false);
             setEditar(null);
@@ -372,10 +374,12 @@ function TrabajadorCard({
 
 function UsuarioForm({
   usuario,
+  usuarios,
   onClose,
   onSaved,
 }: {
   usuario: Usuario | null;
+  usuarios: Usuario[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -406,6 +410,13 @@ function UsuarioForm({
   const [verPass, setVerPass] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Usuario corto de login: si ya existe (edición) se mantiene; si no, se
+  // genera del nombre evitando los que ya usa la empresa (handle o nombre).
+  const handlesEnUso = usuarios
+    .filter((u) => u.id !== usuario?.id)
+    .map((u) => u.usuario || u.nombre);
+  const usuarioLogin = usuario?.usuario || generarUsuario(d.nombre, handlesEnUso);
+
   function toggleModulo(clave: string) {
     setD((prev) => ({
       ...prev,
@@ -416,7 +427,7 @@ function UsuarioForm({
   }
 
   async function guardar() {
-    if (!d.nombre.trim()) return setError("El nombre de usuario es obligatorio.");
+    if (!d.nombre.trim()) return setError("El nombre completo es obligatorio.");
     if (!d.password.trim()) return setError("La contraseña es obligatoria.");
     setGuardando(true);
     try {
@@ -424,6 +435,7 @@ function UsuarioForm({
       // el resto de roles no se toca `modulos` (directivos ven todo).
       const base = {
         nombre: d.nombre,
+        usuario: usuarioLogin,
         password: d.password,
         puesto: d.puesto,
         telefono: d.telefono,
@@ -449,14 +461,28 @@ function UsuarioForm({
     <Modal open onClose={onClose} title={usuario ? "Editar usuario" : "Nuevo usuario"}>
       <div className="space-y-4">
         <div>
-          <label className="label">Nombre de usuario</label>
+          <label className="label">Nombre completo</label>
           <input
             className="field mt-1.5"
-            placeholder="p.ej. Juan Pérez"
+            placeholder="p.ej. Pablo Luis Abreu"
             value={d.nombre}
             onChange={(e) => setD({ ...d, nombre: e.target.value })}
           />
-          <p className="mt-1 text-xs text-slate-400">Es el nombre con el que inicia sesión.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Nombre legal completo (aparece en vacaciones, partes de obra, etc.).
+          </p>
+        </div>
+        <div>
+          <label className="label">Usuario (para entrar)</label>
+          <div className="mt-1.5 flex items-center gap-2 rounded-md border border-input bg-muted px-3 py-2 text-sm">
+            <span className="font-mono font-semibold text-foreground">{usuarioLogin || "—"}</span>
+            <span className="text-xs text-muted-foreground">
+              {usuario?.usuario ? "· fijo" : "· se genera del nombre"}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            Es el usuario corto con el que inicia sesión. También puede entrar con su nombre completo.
+          </p>
         </div>
         <div>
           <label className="label">Contraseña</label>

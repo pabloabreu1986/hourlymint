@@ -203,8 +203,12 @@ export interface Usuario {
   id: string;
   /** Cliente (tenant) al que pertenece. `_platform` = super-admin. */
   tenantId: string;
-  /** Nombre de usuario = nombre del trabajador (lo usa para iniciar sesión) */
+  /** Nombre completo (legal): se usa en documentos como solicitudes de
+   * vacaciones, partes/reportes de obra, etc. No es el login. */
   nombre: string;
+  /** Usuario corto de login, autogenerado del nombre (ver lib/usuario-handle).
+   * Único dentro de la empresa. Legacy sin valor → se entra por `nombre`. */
+  usuario?: string;
   /** Contraseña en claro. Mock: el admin la fija/edita a mano. */
   password: string;
   rol: Rol;

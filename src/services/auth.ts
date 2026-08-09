@@ -20,9 +20,13 @@ export async function login({ usuario, password }: Credenciales): Promise<Usuari
   // Solo usuarios que pueden acceder por este dominio (su tenant, o el
   // super-admin en el apex): así se busca al usuario correcto aunque dos
   // clientes tengan un trabajador con el mismo nombre.
-  const u = db.usuarios.find(
-    (x) => x.activo && usuarioPermitidoEnHost(x) && norm(x.nombre) === norm(usuario)
-  );
+  const q = norm(usuario);
+  const permitido = (x: (typeof db.usuarios)[number]) =>
+    x.activo && usuarioPermitidoEnHost(x);
+  // Preferimos el usuario corto (handle); si no, el nombre completo (legacy).
+  const u =
+    db.usuarios.find((x) => permitido(x) && x.usuario && norm(x.usuario) === q) ??
+    db.usuarios.find((x) => permitido(x) && norm(x.nombre) === q);
   if (!u || u.password !== password) {
     await delay(null, 250);
     throw new Error("Usuario o contraseña incorrectos");

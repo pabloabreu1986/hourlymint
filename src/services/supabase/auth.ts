@@ -12,10 +12,12 @@ export async function login({ usuario, password }: Credenciales): Promise<Usuari
   // Solo usuarios que pueden acceder por este dominio (su tenant, o el
   // super-admin en el apex). Evita el cruce entre clientes y desambigua
   // nombres repetidos entre distintos negocios.
-  const u = (data ?? [])
-    .map(toUsuario)
-    .filter(usuarioPermitidoEnHost)
-    .find((x) => norm(x.nombre) === norm(usuario));
+  const q = norm(usuario);
+  const permitidos = (data ?? []).map(toUsuario).filter(usuarioPermitidoEnHost);
+  // Preferimos el usuario corto (handle); si no, el nombre completo (legacy).
+  const u =
+    permitidos.find((x) => x.usuario && norm(x.usuario) === q) ??
+    permitidos.find((x) => norm(x.nombre) === q);
   if (!u || u.password !== password) throw new Error("Usuario o contraseña incorrectos");
   return u;
 }
