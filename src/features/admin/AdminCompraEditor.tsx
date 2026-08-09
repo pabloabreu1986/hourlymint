@@ -234,6 +234,9 @@ export default function AdminCompraEditor() {
   }
 
   const bloqueada = c.estado === "aprobada";
+  const proveedorLabel = proveedores.find((p) => p.id === c.proveedorId)?.nombre ?? "—";
+  const obraLabel = obras.find((o) => o.id === c.obraId)?.nombre ?? "—";
+  const comboFieldCls = "field mt-1.5 flex w-full items-center justify-between text-left";
 
   return (
     <div className="space-y-5 pb-16">
@@ -342,35 +345,37 @@ export default function AdminCompraEditor() {
         </div>
         <div>
           <label className="label">Proveedor</label>
-          <select
-            className="field mt-1.5"
-            value={c.proveedorId ?? ""}
-            disabled={bloqueada}
-            onChange={(e) => set({ proveedorId: e.target.value || null })}
-          >
-            <option value="">—</option>
-            {proveedores.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
+          {bloqueada ? (
+            <div className="field mt-1.5 text-slate-500">{proveedorLabel}</div>
+          ) : (
+            <Combobox
+              className={comboFieldCls}
+              label={proveedorLabel}
+              placeholder="Buscar proveedor…"
+              items={[
+                { id: "", label: "—" },
+                ...proveedores.map((p) => ({ id: p.id, label: p.nombre })),
+              ]}
+              onPick={(id) => set({ proveedorId: id || null })}
+            />
+          )}
         </div>
         <div>
           <label className="label">Obra (coste real)</label>
-          <select
-            className="field mt-1.5"
-            value={c.obraId ?? ""}
-            disabled={bloqueada}
-            onChange={(e) => set({ obraId: e.target.value || null })}
-          >
-            <option value="">—</option>
-            {obras.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.nombre}
-              </option>
-            ))}
-          </select>
+          {bloqueada ? (
+            <div className="field mt-1.5 text-slate-500">{obraLabel}</div>
+          ) : (
+            <Combobox
+              className={comboFieldCls}
+              label={obraLabel}
+              placeholder="Buscar obra…"
+              items={[
+                { id: "", label: "—" },
+                ...obras.map((o) => ({ id: o.id, label: o.nombre })),
+              ]}
+              onPick={(id) => set({ obraId: id || null })}
+            />
+          )}
         </div>
       </div>
 

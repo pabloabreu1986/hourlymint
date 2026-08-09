@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { documentosApi, usuariosApi } from "@/services";
 import type { CategoriaDocumento, Documento, Usuario } from "@/lib/types";
 import { Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { fechaCompleta } from "@/lib/format";
 import { errorDeTamano } from "@/lib/files";
 import { IconDownload, IconFolder, IconPlus, IconTrash } from "@/components/icons";
@@ -108,7 +109,7 @@ export default function AdminDocumentos() {
   }
 
   async function eliminar(d: Documento) {
-    if (!window.confirm(`¿Eliminar "${d.nombre}"?`)) return;
+    if (!(await confirmar({ titulo: "Eliminar documento", mensaje: `Se eliminará "${d.nombre}". Esta acción no se puede deshacer.` }))) return;
     await documentosApi.eliminarDocumento(d.id);
     cargar();
   }

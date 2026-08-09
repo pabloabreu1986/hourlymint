@@ -7,6 +7,7 @@ import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
 import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
 import { Cargando, EmptyState, Spinner, Avatar, Modal } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { IconChevronLeft, IconCheck, IconTrash, IconCamera, IconPlus } from "@/components/icons";
 import EditorWeb from "./EditorWeb";
 
@@ -463,7 +464,7 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
   }
 
   async function eliminar(u: Usuario) {
-    if (!window.confirm(`¿Eliminar a ${u.nombre}?`)) return;
+    if (!(await confirmar({ titulo: "Eliminar usuario", mensaje: `Se eliminará a ${u.nombre}. Esta acción no se puede deshacer.` }))) return;
     await usuariosApi.eliminarUsuario(u.id);
     await cargar();
   }

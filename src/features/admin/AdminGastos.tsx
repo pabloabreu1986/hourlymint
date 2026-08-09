@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { gastosApi, obrasApi, usuariosApi, clientesApi } from "@/services";
 import type { CategoriaGasto, Cliente, EstadoGasto, Gasto, Obra, Usuario } from "@/lib/types";
 import { Avatar, Badge, Cargando, EmptyState, Modal } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import { fechaCompleta } from "@/lib/format";
 import { IconEuro } from "@/components/icons";
 
@@ -109,6 +110,12 @@ export default function AdminGastos() {
           {visibles.map((g) => {
             const u = usuarioDe(g.trabajadorId);
             const badge = ESTADOS.find((e) => e.value === g.estado)!;
+            const cliSel = clientes.find((x) => x.id === g.clienteId);
+            const cliLabel = cliSel
+              ? `${cliSel.nombre} ${cliSel.apellidos}`.trim()
+              : clienteDeGasto(g)
+                ? "Cliente (de la obra)"
+                : "Sin cliente";
             return (
               <div key={g.id} className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
                 <Avatar nombre={u?.nombre ?? "?"} color={u?.color} size={44} />
@@ -148,23 +155,16 @@ export default function AdminGastos() {
                       </option>
                     ))}
                   </select>
-                  <select
-                    value={g.clienteId ?? ""}
-                    onChange={(e) => asignarCliente(g.id, e.target.value)}
-                    className="field text-sm"
-                    title="Imputar a un cliente"
-                  >
-                    <option value="">
-                      {clienteDeGasto(g) && !g.clienteId
-                        ? `Cliente (de la obra)`
-                        : "Sin cliente"}
-                    </option>
-                    {clientes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre} {c.apellidos}
-                      </option>
-                    ))}
-                  </select>
+                  <Combobox
+                    className="field flex w-full items-center justify-between text-left text-sm"
+                    label={cliLabel}
+                    placeholder="Buscar cliente…"
+                    items={[
+                      { id: "", label: "Sin cliente" },
+                      ...clientes.map((c) => ({ id: c.id, label: `${c.nombre} ${c.apellidos}`.trim() })),
+                    ]}
+                    onPick={(id) => asignarCliente(g.id, id)}
+                  />
                 </div>
               </div>
             );

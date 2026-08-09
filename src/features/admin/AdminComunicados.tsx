@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { comunicadosApi, notificacionesApi } from "@/services";
 import type { Comunicado } from "@/lib/types";
 import { Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { fechaHora } from "@/lib/format";
 import { IconMegaphone, IconPlus, IconTrash } from "@/components/icons";
 
@@ -57,7 +58,7 @@ export default function AdminComunicados() {
   }
 
   async function eliminar(c: Comunicado) {
-    if (!window.confirm(`¿Eliminar el comunicado "${c.titulo}"?`)) return;
+    if (!(await confirmar({ titulo: "Eliminar comunicado", mensaje: `Se eliminará "${c.titulo}". Esta acción no se puede deshacer.` }))) return;
     await comunicadosApi.eliminarComunicado(c.id);
     cargar();
   }

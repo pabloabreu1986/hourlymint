@@ -18,6 +18,7 @@ import {
 } from "@/lib/presupuestos-calc";
 import { formatEuro } from "@/lib/format";
 import { Cargando } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { Combobox } from "@/components/Combobox";
 import { toast } from "sonner";
 import {
@@ -111,7 +112,12 @@ export default function AdminPresupuestoEditor() {
   async function convertirEnFactura() {
     if (!p || !p.clienteId) return;
     const t = totalesPresupuesto(p);
-    if (!window.confirm(`Crear una factura de ${formatEuro(totalFactura(t.pvp, 21))} (IVA 21%) para este cliente y marcar el presupuesto como aceptado?`))
+    if (!(await confirmar({
+      titulo: "Convertir en factura",
+      mensaje: `Se creará una factura de ${formatEuro(totalFactura(t.pvp, 21))} (IVA 21%) para este cliente y el presupuesto quedará como aceptado.`,
+      confirmar: "Crear factura",
+      peligro: false,
+    })))
       return;
     await guardar();
     await facturasApi.crearFactura({
@@ -149,6 +155,12 @@ export default function AdminPresupuestoEditor() {
 
   const obrasCliente = obras.filter((o) => o.clienteId === p.clienteId);
   const tot = totalesPresupuesto(p);
+
+  const clienteSel = clientes.find((c) => c.id === p.clienteId);
+  const clienteLabel = clienteSel ? `${clienteSel.nombre} ${clienteSel.apellidos}`.trim() : "— Sin asignar —";
+  const obraSel = obras.find((o) => o.id === p.obraId);
+  const obraLabel = obraSel ? obraSel.nombre : "— General —";
+  const comboFieldCls = "field mt-1.5 flex w-full items-center justify-between text-left";
 
   // ── Añadir líneas ──
   function addArticulo(art: Articulo) {
@@ -270,33 +282,29 @@ export default function AdminPresupuestoEditor() {
         </div>
         <div>
           <label className="label">Cliente</label>
-          <select
-            className="field mt-1.5"
-            value={p.clienteId ?? ""}
-            onChange={(e) => set({ clienteId: e.target.value || null, obraId: null })}
-          >
-            <option value="">— Sin asignar —</option>
-            {clientes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre} {c.apellidos}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            className={comboFieldCls}
+            label={clienteLabel}
+            placeholder="Buscar cliente…"
+            items={[
+              { id: "", label: "— Sin asignar —" },
+              ...clientes.map((c) => ({ id: c.id, label: `${c.nombre} ${c.apellidos}`.trim() })),
+            ]}
+            onPick={(id) => set({ clienteId: id || null, obraId: null })}
+          />
         </div>
         <div>
           <label className="label">Obra</label>
-          <select
-            className="field mt-1.5"
-            value={p.obraId ?? ""}
-            onChange={(e) => set({ obraId: e.target.value || null })}
-          >
-            <option value="">— General —</option>
-            {obrasCliente.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.nombre}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            className={comboFieldCls}
+            label={obraLabel}
+            placeholder="Buscar obra…"
+            items={[
+              { id: "", label: "— General —" },
+              ...obrasCliente.map((o) => ({ id: o.id, label: o.nombre })),
+            ]}
+            onPick={(id) => set({ obraId: id || null })}
+          />
         </div>
         <div>
           <label className="label">Margen por defecto (%)</label>

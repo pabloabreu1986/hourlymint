@@ -4,6 +4,7 @@ import { ESTADOS_FACTURA, totalFactura } from "@/lib/finanzas";
 import { formatEuro } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { Modal, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/Combobox";
 import type { Cliente, EstadoFactura, Factura, Obra } from "@/lib/types";
 
 type Draft = {
@@ -63,6 +64,11 @@ export default function FacturaForm({
     [obras, d.clienteId]
   );
 
+  const clienteSel = clientes.find((c) => c.id === d.clienteId);
+  const clienteLabel = clienteSel ? `${clienteSel.nombre} ${clienteSel.apellidos}`.trim() : "— Selecciona —";
+  const obraLabel = obrasCliente.find((o) => o.id === d.obraId)?.nombre ?? "— General del cliente —";
+  const comboFieldCls = "field mt-1.5 flex w-full items-center justify-between text-left";
+
   async function guardar() {
     if (!d.clienteId) return setError("Selecciona un cliente.");
     if (!d.numero.trim()) return setError("El número de factura es obligatorio.");
@@ -104,34 +110,33 @@ export default function FacturaForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Cliente</label>
-            <select
-              className="field mt-1.5 disabled:opacity-60"
-              value={d.clienteId}
-              disabled={!!clienteIdFijo}
-              onChange={(e) => setD({ ...d, clienteId: e.target.value, obraId: "" })}
-            >
-              <option value="">— Selecciona —</option>
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre} {c.apellidos}
-                </option>
-              ))}
-            </select>
+            {clienteIdFijo ? (
+              <div className="field mt-1.5 opacity-60">{clienteLabel}</div>
+            ) : (
+              <Combobox
+                className={comboFieldCls}
+                label={clienteLabel}
+                placeholder="Buscar cliente…"
+                items={[
+                  { id: "", label: "— Selecciona —" },
+                  ...clientes.map((c) => ({ id: c.id, label: `${c.nombre} ${c.apellidos}`.trim() })),
+                ]}
+                onPick={(id) => setD({ ...d, clienteId: id, obraId: "" })}
+              />
+            )}
           </div>
           <div>
             <label className="label">Obra (opcional)</label>
-            <select
-              className="field mt-1.5"
-              value={d.obraId}
-              onChange={(e) => setD({ ...d, obraId: e.target.value })}
-            >
-              <option value="">— General del cliente —</option>
-              {obrasCliente.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nombre}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              className={comboFieldCls}
+              label={obraLabel}
+              placeholder="Buscar obra…"
+              items={[
+                { id: "", label: "— General del cliente —" },
+                ...obrasCliente.map((o) => ({ id: o.id, label: o.nombre })),
+              ]}
+              onPick={(id) => setD({ ...d, obraId: id })}
+            />
           </div>
         </div>
 

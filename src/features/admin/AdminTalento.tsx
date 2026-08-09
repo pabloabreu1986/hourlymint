@@ -11,6 +11,7 @@ import type {
   Usuario,
 } from "@/lib/types";
 import { Avatar, Badge, Cargando, EmptyState, Modal, ProgressBar, Spinner } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { fechaCompleta } from "@/lib/format";
 import {
   IconCheckSquare,
@@ -295,7 +296,7 @@ function Metas() {
   }
 
   async function eliminar(m: Meta) {
-    if (!window.confirm(`¿Eliminar la meta "${m.titulo}"?`)) return;
+    if (!(await confirmar({ titulo: "Eliminar meta", mensaje: `Se eliminará la meta "${m.titulo}".` }))) return;
     await talentoApi.eliminarMeta(m.id);
     cargar();
   }
@@ -454,7 +455,7 @@ function Onboarding() {
 
   async function eliminar(p: ProcesoOnboarding) {
     const nombre = usuarioDe(p.usuarioId)?.nombre ?? "";
-    if (!window.confirm(`¿Eliminar el proceso de ${nombre}?`)) return;
+    if (!(await confirmar({ titulo: "Eliminar onboarding", mensaje: `Se eliminará el proceso de ${nombre}.` }))) return;
     await talentoApi.eliminarOnboarding(p.id);
     cargar();
   }
