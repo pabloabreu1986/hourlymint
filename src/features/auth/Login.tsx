@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
+import { CreditoFichaloop } from "@/components/CreditoFichaloop";
 import { tenantActual } from "@/lib/branding";
 
 // Login de cliente (se muestra en su subdominio: nombreempresa.fichaloop.com),
@@ -22,6 +23,11 @@ export default function Login() {
       {/* Formulario */}
       <div className="relative z-10 mx-auto w-full max-w-sm">
         <LoginForm />
+      </div>
+
+      {/* Crédito de la plataforma */}
+      <div className="absolute inset-x-0 bottom-5 z-10 text-center">
+        <CreditoFichaloop className="text-xs text-white/40" />
       </div>
     </div>
   );

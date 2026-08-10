@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { LoginForm } from "@/components/LoginForm";
 import { KineticGridBackground } from "@/components/KineticGridBackground";
 import { Cargando, Modal, Spinner } from "@/components/ui";
+import { CreditoFichaloop } from "@/components/CreditoFichaloop";
 import { IconCheck, IconChevronDown } from "@/components/icons";
 
 /** Mensaje prefijado del CTA "Continuar por WhatsApp". */
@@ -84,22 +85,8 @@ export default function WebCliente() {
   );
 }
 
-/** Crédito común a todos los footers de la plataforma: cita a fichaloop
- *  (el producto) y a ENSODev (quien lo desarrolla). */
-export function CreditoENSODev({ className = "" }: { className?: string }) {
-  return (
-    <span className={className}>
-      Con la tecnología de{" "}
-      <a href="https://fichaloop.com" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70">
-        fichaloop
-      </a>{" "}
-      · un sistema de{" "}
-      <a href="https://ensodev.eu" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70">
-        ENSODev
-      </a>
-    </span>
-  );
-}
+/** Alias por compatibilidad; el crédito vive en components/CreditoFichaloop. */
+export const CreditoENSODev = CreditoFichaloop;
 
 /** Etiqueta pequeña sobre cada sección: "01 — Nuestras experiencias". */
 function Eyebrow({ n, texto, claro }: { n: number; texto: string; claro?: boolean }) {
