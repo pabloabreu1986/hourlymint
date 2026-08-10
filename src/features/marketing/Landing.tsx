@@ -30,6 +30,7 @@ import {
   IconSitemap,
   IconMegaphone,
   IconShield,
+  IconBriefcase,
 } from "@/components/icons";
 
 const NARANJA = "#E8721C";
@@ -351,6 +352,10 @@ function Dolores() {
 
 const FUNCIONES: Array<{ icon: (p: { className?: string }) => ReactNode; titulo: string; texto: string }> = [
   { icon: IconMapPin, titulo: "Fichaje con GPS", texto: "Entrada y salida con ubicación y hora. Retrasos y olvidos visibles al momento." },
+  { icon: IconClipboard, titulo: "Presupuestos rápidos", texto: "Arrastra artículos y packs, aplica tu margen y exporta el PDF con tu marca." },
+  { icon: IconBox, titulo: "Banco de precios", texto: "Materiales y mano de obra con coste por proveedor. Packs por gremio listos." },
+  { icon: IconReceipt, titulo: "Facturas de proveedor (IA)", texto: "Sube la factura y la IA extrae precios que alimentan tu banco automáticamente." },
+  { icon: IconBriefcase, titulo: "Clientes (CRM)", texto: "Ficha, obras, facturas y rentabilidad real por cliente y por obra." },
   { icon: IconClipboard, titulo: "Partes diarios", texto: "Trabajo, materiales e incidencias en un parte firmado por el encargado." },
   { icon: IconCamera, titulo: "Fotos de obra", texto: "El avance documentado y ordenado automáticamente por obra y día." },
   { icon: IconChart, titulo: "Horas e informes", texto: "Datos reales por trabajador y obra, listos para pagar y facturar." },
@@ -714,7 +719,8 @@ function Footer() {
         <div>
           <Marca />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-black/45">
-            Control de fichajes, obras y partes diarios — y la gestión completa de tu
+            Control de fichajes, obras y partes diarios; presupuestos rápidos con banco de
+            precios y lectura de facturas por IA; clientes (CRM) y la gestión completa de tu
             equipo: ausencias, turnos, gastos, nómina y talento.
           </p>
         </div>

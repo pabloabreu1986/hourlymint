@@ -11,19 +11,25 @@
     <meta name="apple-mobile-web-app-title" content="fichaloop" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <title>fichaloop · Control de obra y equipo</title>
+    <title>fichaloop · Control de obra, fichajes y presupuestos</title>
     <meta
       name="description"
-      content="Fichajes con GPS, partes diarios, fotos y horas reales. Y la gestión de tu equipo: ausencias, turnos, gastos y nómina. Todo en una sola app. Sin papeles."
+      content="Software para empresas de construcción y reformas: fichajes con GPS, partes de obra, fotos, presupuestos rápidos con banco de precios, lectura de facturas por IA, clientes (CRM) y RRHH (ausencias, turnos, gastos, nómina). Sin papeles. Un sistema de ENSODev."
     />
+    <meta
+      name="keywords"
+      content="control de obra, fichajes GPS, partes de obra, presupuestos de obra, banco de precios, software construcción, software reformas, CRM obra, gestión de equipos, RRHH construcción, fichaloop, ENSODev"
+    />
+    <meta name="author" content="ENSODev" />
+    <link rel="canonical" href="https://fichaloop.com/" />
 
     <!-- Open Graph (previsualización al compartir) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="fichaloop" />
-    <meta property="og:title" content="fichaloop · Control de obra y equipo" />
+    <meta property="og:title" content="fichaloop · Control de obra, fichajes y presupuestos" />
     <meta
       property="og:description"
-      content="Fichajes con GPS, partes diarios, fotos y horas reales. Y la gestión de tu equipo: ausencias, turnos, gastos y nómina. Todo en una sola app. Sin papeles."
+      content="Software para construcción y reformas: fichajes GPS, partes de obra, presupuestos rápidos con banco de precios, lectura de facturas por IA, CRM y RRHH. Sin papeles."
     />
     <meta property="og:url" content="https://fichaloop.com" />
     <meta property="og:image" content="https://www.fichaloop.com/og-fichaloop.png" />
@@ -40,6 +46,38 @@
       content="Fichajes, partes, ausencias, turnos, gastos y nómina. Sin papeles."
     />
     <meta name="twitter:image" content="https://www.fichaloop.com/og-fichaloop.png" />
+
+    <!-- Datos estructurados (SEO): producto fichaloop, creado por ENSODev -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://ensodev.eu/#organization",
+            "name": "ENSODev",
+            "url": "https://ensodev.eu",
+            "description": "Estudio de software que desarrolla fichaloop."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "fichaloop",
+            "url": "https://fichaloop.com",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web, iOS, Android",
+            "description": "Software para empresas de construcción y reformas: fichajes con GPS, partes de obra, presupuestos rápidos con banco de precios, lectura de facturas por IA, clientes (CRM) y RRHH.",
+            "inLanguage": "es",
+            "publisher": { "@id": "https://ensodev.eu/#organization" },
+            "author": { "@id": "https://ensodev.eu/#organization" },
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "EUR",
+              "category": "SaaS"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

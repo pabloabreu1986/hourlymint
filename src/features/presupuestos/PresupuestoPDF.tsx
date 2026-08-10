@@ -135,7 +135,7 @@ export default function PresupuestoPDF() {
         )}
 
         <p className="mt-8 text-center text-[10px] text-slate-300">
-          Presupuesto generado con fichaloop
+          Presupuesto generado con fichaloop · un sistema de ENSODev
         </p>
       </div>
     </div>

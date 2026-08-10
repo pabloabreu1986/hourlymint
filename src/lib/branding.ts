@@ -102,6 +102,21 @@ function canales(hex: string): string {
   return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
 }
 
+// Título fijado por la ruta actual (useTitulo). Tiene prioridad sobre el
+// título base, para que la hidratación async del tenant no lo pise.
+let tituloRuta: string | null = null;
+
+/** Título por defecto: plataforma en el apex, marca del cliente en su web. */
+function tituloBase(t: Tenant = tenantActual()): string {
+  return esApex() ? "fichaloop · Control de obra, fichajes y presupuestos" : t.nombre;
+}
+
+/** Fija (o limpia con null) el título de la ruta actual. Lo usa useTitulo. */
+export function fijarTituloRuta(titulo: string | null): void {
+  tituloRuta = titulo;
+  if (typeof document !== "undefined") document.title = titulo ?? tituloBase();
+}
+
 /** Inyecta la paleta del tenant como variables CSS en :root y ajusta
  * título y color de tema. Debe llamarse antes del primer render. */
 export function aplicarTema(t: Tenant = tenantActual()): void {
@@ -118,7 +133,7 @@ export function aplicarTema(t: Tenant = tenantActual()): void {
 
   // En el dominio raíz (marketing) el título es de la plataforma; en el
   // subdominio de un cliente, el de su marca.
-  document.title = esApex() ? "fichaloop · Control de obra y equipo" : t.nombre;
+  document.title = tituloRuta ?? tituloBase(t);
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", t.colores.dark);

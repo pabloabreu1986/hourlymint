@@ -84,17 +84,20 @@ export default function WebCliente() {
   );
 }
 
-/** Crédito común a todos los footers de la plataforma. */
+/** Crédito común a todos los footers de la plataforma: cita a fichaloop
+ *  (el producto) y a ENSODev (quien lo desarrolla). */
 export function CreditoENSODev({ className = "" }: { className?: string }) {
   return (
-    <a
-      href="https://ensodev.eu"
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`hover:opacity-70 ${className}`}
-    >
-      Desarrollado con <span aria-hidden="true">❤️</span> por ENSODev
-    </a>
+    <span className={className}>
+      Con la tecnología de{" "}
+      <a href="https://fichaloop.com" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70">
+        fichaloop
+      </a>{" "}
+      · un sistema de{" "}
+      <a href="https://ensodev.eu" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70">
+        ENSODev
+      </a>
+    </span>
   );
 }
 

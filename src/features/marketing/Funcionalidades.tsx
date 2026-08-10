@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTitulo } from "@/lib/useTitulo";
 import type { ReactNode } from "react";
 import logoLight from "@/assets/fichaloop_black.png";
 import {
@@ -31,6 +32,7 @@ import {
   IconEdit,
   IconUser,
   IconHome,
+  IconBriefcase,
 } from "@/components/icons";
 
 // Página "Funcionalidades": explica cada módulo de fichaloop, primero
@@ -74,6 +76,41 @@ const ADMIN: Grupo[] = [
         titulo: "Trabajadores",
         texto:
           "La plantilla completa con sus datos, credenciales de acceso y estado. Cada trabajador entra a la app con su usuario y solo ve lo suyo.",
+      },
+    ],
+  },
+  {
+    area: "Comercial y presupuestos",
+    funciones: [
+      {
+        icon: IconBriefcase,
+        titulo: "Clientes (CRM)",
+        texto:
+          "La ficha de cada cliente: contacto, sus obras, facturas, gastos y la rentabilidad (P&L) real por cliente y por obra. Con el origen de captación (redes, referencia, web…) para saber qué te funciona.",
+      },
+      {
+        icon: IconClipboard,
+        titulo: "Presupuestos rápidos",
+        texto:
+          "Monta un presupuesto en minutos: arrastra artículos y packs (baño, cocina, pladur, pintura…), aplica tu margen y expórtalo en PDF con tu marca y tus avisos. También reformas por m².",
+      },
+      {
+        icon: IconBox,
+        titulo: "Banco de precios",
+        texto:
+          "Tu catálogo de materiales y mano de obra con el coste por proveedor. Los packs por gremio agrupan lo típico de cada trabajo para presupuestar de un tirón.",
+      },
+      {
+        icon: IconReceipt,
+        titulo: "Facturas de proveedor (IA)",
+        texto:
+          "Sube la factura de Obramat, Leroy o quien sea y la IA extrae las líneas y precios. Al aprobarla, alimenta el banco de precios con su proveedor, automáticamente.",
+      },
+      {
+        icon: IconEuro,
+        titulo: "Facturas a cliente",
+        texto:
+          "Emite facturas por cliente y obra, con su estado de cobro (emitida, pagada, vencida) reflejado en la rentabilidad. Un presupuesto aceptado se convierte en factura en un clic.",
       },
     ],
   },
@@ -362,6 +399,7 @@ function Seccion({ n, titulo, sub, grupos }: { n: string; titulo: ReactNode; sub
 }
 
 export default function Funcionalidades() {
+  useTitulo("Funcionalidades · fichaloop — control de obra, presupuestos y RRHH");
   return (
     <div className="min-h-full bg-[#F5F3EE] text-[#101418] selection:bg-[#E8721C] selection:text-white">
       <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>

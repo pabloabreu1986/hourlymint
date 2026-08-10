@@ -1,0 +1,12 @@
+# fichaloop · un sistema de ENSODev (https://ensodev.eu)
+User-agent: *
+Allow: /$
+Allow: /funcionalidades
+Allow: /terminos
+# Zonas privadas de la app (tras login): no aportan al SEO.
+Disallow: /admin
+Disallow: /super
+Disallow: /inicio
+Disallow: /login
+
+Sitemap: https://fichaloop.com/sitemap.xml

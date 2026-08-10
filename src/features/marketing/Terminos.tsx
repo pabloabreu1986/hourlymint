@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTitulo } from "@/lib/useTitulo";
 import logoLight from "@/assets/fichaloop_black.png";
 
 // Términos y Condiciones de fichaloop. Documento MODELO orientado a una
@@ -27,6 +28,7 @@ function Li({ children }: { children: React.ReactNode }) {
 }
 
 export default function Terminos() {
+  useTitulo("Términos y condiciones · fichaloop");
   return (
     <div className="min-h-full bg-[#F5F3EE] text-[#101418]">
       <header className="border-b border-black/10 bg-[#F5F3EE]/90 backdrop-blur-xl">
@@ -89,8 +91,9 @@ export default function Terminos() {
         <P>
           fichaloop es una herramienta de software como servicio (SaaS) que permite a las empresas
           gestionar el registro de jornada y fichajes, partes de trabajo, documentación
-          fotográfica de obra, control de materiales, recursos e incidencias, así como el cómputo
-          de horas para su tratamiento en nómina. La Plataforma se ofrece como <em>medio o
+          fotográfica de obra, control de materiales, recursos e incidencias, el cómputo de horas
+          para su tratamiento en nómina, así como funcionalidades de presupuestos, banco de
+          precios, gestión de clientes (CRM) y facturación. La Plataforma se ofrece como <em>medio o
           instrumento</em> para que el Cliente cumpla sus obligaciones legales; fichaloop no presta
           servicios de asesoría laboral, fiscal ni jurídica.
         </P>
