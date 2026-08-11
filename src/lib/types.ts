@@ -325,6 +325,19 @@ export type CategoriaArticulo =
   | "subcontrata"
   | "otro";
 
+/** Precio de un proveedor concreto para un artículo (comparativa Obramat /
+ *  Leroy Merlin…). El coste del artículo se toma normalmente del más barato. */
+export interface PrecioProveedor {
+  /** Nombre del proveedor (texto libre): "Obramat", "Leroy Merlin"… */
+  proveedor: string;
+  /** Referencia/código del producto en ese proveedor. */
+  referencia: string;
+  /** PVP sin IVA (coste). */
+  precioSinIva: number | null;
+  /** PVP con IVA. */
+  precioConIva: number | null;
+}
+
 /** Artículo del banco de precios: un coste unitario conocido. */
 export interface Articulo {
   id: string;
@@ -335,12 +348,21 @@ export interface Articulo {
   /** Proveedor habitual; null = genérico. */
   proveedorId: string | null;
   categoria: CategoriaArticulo;
+  /** Familia/gremio del producto (Baños, Fontanería, Electricidad…). Viene de
+   *  la pestaña del Excel de materiales; libre. */
+  familia?: string;
   /** Unidad de medida: ud, m², ml, kg, h, saco… */
   unidad: string;
-  /** Coste unitario actual (se actualiza al aprobar compras). */
+  /** Coste unitario actual (se actualiza al aprobar compras). Normalmente el
+   *  precio sin IVA del proveedor más barato en `precios`. */
   coste: number;
+  /** Precios por proveedor (comparativa). El primero suele ser el más barato. */
+  precios?: PrecioProveedor[];
   /** Ficha técnica: fabricante, medidas, espesor, normas… (texto libre). */
   especificaciones?: string;
+  /** Foto del producto (URL de Storage o data URL en mock). Se pega desde la
+   *  web del proveedor, se sube o se pone por URL. */
+  imagen?: string | null;
   createdAt: string; // ISO
 }
 

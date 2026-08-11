@@ -98,7 +98,11 @@ function Tarjeta({ usuario, destacada }: { usuario: Usuario; destacada?: boolean
       <Avatar nombre={usuario.nombre} color={usuario.color} size={44} />
       <div>
         <p className="font-bold text-forge-dark">{usuario.nombre}</p>
-        <p className="text-xs text-slate-400">{usuario.puesto ?? "Administración"}</p>
+        <p className="text-xs text-slate-400">
+          {[usuario.rol === "directivo" ? "Directivo" : "Admin", usuario.puesto]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
       </div>
     </div>
   );

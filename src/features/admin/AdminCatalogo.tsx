@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { catalogoApi } from "@/services";
 import {
   CATEGORIAS_ARTICULO,
@@ -6,15 +6,19 @@ import {
   labelCategoria,
 } from "@/lib/presupuestos-calc";
 import { formatEuro } from "@/lib/format";
+import { errorDeTamano } from "@/lib/files";
+import { importarCatalogo, type ArticuloImportado } from "@/lib/importar-catalogo";
+import { toast } from "sonner";
 import { Badge, Cargando, Modal, Spinner } from "@/components/ui";
 import { confirmar } from "@/components/confirm";
 import { Combobox } from "@/components/Combobox";
-import { IconPlus, IconEdit, IconTrash } from "@/components/icons";
+import { IconPlus, IconEdit, IconTrash, IconCamera, IconBox, IconDownload } from "@/components/icons";
 import type {
   Articulo,
   CategoriaArticulo,
   ComponentePartida,
   Partida,
+  PrecioProveedor,
   Proveedor,
 } from "@/lib/types";
 
@@ -91,9 +95,40 @@ function ArticulosTab({
 }) {
   const [editar, setEditar] = useState<Articulo | null>(null);
   const [nuevo, setNuevo] = useState(false);
+  const [importar, setImportar] = useState(false);
+  const [exportando, setExportando] = useState(false);
   const [filtroProv, setFiltroProv] = useState<string>("");
   const provNombre = (id: string | null) =>
     id ? proveedores.find((p) => p.id === id)?.nombre ?? "—" : "—";
+
+  async function exportarExcel() {
+    setExportando(true);
+    try {
+      const XLSX: any = await import("xlsx");
+      const provNames = [...new Set(articulos.flatMap((a) => (a.precios ?? []).map((p) => p.proveedor)))];
+      const rows = articulos.map((a) => {
+        const base: Record<string, unknown> = {
+          Familia: a.familia ?? "",
+          Artículo: a.nombre,
+          Unidad: a.unidad,
+          "Coste (s/IVA)": a.coste,
+        };
+        for (const pn of provNames) {
+          const p = (a.precios ?? []).find((x) => x.proveedor === pn);
+          base[`${pn} Ref`] = p?.referencia ?? "";
+          base[`${pn} s/IVA`] = p?.precioSinIva ?? "";
+          base[`${pn} c/IVA`] = p?.precioConIva ?? "";
+        }
+        return base;
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Productos");
+      XLSX.writeFile(wb, "catalogo-productos.xlsx");
+    } finally {
+      setExportando(false);
+    }
+  }
 
   const visibles = articulos.filter((a) =>
     filtroProv === ""
@@ -123,9 +158,21 @@ function ArticulosTab({
           ]}
           onPick={(id) => setFiltroProv(id)}
         />
-        <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
-          <IconPlus className="h-4 w-4" /> Nuevo artículo
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setImportar(true)} className="btn-ghost px-3 py-2.5 text-sm">
+            <IconDownload className="h-4 w-4" /> Importar Excel
+          </button>
+          <button
+            onClick={exportarExcel}
+            disabled={exportando || articulos.length === 0}
+            className="btn-ghost px-3 py-2.5 text-sm disabled:opacity-50"
+          >
+            {exportando ? <Spinner className="h-4 w-4" /> : <IconEdit className="h-4 w-4" />} Exportar Excel
+          </button>
+          <button onClick={() => setNuevo(true)} className="btn-primary px-4 py-2.5 text-sm">
+            <IconPlus className="h-4 w-4" /> Nuevo artículo
+          </button>
+        </div>
       </div>
       {articulos.length === 0 ? (
         <Vacio texto="Sin artículos. Añade materiales, mano de obra o maquinaria con su coste." />
@@ -154,16 +201,54 @@ function ArticulosTab({
                 {visibles.map((a) => (
                   <tr key={a.id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-forge-dark">{a.nombre}</p>
-                      {a.referencia && <p className="text-xs text-slate-400">Ref. {a.referencia}</p>}
-                      {a.especificaciones && (
-                        <p className="mt-0.5 text-xs italic text-slate-400">{a.especificaciones}</p>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100">
+                          {a.imagen ? (
+                            <img src={a.imagen} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <IconBox className="h-5 w-5 text-slate-300" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-forge-dark">{a.nombre}</p>
+                            {a.familia && <Badge color="slate">{a.familia}</Badge>}
+                          </div>
+                          {a.referencia && <p className="text-xs text-slate-400">Ref. {a.referencia}</p>}
+                          {a.especificaciones && (
+                            <p className="mt-0.5 text-xs italic text-slate-400">{a.especificaciones}</p>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge color="slate">{labelCategoria(a.categoria)}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{provNombre(a.proveedorId)}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {a.precios && a.precios.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {(() => {
+                            const min = Math.min(
+                              ...a.precios.filter((p) => p.precioSinIva != null).map((p) => p.precioSinIva as number)
+                            );
+                            return a.precios.map((p, i) => (
+                              <div key={i} className="flex items-center gap-1.5 text-xs">
+                                <span className="text-slate-600">{p.proveedor || "—"}</span>
+                                <span
+                                  className={`font-semibold ${
+                                    p.precioSinIva === min ? "text-green-600" : "text-slate-400"
+                                  }`}
+                                >
+                                  {p.precioSinIva != null ? formatEuro(p.precioSinIva) : "—"}
+                                </span>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      ) : (
+                        provNombre(a.proveedorId)
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-slate-500">{a.unidad}</td>
                     <td className="px-4 py-3 text-right font-semibold text-forge-dark">
                       {formatEuro(a.coste)}
@@ -211,7 +296,133 @@ function ArticulosTab({
           }}
         />
       )}
+      {importar && (
+        <ImportarCatalogoModal
+          onClose={() => setImportar(false)}
+          onImported={() => {
+            setImportar(false);
+            onCambio();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/** Importa el Excel de materiales (todas las pestañas) al banco de precios. */
+function ImportarCatalogoModal({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void;
+  onImported: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [items, setItems] = useState<ArticuloImportado[] | null>(null);
+  const [leyendo, setLeyendo] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [nombreArchivo, setNombreArchivo] = useState<string | null>(null);
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    const err = errorDeTamano(file);
+    if (err) return setError(err);
+    setError(null);
+    setLeyendo(true);
+    setNombreArchivo(file.name);
+    try {
+      const parsed = await importarCatalogo(file);
+      if (parsed.length === 0) setError("No se reconoció ningún producto. Revisa el formato del Excel.");
+      setItems(parsed);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo leer el archivo.");
+    } finally {
+      setLeyendo(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function guardar() {
+    if (!items || items.length === 0) return;
+    setGuardando(true);
+    try {
+      await catalogoApi.crearArticulos(items.map((a) => ({ ...a, proveedorId: null })));
+      toast.success(`${items.length} productos importados`);
+      onImported();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudieron guardar.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  // Recuento por familia (pestaña).
+  const porFamilia = (items ?? []).reduce<Record<string, number>>((acc, a) => {
+    acc[a.familia] = (acc[a.familia] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <Modal open onClose={onClose} title="Importar catálogo desde Excel">
+      <div className="space-y-4">
+        <p className="text-sm text-slate-500">
+          Sube el <b>.xlsx</b> de materiales. Se leen <b>todas las pestañas</b> (cada una es una
+          familia) y los <b>precios por proveedor</b> (Obramat, Leroy Merlin…). Las fotos incrustadas
+          no se importan aquí: se pegan luego en cada producto.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={leyendo}
+            className="btn-ghost px-4 py-2.5 text-sm"
+          >
+            {leyendo ? <Spinner className="h-4 w-4" /> : <IconDownload className="h-4 w-4" />}
+            {leyendo ? "Leyendo…" : nombreArchivo ? "Cambiar archivo" : "Elegir archivo"}
+          </button>
+          {nombreArchivo && <span className="truncate text-xs text-slate-400">{nombreArchivo}</span>}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            hidden
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
+        {items && items.length > 0 && (
+          <div className="rounded-xl border border-slate-200 p-3">
+            <p className="text-sm font-semibold text-forge-dark">
+              {items.length} productos en {Object.keys(porFamilia).length} familias
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {Object.entries(porFamilia).map(([fam, n]) => (
+                <Badge key={fam} color="slate">
+                  {fam} ({n})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          <button onClick={onClose} className="btn-ghost flex-1">
+            Cancelar
+          </button>
+          <button
+            onClick={guardar}
+            disabled={guardando || !items || items.length === 0}
+            className="btn-primary flex-1 disabled:opacity-50"
+          >
+            {guardando ? <Spinner className="h-5 w-5" /> : `Importar ${items?.length || ""}`}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -232,22 +443,84 @@ function ArticuloForm({
   const [unidad, setUnidad] = useState(articulo?.unidad ?? "ud");
   const [coste, setCoste] = useState(articulo ? String(articulo.coste) : "");
   const [proveedorId, setProveedorId] = useState(articulo?.proveedorId ?? "");
+  const [familia, setFamilia] = useState(articulo?.familia ?? "");
+  const [precios, setPrecios] = useState<PrecioProveedor[]>(articulo?.precios ?? []);
   const [especificaciones, setEspecificaciones] = useState(articulo?.especificaciones ?? "");
+  const [imagen, setImagen] = useState<string | null>(articulo?.imagen ?? null);
+  const [subiendoImg, setSubiendoImg] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function subirImagen(file: File | Blob) {
+    if (file instanceof File) {
+      const err = errorDeTamano(file);
+      if (err) return setError(err);
+    }
+    setError(null);
+    setSubiendoImg(true);
+    try {
+      setImagen(await catalogoApi.subirImagenArticulo(file));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo subir la imagen.");
+    } finally {
+      setSubiendoImg(false);
+    }
+  }
+
+  /** Pegar (Ctrl+V): imagen del portapapeles (p. ej. copiada de Obramat) o,
+   *  si es texto, una URL de imagen directa. */
+  async function onPaste(e: React.ClipboardEvent) {
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const img = items.find((it) => it.type.startsWith("image/"));
+    if (img) {
+      e.preventDefault();
+      const file = img.getAsFile();
+      if (file) await subirImagen(file);
+      return;
+    }
+    const texto = e.clipboardData?.getData("text")?.trim();
+    if (texto && /^https?:\/\/\S+/i.test(texto)) {
+      e.preventDefault();
+      setImagen(texto);
+    }
+  }
+
+  function setPrecio(i: number, patch: Partial<PrecioProveedor>) {
+    setPrecios((ps) => ps.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  }
+  function addPrecio() {
+    setPrecios((ps) => [...ps, { proveedor: "", referencia: "", precioSinIva: null, precioConIva: null }]);
+  }
+  function quitarPrecio(i: number) {
+    setPrecios((ps) => ps.filter((_, idx) => idx !== i));
+  }
+  /** Copia al coste el precio sin IVA más barato de los proveedores. */
+  function usarMasBarato() {
+    const conPrecio = precios.filter((p) => p.precioSinIva != null);
+    if (!conPrecio.length) return;
+    const min = Math.min(...conPrecio.map((p) => p.precioSinIva as number));
+    setCoste(String(min));
+    const barato = conPrecio.find((p) => p.precioSinIva === min);
+    if (barato?.referencia) setReferencia(barato.referencia);
+  }
 
   async function guardar() {
     if (!nombre.trim()) return setError("El nombre es obligatorio.");
     setGuardando(true);
     try {
+      const preciosLimpios = precios.filter((p) => p.proveedor.trim() || p.referencia.trim());
       const data = {
         nombre: nombre.trim(),
         referencia: referencia.trim(),
         categoria,
+        familia: familia.trim() || undefined,
         unidad: unidad.trim() || "ud",
         coste: Number(coste) || 0,
+        precios: preciosLimpios.length ? preciosLimpios : undefined,
         proveedorId: proveedorId || null,
         especificaciones: especificaciones.trim() || undefined,
+        imagen: imagen ?? null,
       };
       if (articulo) await catalogoApi.actualizarArticulo(articulo.id, data);
       else await catalogoApi.crearArticulo(data);
@@ -266,6 +539,69 @@ function ArticuloForm({
           <label className="label">Nombre</label>
           <input className="field mt-1.5" value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </div>
+
+        {/* Foto del producto: pegar (Ctrl+V) desde la web del proveedor, subir o URL */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="label">Foto del producto</label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="text-xs font-semibold text-forge-orange hover:underline"
+              >
+                Subir archivo
+              </button>
+              {imagen && (
+                <button
+                  type="button"
+                  onClick={() => setImagen(null)}
+                  className="text-xs font-semibold text-red-500 hover:underline"
+                >
+                  Quitar
+                </button>
+              )}
+            </div>
+          </div>
+          <div
+            tabIndex={0}
+            onPaste={onPaste}
+            className="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-200 p-3 outline-none focus:border-forge-orange focus:ring-2 focus:ring-forge-orange/20"
+            onClick={() => !imagen && fileRef.current?.click()}
+          >
+            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100">
+              {subiendoImg ? (
+                <Spinner className="h-5 w-5 text-slate-400" />
+              ) : imagen ? (
+                <img src={imagen} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <IconBox className="h-7 w-7 text-slate-300" />
+              )}
+            </div>
+            <div className="min-w-0 text-sm text-slate-500">
+              <p className="font-semibold text-forge-dark">
+                <IconCamera className="mr-1 inline h-4 w-4 text-forge-orange" />
+                Pega la foto aquí (Ctrl+V)
+              </p>
+              <p className="mt-0.5 text-xs">
+                Copia la imagen desde la web del proveedor (Obramat…) con “Copiar imagen” y pégala
+                aquí. También puedes subir un archivo o pegar una URL de imagen.
+              </p>
+            </div>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) subirImagen(f);
+              if (fileRef.current) fileRef.current.value = "";
+            }}
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Referencia</label>
@@ -323,6 +659,91 @@ function ArticuloForm({
             />
           </div>
         </div>
+        <div>
+          <label className="label">Familia / gremio</label>
+          <input
+            className="field mt-1.5"
+            placeholder="Baños, Fontanería, Electricidad…"
+            value={familia}
+            onChange={(e) => setFamilia(e.target.value)}
+          />
+        </div>
+
+        {/* Precios por proveedor (comparativa Obramat / Leroy Merlin…) */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="label">Precios por proveedor</label>
+            <div className="flex items-center gap-3">
+              {precios.some((p) => p.precioSinIva != null) && (
+                <button
+                  type="button"
+                  onClick={usarMasBarato}
+                  className="text-xs font-semibold text-forge-orange hover:underline"
+                >
+                  Coste = más barato
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={addPrecio}
+                className="text-xs font-semibold text-forge-orange hover:underline"
+              >
+                + Añadir proveedor
+              </button>
+            </div>
+          </div>
+          {precios.length === 0 ? (
+            <p className="mt-1 text-xs text-slate-400">
+              Sin proveedores. Añade Obramat, Leroy Merlin… con su referencia y precio.
+            </p>
+          ) : (
+            <div className="mt-1.5 space-y-2">
+              {precios.map((p, i) => (
+                <div key={i} className="grid grid-cols-12 items-center gap-1.5">
+                  <input
+                    className="field col-span-3 py-1.5"
+                    placeholder="Proveedor"
+                    value={p.proveedor}
+                    onChange={(e) => setPrecio(i, { proveedor: e.target.value })}
+                  />
+                  <input
+                    className="field col-span-3 py-1.5"
+                    placeholder="Referencia"
+                    value={p.referencia}
+                    onChange={(e) => setPrecio(i, { referencia: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    className="field col-span-2 py-1.5"
+                    placeholder="s/IVA"
+                    value={p.precioSinIva ?? ""}
+                    onChange={(e) =>
+                      setPrecio(i, { precioSinIva: e.target.value === "" ? null : Number(e.target.value) })
+                    }
+                  />
+                  <input
+                    type="number"
+                    className="field col-span-2 py-1.5"
+                    placeholder="c/IVA"
+                    value={p.precioConIva ?? ""}
+                    onChange={(e) =>
+                      setPrecio(i, { precioConIva: e.target.value === "" ? null : Number(e.target.value) })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => quitarPrecio(i)}
+                    className="col-span-2 grid h-8 place-items-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label="Quitar proveedor"
+                  >
+                    <IconTrash className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div>
           <div className="flex items-center justify-between">
             <label className="label">Ficha técnica / especificaciones</label>

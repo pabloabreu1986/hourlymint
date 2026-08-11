@@ -1,6 +1,7 @@
 import { sb } from "@/lib/supabase";
 import { uid } from "@/lib/db";
 import { tenantActivoId } from "@/lib/host";
+import { fileToThumbDataURL, dataURLtoBlob } from "@/lib/image";
 import type { Articulo, Partida, Proveedor } from "@/lib/types";
 import type { NuevoArticulo, NuevaPartida, NuevoProveedor } from "../catalogo";
 import {
@@ -12,6 +13,20 @@ import {
   fromPartida,
   check,
 } from "./_map";
+
+/** Bucket público para las fotos del catálogo (URL estable, sin firmar). */
+const CATALOGO_BUCKET = "catalogo";
+
+/** Sube la foto de un artículo comprimida al bucket público y devuelve su URL. */
+export async function subirImagenArticulo(file: File | Blob): Promise<string> {
+  const blob = dataURLtoBlob(await fileToThumbDataURL(file as File, 800, 0.82));
+  const path = `articulos/${tenantActivoId()}/${uid("img")}.jpg`;
+  const up = await sb()
+    .storage.from(CATALOGO_BUCKET)
+    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (up.error) throw new Error(up.error.message);
+  return sb().storage.from(CATALOGO_BUCKET).getPublicUrl(path).data.publicUrl;
+}
 
 // ── Proveedores ──
 export async function listProveedores(): Promise<Proveedor[]> {
@@ -62,6 +77,17 @@ export async function crearArticulo(input: NuevoArticulo): Promise<Articulo> {
   };
   check(await sb().from("articulos").insert(fromArticulo(nuevo)));
   return nuevo;
+}
+
+export async function crearArticulos(datos: NuevoArticulo[]): Promise<Articulo[]> {
+  const tid = tenantActivoId();
+  const now = new Date().toISOString();
+  const nuevos: Articulo[] = datos.map((d) => ({ id: uid("art"), tenantId: tid, createdAt: now, ...d }));
+  // Inserta por lotes para no exceder límites de payload.
+  for (let i = 0; i < nuevos.length; i += 200) {
+    check(await sb().from("articulos").insert(nuevos.slice(i, i + 200).map(fromArticulo)));
+  }
+  return nuevos;
 }
 
 export async function actualizarArticulo(id: string, patch: Partial<Articulo>): Promise<Articulo> {

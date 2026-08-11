@@ -3,8 +3,20 @@
 import { loadDB, updateDB, uid, delay } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { tenantActivoId } from "@/lib/host";
+import { fileToThumbDataURL } from "@/lib/image";
 import type { Articulo, Partida, Proveedor } from "@/lib/types";
 import * as sb from "./supabase/catalogo";
+
+/**
+ * Sube (o convierte, en mock) la foto de un artículo y devuelve su URL.
+ * En producción va a un bucket público de Storage; en mock se guarda como
+ * data URL comprimido. Acepta un File (subida) o un Blob (pegado del
+ * portapapeles).
+ */
+export async function subirImagenArticulo(file: File | Blob): Promise<string> {
+  if (isSupabaseEnabled) return sb.subirImagenArticulo(file);
+  return fileToThumbDataURL(file as File, 800, 0.82);
+}
 
 // ── Proveedores ──
 export async function listProveedores(): Promise<Proveedor[]> {
@@ -79,6 +91,16 @@ export async function crearArticulo(data: NuevoArticulo): Promise<Articulo> {
   };
   updateDB((db) => db.articulos.push(nuevo));
   return delay(nuevo);
+}
+
+/** Alta en lote (importación de Excel). */
+export async function crearArticulos(datos: NuevoArticulo[]): Promise<Articulo[]> {
+  if (isSupabaseEnabled) return sb.crearArticulos(datos);
+  const tid = tenantActivoId();
+  const now = new Date().toISOString();
+  const nuevos: Articulo[] = datos.map((d) => ({ id: uid("art"), tenantId: tid, createdAt: now, ...d }));
+  updateDB((db) => db.articulos.push(...nuevos));
+  return delay(nuevos);
 }
 
 export async function actualizarArticulo(id: string, patch: Partial<Articulo>): Promise<Articulo> {
