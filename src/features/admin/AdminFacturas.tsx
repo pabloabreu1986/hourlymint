@@ -113,7 +113,9 @@ export default function AdminFacturas() {
           <p className="text-sm text-slate-400">No hay facturas en este filtro.</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <>
+        {/* Escritorio: tabla */}
+        <div className="card hidden overflow-hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -178,6 +180,54 @@ export default function AdminFacturas() {
             </table>
           </div>
         </div>
+
+        {/* Móvil: tarjetas con acciones visibles (incl. eliminar) */}
+        <div className="space-y-3 md:hidden">
+          {visibles.map((f) => {
+            const info = infoEstadoFactura(f.estado);
+            return (
+              <div key={f.id} className="card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-bold text-forge-dark">{f.numero || "—"}</p>
+                    <button
+                      onClick={() => navigate(`/admin/clientes/${f.clienteId}`)}
+                      className="truncate text-sm text-slate-500 hover:text-forge-orange hover:underline"
+                    >
+                      {nombreCliente(f.clienteId)}
+                    </button>
+                  </div>
+                  <Badge color={info.badge}>{info.label}</Badge>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-slate-400">{fechaCompleta(f.fecha)}</span>
+                  <span className="font-bold text-forge-dark">{formatEuro(f.total)}</span>
+                </div>
+                <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+                  {f.estado !== "pagada" && (
+                    <button
+                      onClick={() => marcarPagada(f)}
+                      className="btn flex-1 bg-green-600 py-2 text-sm text-white hover:bg-green-700"
+                    >
+                      Cobrada
+                    </button>
+                  )}
+                  <button onClick={() => setEditar(f)} className="btn-ghost flex-1 py-2 text-sm">
+                    <IconEdit className="h-4 w-4" /> Editar
+                  </button>
+                  <button
+                    onClick={() => eliminar(f)}
+                    className="btn border border-red-200 bg-white px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    aria-label="Eliminar factura"
+                  >
+                    <IconTrash className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        </>
       )}
 
       {(nueva || editar) && (
