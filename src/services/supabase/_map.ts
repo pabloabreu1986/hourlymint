@@ -266,7 +266,17 @@ export const toVehiculo = (r: any): Vehiculo => ({
   matricula: r.matricula,
   modelo: r.modelo,
   asignadoA: r.asignado_a ?? null,
+  obraId: r.obra_id ?? null,
   estado: r.estado,
+});
+export const fromVehiculo = (v: Partial<Vehiculo>): any => ({
+  ...(v.id !== undefined && { id: v.id }),
+  ...(v.tenantId !== undefined && { tenant_id: v.tenantId }),
+  ...(v.matricula !== undefined && { matricula: v.matricula }),
+  ...(v.modelo !== undefined && { modelo: v.modelo }),
+  ...(v.asignadoA !== undefined && { asignado_a: v.asignadoA }),
+  ...(v.obraId !== undefined && { obra_id: v.obraId }),
+  ...(v.estado !== undefined && { estado: v.estado }),
 });
 export const toHerramienta = (r: any): Herramienta => ({
   id: r.id,
@@ -274,6 +284,13 @@ export const toHerramienta = (r: any): Herramienta => ({
   nombre: r.nombre,
   cantidad: r.cantidad,
   ubicacion: r.ubicacion,
+});
+export const fromHerramienta = (h: Partial<Herramienta>): any => ({
+  ...(h.id !== undefined && { id: h.id }),
+  ...(h.tenantId !== undefined && { tenant_id: h.tenantId }),
+  ...(h.nombre !== undefined && { nombre: h.nombre }),
+  ...(h.cantidad !== undefined && { cantidad: h.cantidad }),
+  ...(h.ubicacion !== undefined && { ubicacion: h.ubicacion }),
 });
 export const toAlmacen = (r: any): AlmacenItem => ({
   id: r.id,
@@ -295,6 +312,8 @@ export const toAusencia = (r: any): Ausencia => ({
   motivo: r.motivo ?? "",
   estado: r.estado,
   respuesta: r.respuesta ?? null,
+  adjunto: r.adjunto ?? null,
+  adjuntoNombre: r.adjunto_nombre ?? null,
   creadaEn: r.creada_en,
 });
 export const fromAusencia = (a: Partial<Ausencia>): any => ({
@@ -307,6 +326,8 @@ export const fromAusencia = (a: Partial<Ausencia>): any => ({
   ...(a.motivo !== undefined && { motivo: a.motivo }),
   ...(a.estado !== undefined && { estado: a.estado }),
   ...(a.respuesta !== undefined && { respuesta: a.respuesta }),
+  ...(a.adjunto !== undefined && { adjunto: a.adjunto }),
+  ...(a.adjuntoNombre !== undefined && { adjunto_nombre: a.adjuntoNombre }),
   ...(a.creadaEn !== undefined && { creada_en: a.creadaEn }),
 });
 

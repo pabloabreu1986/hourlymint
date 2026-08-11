@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { notificacionesApi, usuariosApi } from "@/services";
 import type { Notificacion, Usuario } from "@/lib/types";
 import { Cargando, EmptyState } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { hace } from "@/lib/format";
 import { IconBell, IconClock, IconAlert, IconBox } from "@/components/icons";
 
@@ -43,6 +44,20 @@ export default function AdminNotificaciones() {
     cargar();
   }
 
+  async function borrarTodas() {
+    if (
+      !(await confirmar({
+        titulo: "Borrar todas las notificaciones",
+        mensaje: `Se eliminarán las ${items!.length} notificaciones. Esta acción no se puede deshacer.`,
+        confirmar: "Borrar todas",
+        peligro: true,
+      }))
+    )
+      return;
+    await notificacionesApi.eliminarTodas();
+    cargar();
+  }
+
   const sinLeer = items.filter((n) => !n.leida).length;
 
   return (
@@ -51,11 +66,18 @@ export default function AdminNotificaciones() {
         <p className="text-sm text-slate-400">
           {sinLeer > 0 ? `${sinLeer} sin leer` : "Todo leído"}
         </p>
-        {sinLeer > 0 && (
-          <button onClick={marcarTodas} className="text-sm font-semibold text-forge-orange">
-            Marcar todas leídas
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          {sinLeer > 0 && (
+            <button onClick={marcarTodas} className="text-sm font-semibold text-forge-orange">
+              Marcar todas leídas
+            </button>
+          )}
+          {items.length > 0 && (
+            <button onClick={borrarTodas} className="text-sm font-semibold text-red-500">
+              Borrar todas
+            </button>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (

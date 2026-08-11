@@ -465,7 +465,7 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
   const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
   const [puesto, setPuesto] = useState("");
-  const [rol, setRol] = useState<Rol>("admin");
+  const [rol, setRol] = useState<Rol>("directivo");
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -500,7 +500,7 @@ function UsuariosTenant({ tenantId, slug }: { tenantId: string; slug: string }) 
       setNombre("");
       setPassword("");
       setPuesto("");
-      setRol("admin");
+      setRol("directivo");
       await cargar();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo crear el usuario.");

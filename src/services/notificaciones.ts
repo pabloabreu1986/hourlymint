@@ -48,6 +48,37 @@ export async function marcarTodasLeidas(trabajadorId: string): Promise<void> {
   return delay(undefined, 0);
 }
 
+export async function eliminarNotificacion(id: string): Promise<void> {
+  if (isSupabaseEnabled) return sb.eliminarNotificacion(id);
+  updateDB((db) => {
+    db.notificaciones = db.notificaciones.filter((n) => n.id !== id);
+  });
+  return delay(undefined, 0);
+}
+
+/** Borra TODAS las notificaciones del tenant activo (acción del admin). */
+export async function eliminarTodas(): Promise<void> {
+  if (isSupabaseEnabled) return sb.eliminarTodas();
+  const tid = tenantActivoId();
+  updateDB((db) => {
+    db.notificaciones = db.notificaciones.filter((n) => n.tenantId !== tid);
+  });
+  return delay(undefined, 0);
+}
+
+/** Borra las notificaciones personales de un trabajador (no las globales,
+ *  que son de todo el equipo). */
+export async function eliminarTodasDe(trabajadorId: string): Promise<void> {
+  if (isSupabaseEnabled) return sb.eliminarTodasDe(trabajadorId);
+  const tid = tenantActivoId();
+  updateDB((db) => {
+    db.notificaciones = db.notificaciones.filter(
+      (n) => !(n.tenantId === tid && n.trabajadorId === trabajadorId)
+    );
+  });
+  return delay(undefined, 0);
+}
+
 export async function crearNotificacion(
   data: Omit<Notificacion, "id" | "tenantId" | "fecha" | "leida">
 ): Promise<Notificacion> {

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi, clientesApi } from "@/services";
+import { obrasApi, usuariosApi, adjuntosApi, dashboardApi, fotosApi, clientesApi, recursosApi } from "@/services";
 import { Combobox } from "@/components/Combobox";
 import { confirmar } from "@/components/confirm";
-import type { Adjunto, Cliente, EstadoObra, Obra, Usuario, Fichaje, Foto } from "@/lib/types";
+import type { Adjunto, Cliente, EstadoObra, Obra, Usuario, Fichaje, Foto, Vehiculo } from "@/lib/types";
 import { errorDeTamano } from "@/lib/files";
 import { calcularJornada, formatHoras, ESTILO_ESTADO_JORNADA } from "@/lib/horas";
 import { fechaLarga } from "@/lib/format";
@@ -28,6 +29,7 @@ import {
   IconClock,
   IconChevronDown,
   IconChevronUp,
+  IconAlert,
 } from "@/components/icons";
 
 const DIAS_SEMANA = [
@@ -57,6 +59,7 @@ export default function AdminObras() {
   const [obras, setObras] = useState<Obra[] | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [editar, setEditar] = useState<Obra | null>(null);
   const [nuevo, setNuevo] = useState(false);
   const [borrar, setBorrar] = useState<Obra | null>(null);
@@ -64,14 +67,16 @@ export default function AdminObras() {
   const [ahora, setAhora] = useState(() => new Date());
 
   async function cargar() {
-    const [os, us, cs] = await Promise.all([
+    const [os, us, cs, vs] = await Promise.all([
       obrasApi.listObras(),
       usuariosApi.listTrabajadores(),
       clientesApi.listClientes(),
+      recursosApi.listVehiculos(),
     ]);
     setObras(os);
     setUsuarios(us);
     setClientes(cs);
+    setVehiculos(vs);
   }
   async function cargarFichajes() {
     const data = await dashboardApi.getDashboard();
@@ -134,6 +139,7 @@ export default function AdminObras() {
           obra={editar}
           trabajadores={usuarios}
           clientes={clientes}
+          vehiculos={vehiculos}
           onClose={() => {
             setNuevo(false);
             setEditar(null);
@@ -403,12 +409,14 @@ function ObraForm({
   obra,
   trabajadores,
   clientes,
+  vehiculos,
   onClose,
   onSaved,
 }: {
   obra: Obra | null;
   trabajadores: Usuario[];
   clientes: Cliente[];
+  vehiculos: Vehiculo[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -428,10 +436,21 @@ function ObraForm({
   const [horaEntrada, setHoraEntrada] = useState(obra?.horaEntrada ?? "09:00");
   const [horaSalida, setHoraSalida] = useState(obra?.horaSalida ?? "18:00");
   const [margen, setMargen] = useState(obra?.margenSalidaAutomaticaMin ?? 5);
+  const navigate = useNavigate();
+  // Al crear una obra sin clientes: se puede continuar (el cliente es
+  // opcional), pero avisamos porque lo normal es asignarle uno.
+  const avisarSinClientes = !obra && clientes.length === 0;
+  // Vehículos asignados a esta obra (fuente de verdad: vehiculo.obraId).
+  const [vehiculosAsignados, setVehiculosAsignados] = useState<string[]>(
+    obra ? vehiculos.filter((v) => v.obraId === obra.id).map((v) => v.id) : []
+  );
   const [guardando, setGuardando] = useState(false);
 
   function toggle(id: string) {
     setEquipo((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]));
+  }
+  function toggleVehiculo(id: string) {
+    setVehiculosAsignados((v) => (v.includes(id) ? v.filter((x) => x !== id) : [...v, id]));
   }
   function toggleDia(dia: number) {
     setDiasLaborables((d) => (d.includes(dia) ? d.filter((x) => x !== dia) : [...d, dia].sort()));
@@ -457,8 +476,22 @@ function ObraForm({
         horaSalida,
         margenSalidaAutomaticaMin: margen,
       };
-      if (obra) await obrasApi.actualizarObra(obra.id, payload);
-      else await obrasApi.crearObra(payload);
+      const guardada = obra
+        ? await obrasApi.actualizarObra(obra.id, payload)
+        : await obrasApi.crearObra(payload);
+      // Sincroniza la asignación de vehículos: solo tocamos los que cambian.
+      await Promise.all(
+        vehiculos.map((v) => {
+          const debeEstar = vehiculosAsignados.includes(v.id);
+          if (debeEstar && v.obraId !== guardada.id) {
+            return recursosApi.actualizarVehiculo(v.id, { obraId: guardada.id });
+          }
+          if (!debeEstar && v.obraId === guardada.id) {
+            return recursosApi.actualizarVehiculo(v.id, { obraId: null });
+          }
+          return null;
+        })
+      );
       onSaved();
     } finally {
       setGuardando(false);
@@ -468,6 +501,28 @@ function ObraForm({
   return (
     <Modal open onClose={onClose} title={obra ? "Editar obra" : "Nueva obra"}>
       <div className="space-y-4">
+        {avisarSinClientes && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <IconAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div className="text-sm text-amber-800">
+              <p className="font-semibold">Aún no tienes clientes.</p>
+              <p className="mt-0.5 text-amber-700">
+                Puedes crear la obra sin cliente, pero lo normal es asignarle uno para poder
+                facturarla después.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate("/admin/clientes");
+                }}
+                className="mt-2 font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950"
+              >
+                Ir a crear un cliente →
+              </button>
+            </div>
+          </div>
+        )}
         <div>
           <label className="label">Nombre de la obra</label>
           <input className="field mt-1.5" value={nombre} onChange={(e) => setNombre(e.target.value)} />
@@ -626,6 +681,39 @@ function ObraForm({
               </label>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="label">Vehículos asignados</label>
+          {vehiculos.length === 0 ? (
+            <p className="mt-1.5 text-xs text-slate-400">
+              No hay vehículos registrados. Añádelos en el módulo Vehículos.
+            </p>
+          ) : (
+            <div className="mt-1.5 grid max-h-44 grid-cols-1 gap-1.5 overflow-y-auto rounded-xl border border-slate-200 p-2">
+              {vehiculos.map((v) => {
+                const otraObra = v.obraId && v.obraId !== obra?.id;
+                return (
+                  <label
+                    key={v.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-forge-orange"
+                      checked={vehiculosAsignados.includes(v.id)}
+                      onChange={() => toggleVehiculo(v.id)}
+                    />
+                    <span className="text-sm text-forge-dark">{v.modelo}</span>
+                    <span className="font-mono text-xs text-slate-400">{v.matricula}</span>
+                    {otraObra && !vehiculosAsignados.includes(v.id) && (
+                      <span className="ml-auto text-xs text-amber-500">en otra obra</span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {obra ? (

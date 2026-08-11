@@ -12,6 +12,7 @@ import type { Rol } from "@/lib/types";
 import type { ReactNode } from "react";
 
 import Login from "@/features/auth/Login";
+import LoginOperador from "@/features/auth/LoginOperador";
 
 /**
  * Si falla la carga de un chunk lazy (típico justo tras un despliegue:
@@ -140,13 +141,14 @@ function RaizPublica() {
 }
 
 /** "/login": en un subdominio siempre es el login del cliente (aunque
- * tenga web pública); en el apex se comporta como la raíz. */
+ * tenga web pública); en el apex (fichaloop.com) es el login del operador
+ * de plataforma (super-admin), con URL directa y estable. */
 function LoginPublico() {
   const { usuario, cargando } = useAuth();
   if (cargando) return <Cargando />;
   if (usuario) return <Navigate to={inicioDe(usuario.rol)} replace />;
   if (!esApex()) return <Login />;
-  return <RaizPublica />;
+  return <LoginOperador />;
 }
 
 function Guard({ rol, children }: { rol: Rol | Rol[]; children: ReactNode }) {

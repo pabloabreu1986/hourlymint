@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { presupuestosApi, clientesApi } from "@/services";
+import { toast } from "sonner";
+import { presupuestosApi, clientesApi, obrasApi } from "@/services";
 import { infoEstadoPresupuesto, totalesPresupuesto } from "@/lib/presupuestos-calc";
 import { formatEuro, fechaCompleta } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { Badge, Cargando } from "@/components/ui";
-import { IconPlus, IconClipboard } from "@/components/icons";
-import type { Cliente, Presupuesto } from "@/lib/types";
+import { IconPlus, IconClipboard, IconReceipt } from "@/components/icons";
+import type { Cliente, Obra, Presupuesto } from "@/lib/types";
+import FacturaForm from "./FacturaForm";
 
 /** Margen por defecto (lo fija el directivo); se guarda por tenant en local. */
 export function margenDefecto(): number {
@@ -21,16 +23,21 @@ export function margenDefecto(): number {
 export default function AdminPresupuestos() {
   const [items, setItems] = useState<Presupuesto[] | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [obras, setObras] = useState<Obra[]>([]);
   const [margen, setMargen] = useState(margenDefecto());
+  // Presupuesto que se está facturando (abre el formulario de factura).
+  const [facturarDe, setFacturarDe] = useState<Presupuesto | null>(null);
   const navigate = useNavigate();
 
   async function cargar() {
-    const [ps, cs] = await Promise.all([
+    const [ps, cs, os] = await Promise.all([
       presupuestosApi.listPresupuestos(),
       clientesApi.listClientes(),
+      obrasApi.listObras(),
     ]);
     setItems(ps);
     setClientes(cs);
+    setObras(os);
   }
   useEffect(() => {
     cargar();
@@ -105,6 +112,7 @@ export default function AdminPresupuestos() {
                   <th className="px-4 py-3 font-semibold">Fecha</th>
                   <th className="px-4 py-3 text-right font-semibold">Total</th>
                   <th className="px-4 py-3 font-semibold">Estado</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -126,6 +134,17 @@ export default function AdminPresupuestos() {
                       <td className="px-4 py-3">
                         <Badge color={info.badge}>{info.label}</Badge>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFacturarDe(p);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-forge-orange hover:bg-forge-orange/5"
+                        >
+                          <IconReceipt className="h-3.5 w-3.5" /> Crear factura
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -133,6 +152,26 @@ export default function AdminPresupuestos() {
             </table>
           </div>
         </div>
+      )}
+
+      {facturarDe && (
+        <FacturaForm
+          factura={null}
+          clientes={clientes}
+          obras={obras}
+          prefill={{
+            clienteId: facturarDe.clienteId ?? "",
+            obraId: facturarDe.obraId ?? "",
+            concepto: `Presupuesto ${facturarDe.numero}`,
+            base: String(totalesPresupuesto(facturarDe).pvp),
+          }}
+          onClose={() => setFacturarDe(null)}
+          onSaved={() => {
+            setFacturarDe(null);
+            toast.success("Factura creada a partir del presupuesto");
+            navigate("/admin/facturas");
+          }}
+        />
       )}
     </div>
   );

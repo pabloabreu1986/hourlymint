@@ -302,9 +302,9 @@ function AccesoEspacio() {
       <button
         type="button"
         onClick={() => setModoPlataforma(true)}
-        className="mt-8 text-xs text-white/30 underline decoration-white/15 underline-offset-4 hover:text-white/60"
+        className="mt-8 text-sm font-medium text-white/55 underline decoration-white/25 underline-offset-4 hover:text-white/90"
       >
-        Acceso operador de plataforma
+        Acceso operador de plataforma →
       </button>
     </div>
   );

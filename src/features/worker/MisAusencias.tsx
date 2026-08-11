@@ -7,7 +7,7 @@ import { WorkerHeader } from "./WorkerHeader";
 import { Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import { fechaLarga } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
-import { IconCalendar, IconPlus } from "@/components/icons";
+import { IconCalendar, IconPlus, IconReceipt } from "@/components/icons";
 
 const TIPOS: { value: TipoAusencia; label: string }[] = [
   { value: "vacaciones", label: "Vacaciones" },
@@ -136,6 +136,17 @@ export default function MisAusencias() {
                   <p className="mt-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
                     Respuesta: {a.respuesta}
                   </p>
+                )}
+                {a.adjunto && (
+                  <a
+                    href={a.adjunto}
+                    download={a.adjuntoNombre ?? "documento.pdf"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-forge-orange hover:underline"
+                  >
+                    <IconReceipt className="h-3.5 w-3.5" /> {a.adjuntoNombre ?? "Documento adjunto"}
+                  </a>
                 )}
               </div>
             ))}

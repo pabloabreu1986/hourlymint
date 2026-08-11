@@ -4,6 +4,7 @@ import { notificacionesApi } from "@/services";
 import type { Notificacion } from "@/lib/types";
 import { WorkerHeader } from "./WorkerHeader";
 import { Cargando, EmptyState } from "@/components/ui";
+import { confirmar } from "@/components/confirm";
 import { hace } from "@/lib/format";
 import { IconBell, IconClock, IconAlert, IconBox } from "@/components/icons";
 
@@ -33,6 +34,21 @@ export default function Notificaciones() {
     cargar();
   }
 
+  async function borrarTodas() {
+    if (!usuario) return;
+    if (
+      !(await confirmar({
+        titulo: "Borrar notificaciones",
+        mensaje: "Se eliminarán tus notificaciones. Esta acción no se puede deshacer.",
+        confirmar: "Borrar",
+        peligro: true,
+      }))
+    )
+      return;
+    await notificacionesApi.eliminarTodasDe(usuario.id);
+    cargar();
+  }
+
   async function abrir(n: Notificacion) {
     if (!n.leida) {
       await notificacionesApi.marcarLeida(n.id);
@@ -46,9 +62,16 @@ export default function Notificaciones() {
         title="Notificaciones"
         back={false}
         action={
-          <button onClick={marcarTodas} className="text-sm font-semibold text-forge-orange">
-            Marcar leídas
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={marcarTodas} className="text-sm font-semibold text-forge-orange">
+              Marcar leídas
+            </button>
+            {items && items.length > 0 && (
+              <button onClick={borrarTodas} className="text-sm font-semibold text-red-500">
+                Borrar
+              </button>
+            )}
+          </div>
         }
       />
 

@@ -605,7 +605,9 @@ export interface Vehiculo {
   tenantId: string;
   matricula: string;
   modelo: string;
-  asignadoA: string | null; // trabajadorId
+  asignadoA: string | null; // trabajadorId (conductor)
+  /** Obra a la que está asignado el vehículo; null = sin obra. */
+  obraId: string | null;
   estado: "disponible" | "en_uso" | "taller";
 }
 
@@ -644,6 +646,11 @@ export interface Ausencia {
   estado: EstadoAusencia;
   /** Comentario del admin al aprobar/rechazar. */
   respuesta: string | null;
+  /** PDF adjuntado por el admin al resolver (justificante, resolución…),
+   *  como data URL; null = sin adjunto. */
+  adjunto: string | null;
+  /** Nombre original del archivo adjunto (para mostrarlo/descargarlo). */
+  adjuntoNombre?: string | null;
   creadaEn: string; // ISO
 }
 

@@ -40,6 +40,30 @@ export async function marcarTodasLeidas(trabajadorId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function eliminarNotificacion(id: string): Promise<void> {
+  const { error } = await sb().from("notificaciones").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Borra TODAS las notificaciones del tenant activo (acción del admin). */
+export async function eliminarTodas(): Promise<void> {
+  const { error } = await sb()
+    .from("notificaciones")
+    .delete()
+    .eq("tenant_id", tenantActivoId());
+  if (error) throw new Error(error.message);
+}
+
+/** Borra las notificaciones personales de un trabajador (no las globales). */
+export async function eliminarTodasDe(trabajadorId: string): Promise<void> {
+  const { error } = await sb()
+    .from("notificaciones")
+    .delete()
+    .eq("tenant_id", tenantActivoId())
+    .eq("trabajador_id", trabajadorId);
+  if (error) throw new Error(error.message);
+}
+
 export async function crearNotificacion(
   input: Omit<Notificacion, "id" | "tenantId" | "fecha" | "leida">
 ): Promise<Notificacion> {

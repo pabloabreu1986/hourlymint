@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ausenciasApi, notificacionesApi, usuariosApi } from "@/services";
 import { diasDeAusencia, diasVacacionesUsados } from "@/services/ausencias";
+import { fileADataUrl } from "@/lib/extraer-factura";
+import { errorDeTamano } from "@/lib/files";
 import type { Ausencia, EstadoAusencia, TipoAusencia, Usuario } from "@/lib/types";
-import { Avatar, Badge, Cargando, EmptyState, Modal } from "@/components/ui";
+import { Avatar, Badge, Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import { fechaLarga, fechaHora } from "@/lib/format";
-import { IconCalendar, IconCheck, IconX, IconShield } from "@/components/icons";
+import { IconCalendar, IconCheck, IconX, IconShield, IconReceipt, IconTrash } from "@/components/icons";
 import GuiaLaboral from "./GuiaLaboral";
 
 export const ETIQUETA_TIPO_AUSENCIA: Record<TipoAusencia, string> = {
@@ -39,6 +41,35 @@ export default function AdminAusencias() {
     estado: EstadoAusencia;
   } | null>(null);
   const [respuesta, setRespuesta] = useState("");
+  // PDF adjunto opcional que el admin sube al resolver.
+  const [adjunto, setAdjunto] = useState<{ adjunto: string; adjuntoNombre: string } | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function cerrarModal() {
+    setResolviendo(null);
+    setRespuesta("");
+    setAdjunto(null);
+  }
+
+  async function onAdjunto(file: File | undefined) {
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      alert("El adjunto debe ser un PDF.");
+      return;
+    }
+    const err = errorDeTamano(file);
+    if (err) return alert(err);
+    setSubiendo(true);
+    try {
+      const dataUrl = await fileADataUrl(file);
+      setAdjunto({ adjunto: dataUrl, adjuntoNombre: file.name });
+    } finally {
+      setSubiendo(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   async function cargar() {
     setItems(await ausenciasApi.listAusencias());
@@ -62,21 +93,25 @@ export default function AdminAusencias() {
   async function confirmarResolucion() {
     if (!resolviendo) return;
     const { ausencia, estado } = resolviendo;
-    await ausenciasApi.resolverAusencia(ausencia.id, estado, respuesta.trim());
-    // Aviso al trabajador con el resultado.
-    await notificacionesApi.crearNotificacion({
-      trabajadorId: ausencia.trabajadorId,
-      tipo: "aviso",
-      titulo: `Solicitud de ${ETIQUETA_TIPO_AUSENCIA[ausencia.tipo].toLowerCase()} ${
-        estado === "aprobada" ? "aprobada" : "rechazada"
-      }`,
-      mensaje: `Del ${fechaLarga(ausencia.fechaInicio)} al ${fechaLarga(ausencia.fechaFin)}.${
-        respuesta.trim() ? ` "${respuesta.trim()}"` : ""
-      }`,
-    });
-    setResolviendo(null);
-    setRespuesta("");
-    cargar();
+    setGuardando(true);
+    try {
+      await ausenciasApi.resolverAusencia(ausencia.id, estado, respuesta.trim(), adjunto);
+      // Aviso al trabajador con el resultado.
+      await notificacionesApi.crearNotificacion({
+        trabajadorId: ausencia.trabajadorId,
+        tipo: "aviso",
+        titulo: `Solicitud de ${ETIQUETA_TIPO_AUSENCIA[ausencia.tipo].toLowerCase()} ${
+          estado === "aprobada" ? "aprobada" : "rechazada"
+        }`,
+        mensaje: `Del ${fechaLarga(ausencia.fechaInicio)} al ${fechaLarga(ausencia.fechaFin)}.${
+          respuesta.trim() ? ` "${respuesta.trim()}"` : ""
+        }${adjunto ? " (con documento adjunto)" : ""}`,
+      });
+      cerrarModal();
+      cargar();
+    } finally {
+      setGuardando(false);
+    }
   }
 
   const anio = new Date().getFullYear();
@@ -163,6 +198,17 @@ export default function AdminAusencias() {
                   {a.respuesta && (
                     <p className="mt-1 text-xs text-slate-400">Respuesta: {a.respuesta}</p>
                   )}
+                  {a.adjunto && (
+                    <a
+                      href={a.adjunto}
+                      download={a.adjuntoNombre ?? "documento.pdf"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-forge-orange hover:underline"
+                    >
+                      <IconReceipt className="h-3.5 w-3.5" /> {a.adjuntoNombre ?? "Documento adjunto"}
+                    </a>
+                  )}
                   <p className="mt-1 text-xs text-slate-400">Solicitada el {fechaHora(a.creadaEn)}</p>
                 </div>
                 {a.estado === "pendiente" && (
@@ -189,7 +235,7 @@ export default function AdminAusencias() {
 
       <Modal
         open={!!resolviendo}
-        onClose={() => setResolviendo(null)}
+        onClose={cerrarModal}
         title={resolviendo?.estado === "aprobada" ? "Aprobar solicitud" : "Rechazar solicitud"}
       >
         <div className="space-y-4">
@@ -209,15 +255,60 @@ export default function AdminAusencias() {
               onChange={(e) => setRespuesta(e.target.value)}
             />
           </div>
+          <div>
+            <label className="label">Documento adjunto (PDF, opcional)</label>
+            {adjunto ? (
+              <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                <IconReceipt className="h-4 w-4 shrink-0 text-forge-orange" />
+                <span className="min-w-0 flex-1 truncate text-sm text-forge-dark">
+                  {adjunto.adjuntoNombre}
+                </span>
+                <button
+                  onClick={() => setAdjunto(null)}
+                  className="grid h-7 w-7 place-items-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600"
+                  aria-label="Quitar adjunto"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={subiendo}
+                className="btn-ghost mt-1.5 w-full py-2.5 text-sm"
+              >
+                {subiendo ? <Spinner className="h-4 w-4" /> : <IconReceipt className="h-4 w-4" />}
+                {subiendo ? "Cargando…" : "Adjuntar PDF"}
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf"
+              hidden
+              onChange={(e) => onAdjunto(e.target.files?.[0])}
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              Justificante, resolución o parte médico. Lo verá el trabajador en su solicitud.
+            </p>
+          </div>
           <button
             onClick={confirmarResolucion}
+            disabled={guardando}
             className={`btn w-full py-3 text-white ${
               resolviendo?.estado === "aprobada"
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-red-600 hover:bg-red-700"
             }`}
           >
-            {resolviendo?.estado === "aprobada" ? "Confirmar aprobación" : "Confirmar rechazo"}
+            {guardando ? (
+              <Spinner className="h-5 w-5" />
+            ) : resolviendo?.estado === "aprobada" ? (
+              "Confirmar aprobación"
+            ) : (
+              "Confirmar rechazo"
+            )}
           </button>
         </div>
       </Modal>

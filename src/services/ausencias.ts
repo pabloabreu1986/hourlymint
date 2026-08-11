@@ -26,7 +26,7 @@ export async function ausenciasDe(trabajadorId: string): Promise<Ausencia[]> {
 
 export type NuevaAusencia = Omit<
   Ausencia,
-  "id" | "tenantId" | "estado" | "respuesta" | "creadaEn"
+  "id" | "tenantId" | "estado" | "respuesta" | "adjunto" | "adjuntoNombre" | "creadaEn"
 >;
 
 export async function solicitarAusencia(data: NuevaAusencia): Promise<Ausencia> {
@@ -36,6 +36,8 @@ export async function solicitarAusencia(data: NuevaAusencia): Promise<Ausencia> 
     tenantId: tenantActivoId(),
     estado: "pendiente",
     respuesta: null,
+    adjunto: null,
+    adjuntoNombre: null,
     creadaEn: new Date().toISOString(),
     ...data,
   };
@@ -43,18 +45,29 @@ export async function solicitarAusencia(data: NuevaAusencia): Promise<Ausencia> 
   return delay(nueva);
 }
 
+/** Adjunto opcional (PDF como data URL) que el admin sube al resolver. */
+export interface AdjuntoResolucion {
+  adjunto: string;
+  adjuntoNombre: string;
+}
+
 export async function resolverAusencia(
   id: string,
   estado: EstadoAusencia,
-  respuesta: string
+  respuesta: string,
+  adjunto?: AdjuntoResolucion | null
 ): Promise<Ausencia> {
-  if (isSupabaseEnabled) return sb.resolverAusencia(id, estado, respuesta);
+  if (isSupabaseEnabled) return sb.resolverAusencia(id, estado, respuesta, adjunto);
   let out: Ausencia | undefined;
   updateDB((db) => {
     const a = db.ausencias.find((x) => x.id === id);
     if (a) {
       a.estado = estado;
       a.respuesta = respuesta || null;
+      if (adjunto) {
+        a.adjunto = adjunto.adjunto;
+        a.adjuntoNombre = adjunto.adjuntoNombre;
+      }
       out = a;
     }
   });

@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { facturasApi } from "@/services";
 import { ESTADOS_FACTURA, totalFactura } from "@/lib/finanzas";
 import { formatEuro } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { Modal, Spinner } from "@/components/ui";
 import { Combobox } from "@/components/Combobox";
+import { IconAlert } from "@/components/icons";
 import type { Cliente, EstadoFactura, Factura, Obra } from "@/lib/types";
 
 type Draft = {
@@ -20,8 +22,8 @@ type Draft = {
   fechaPago: string;
 };
 
-function draftDe(f: Factura | null, clienteIdFijo?: string): Draft {
-  return {
+function draftDe(f: Factura | null, clienteIdFijo?: string, prefill?: Partial<Draft>): Draft {
+  const base: Draft = {
     clienteId: f?.clienteId ?? clienteIdFijo ?? "",
     obraId: f?.obraId ?? "",
     numero: f?.numero ?? "",
@@ -33,6 +35,8 @@ function draftDe(f: Factura | null, clienteIdFijo?: string): Draft {
     fechaVencimiento: f?.fechaVencimiento ?? "",
     fechaPago: f?.fechaPago ?? "",
   };
+  // El prefill solo aplica al crear (no al editar una factura existente).
+  return f ? base : { ...base, ...prefill };
 }
 
 /**
@@ -42,6 +46,7 @@ function draftDe(f: Factura | null, clienteIdFijo?: string): Draft {
 export default function FacturaForm({
   factura,
   clienteIdFijo,
+  prefill,
   clientes,
   obras,
   onClose,
@@ -49,14 +54,18 @@ export default function FacturaForm({
 }: {
   factura: Factura | null;
   clienteIdFijo?: string;
+  /** Valores iniciales al crear (p. ej. desde un presupuesto). */
+  prefill?: Partial<Draft>;
   clientes: Cliente[];
   obras: Obra[];
   onClose: () => void;
   onSaved: (f: Factura) => void;
 }) {
-  const [d, setD] = useState<Draft>(draftDe(factura, clienteIdFijo));
+  const [d, setD] = useState<Draft>(draftDe(factura, clienteIdFijo, prefill));
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const sinClientes = clientes.length === 0;
 
   const total = totalFactura(Number(d.base) || 0, Number(d.iva) || 0);
   const obrasCliente = useMemo(
@@ -107,6 +116,27 @@ export default function FacturaForm({
   return (
     <Modal open onClose={onClose} title={factura ? "Editar factura" : "Nueva factura"}>
       <div className="space-y-4">
+        {sinClientes && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <IconAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div className="text-sm text-amber-800">
+              <p className="font-semibold">Necesitas un cliente antes de emitir una factura.</p>
+              <p className="mt-0.5 text-amber-700">
+                Una factura se emite a un cliente. Crea al menos uno para continuar.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate("/admin/clientes");
+                }}
+                className="mt-2 font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950"
+              >
+                Ir a crear un cliente →
+              </button>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Cliente</label>
@@ -238,7 +268,7 @@ export default function FacturaForm({
           <button onClick={onClose} className="btn-ghost flex-1">
             Cancelar
           </button>
-          <button onClick={guardar} disabled={guardando} className="btn-primary flex-1">
+          <button onClick={guardar} disabled={guardando || sinClientes} className="btn-primary flex-1 disabled:opacity-50">
             {guardando ? <Spinner className="h-5 w-5" /> : "Guardar"}
           </button>
         </div>

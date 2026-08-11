@@ -69,12 +69,7 @@ export default function AdminFacturas() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-slate-500">{facturas.length} facturas</p>
-        <button
-          onClick={() => setNueva(true)}
-          disabled={clientes.length === 0}
-          className="btn-primary px-4 py-2.5 text-sm disabled:opacity-50"
-          title={clientes.length === 0 ? "Crea antes un cliente" : undefined}
-        >
+        <button onClick={() => setNueva(true)} className="btn-primary px-4 py-2.5 text-sm">
           <IconPlus className="h-4 w-4" /> Nueva factura
         </button>
       </div>

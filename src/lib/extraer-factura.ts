@@ -188,7 +188,7 @@ export function fileADataUrl(file: File): Promise<string> {
   });
 }
 
-async function textoDePdf(file: File): Promise<{ texto: string; pagina1?: HTMLCanvasElement }> {
+export async function textoDePdf(file: File): Promise<{ texto: string; pagina1?: HTMLCanvasElement }> {
   const pdfjs: any = await import("pdfjs-dist");
   const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
