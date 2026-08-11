@@ -130,12 +130,19 @@ function ArticulosTab({
     }
   }
 
+  // El proveedor puede venir como entidad (proveedorId) o como texto en
+  // `precios[]` (Obramat, Leroy Merlin…). Filtramos por el nombre del proveedor.
+  const provSelNombre = proveedores.find((p) => p.id === filtroProv)?.nombre;
+  const tieneProveedor = (a: Articulo, nombre?: string) =>
+    !!nombre &&
+    ((a.precios ?? []).some((pp) => pp.proveedor === nombre) ||
+      proveedores.find((p) => p.id === a.proveedorId)?.nombre === nombre);
   const visibles = articulos.filter((a) =>
     filtroProv === ""
       ? true
       : filtroProv === "__none__"
-        ? !a.proveedorId
-        : a.proveedorId === filtroProv
+        ? !a.proveedorId && (a.precios ?? []).length === 0
+        : tieneProveedor(a, provSelNombre)
   );
 
   return (
