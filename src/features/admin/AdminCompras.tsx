@@ -4,7 +4,8 @@ import { comprasApi, catalogoApi } from "@/services";
 import { formatEuro, fechaCompleta } from "@/lib/format";
 import { hoyISO } from "@/lib/seed";
 import { Badge, Cargando } from "@/components/ui";
-import { IconPlus, IconReceipt } from "@/components/icons";
+import { confirmar } from "@/components/confirm";
+import { IconPlus, IconReceipt, IconTrash } from "@/components/icons";
 import type { FacturaProveedor, Proveedor } from "@/lib/types";
 
 const BADGE: Record<FacturaProveedor["estado"], { label: string; color: "slate" | "amber" | "green" }> = {
@@ -29,6 +30,20 @@ export default function AdminCompras() {
 
   const nombreProv = (id: string | null) =>
     id ? proveedores.find((p) => p.id === id)?.nombre ?? "—" : "—";
+
+  async function eliminar(c: FacturaProveedor) {
+    if (
+      !(await confirmar({
+        titulo: "Eliminar factura de proveedor",
+        mensaje: `Se eliminará la factura ${c.numero || "(sin número)"}. Esta acción no se puede deshacer.`,
+        confirmar: "Eliminar",
+        peligro: true,
+      }))
+    )
+      return;
+    await comprasApi.eliminarCompra(c.id);
+    cargar();
+  }
 
   async function nueva() {
     const c = await comprasApi.crearCompra({
@@ -63,7 +78,9 @@ export default function AdminCompras() {
           <p className="text-sm text-slate-400">Sin facturas de proveedor todavía.</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <>
+        {/* Escritorio: tabla */}
+        <div className="card hidden overflow-hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -73,6 +90,7 @@ export default function AdminCompras() {
                   <th className="px-4 py-3 font-semibold">Fecha</th>
                   <th className="px-4 py-3 text-right font-semibold">Total</th>
                   <th className="px-4 py-3 font-semibold">Estado</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -91,12 +109,59 @@ export default function AdminCompras() {
                     <td className="px-4 py-3">
                       <Badge color={BADGE[c.estado].color}>{BADGE[c.estado].label}</Badge>
                     </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => eliminar(c)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        aria-label="Eliminar factura de proveedor"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+
+        {/* Móvil: tarjetas con eliminar visible */}
+        <div className="space-y-3 md:hidden">
+          {items.map((c) => (
+            <div key={c.id} className="card p-4">
+              <div className="flex items-start justify-between gap-2">
+                <button
+                  onClick={() => navigate(`/admin/compras/${c.id}`)}
+                  className="min-w-0 text-left"
+                >
+                  <p className="font-bold text-forge-dark">{c.numero || "—"}</p>
+                  <p className="truncate text-sm text-slate-500">{nombreProv(c.proveedorId)}</p>
+                </button>
+                <Badge color={BADGE[c.estado].color}>{BADGE[c.estado].label}</Badge>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">{fechaCompleta(c.fecha)}</span>
+                <span className="font-bold text-forge-dark">{formatEuro(c.total)}</span>
+              </div>
+              <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+                <button
+                  onClick={() => navigate(`/admin/compras/${c.id}`)}
+                  className="btn-ghost flex-1 py-2 text-sm"
+                >
+                  Abrir
+                </button>
+                <button
+                  onClick={() => eliminar(c)}
+                  className="btn border border-red-200 bg-white px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  aria-label="Eliminar factura de proveedor"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
     </div>
   );
