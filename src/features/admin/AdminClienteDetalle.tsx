@@ -146,9 +146,19 @@ export default function AdminClienteDetalle() {
               {cliente.nombre} {cliente.apellidos}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {[cliente.telefono, cliente.email, cliente.direccion].filter(Boolean).join(" · ") ||
+              {[cliente.telefono, cliente.email].filter(Boolean).join(" · ") ||
                 "Sin datos de contacto"}
             </p>
+            {cliente.cif && (
+              <p className="mt-0.5 text-sm text-slate-500">CIF/NIF: {cliente.cif}</p>
+            )}
+            {[cliente.direccion, cliente.cp, cliente.ciudad, cliente.poblacion].some(Boolean) && (
+              <p className="mt-0.5 text-sm text-slate-500">
+                {[cliente.direccion, [cliente.cp, cliente.ciudad].filter(Boolean).join(" "), cliente.poblacion]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge color="slate">Captación: {labelCanal(cliente.canal)}</Badge>
               {cliente.canalDetalle && (

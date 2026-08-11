@@ -7,9 +7,13 @@ import type { CanalCaptacion, Cliente } from "@/lib/types";
 type Draft = {
   nombre: string;
   apellidos: string;
+  cif: string;
   telefono: string;
   email: string;
   direccion: string;
+  cp: string;
+  ciudad: string;
+  poblacion: string;
   canal: CanalCaptacion;
   canalDetalle: string;
   notas: string;
@@ -20,9 +24,13 @@ function draftDe(c: Cliente | null): Draft {
   return {
     nombre: c?.nombre ?? "",
     apellidos: c?.apellidos ?? "",
+    cif: c?.cif ?? "",
     telefono: c?.telefono ?? "",
     email: c?.email ?? "",
     direccion: c?.direccion ?? "",
+    cp: c?.cp ?? "",
+    ciudad: c?.ciudad ?? "",
+    poblacion: c?.poblacion ?? "",
     canal: c?.canal ?? "referencia",
     canalDetalle: c?.canalDetalle ?? "",
     notas: c?.notas ?? "",
@@ -80,6 +88,15 @@ export default function ClienteForm({
             />
           </div>
         </div>
+        <div>
+          <label className="label">CIF / NIF</label>
+          <input
+            className="field mt-1.5 uppercase"
+            placeholder="B12345678 / 12345678Z"
+            value={d.cif}
+            onChange={(e) => setD({ ...d, cif: e.target.value })}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Teléfono</label>
@@ -99,12 +116,40 @@ export default function ClienteForm({
           </div>
         </div>
         <div>
-          <label className="label">Dirección de oficinas</label>
+          <label className="label">Dirección (calle y número)</label>
           <input
             className="field mt-1.5"
             value={d.direccion}
             onChange={(e) => setD({ ...d, direccion: e.target.value })}
           />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="label">Código postal</label>
+            <input
+              className="field mt-1.5"
+              inputMode="numeric"
+              placeholder="28001"
+              value={d.cp}
+              onChange={(e) => setD({ ...d, cp: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label">Ciudad</label>
+            <input
+              className="field mt-1.5"
+              value={d.ciudad}
+              onChange={(e) => setD({ ...d, ciudad: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label">Población</label>
+            <input
+              className="field mt-1.5"
+              value={d.poblacion}
+              onChange={(e) => setD({ ...d, poblacion: e.target.value })}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

@@ -251,10 +251,18 @@ export interface Cliente {
   tenantId: string;
   nombre: string;
   apellidos: string;
+  /** CIF (empresa) o NIF (autónomo/particular). */
+  cif?: string;
   telefono: string;
   email: string;
-  /** Dirección de oficinas del cliente. */
+  /** Dirección de oficinas del cliente (calle y número). */
   direccion: string;
+  /** Código postal. */
+  cp?: string;
+  /** Ciudad. */
+  ciudad?: string;
+  /** Población / municipio. */
+  poblacion?: string;
   /** Canal por el que llegó el cliente. */
   canal: CanalCaptacion;
   /** Detalle del canal: qué red, quién lo refirió, etc. */
