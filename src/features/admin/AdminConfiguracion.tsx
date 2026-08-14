@@ -4,7 +4,113 @@ import { fijarTenant, tenantActual } from "@/lib/branding";
 import { useAuth } from "@/context/AuthContext";
 import { tenantApi } from "@/services";
 import { Modal, Spinner } from "@/components/ui";
-import { IconSettings, IconTrash, IconBox, IconCheck, IconMegaphone } from "@/components/icons";
+import type { DatosFiscales } from "@/lib/types";
+import { IconSettings, IconTrash, IconBox, IconCheck, IconMegaphone, IconReceipt } from "@/components/icons";
+
+/** Datos fiscales/legales de la empresa (aparecen en presupuestos y facturas). */
+function DatosFacturacion() {
+  const [f, setF] = useState<DatosFiscales | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+
+  useEffect(() => {
+    tenantApi.getTenant().then((t) =>
+      setF({
+        razonSocial: t.fiscal?.razonSocial ?? t.nombre,
+        nif: t.fiscal?.nif ?? "",
+        direccion: t.fiscal?.direccion ?? "",
+        cp: t.fiscal?.cp ?? "",
+        ciudad: t.fiscal?.ciudad ?? "",
+        provincia: t.fiscal?.provincia ?? "",
+        iban: t.fiscal?.iban ?? "",
+        formaPago: t.fiscal?.formaPago ?? "",
+        ivaDefecto: t.fiscal?.ivaDefecto ?? 21,
+        textoLegal: t.fiscal?.textoLegal ?? "",
+      })
+    );
+  }, []);
+
+  if (!f) return null;
+  const set = (patch: Partial<DatosFiscales>) => {
+    setF({ ...f, ...patch });
+    setGuardado(false);
+  };
+
+  async function guardar() {
+    if (!f) return;
+    setGuardando(true);
+    try {
+      const t = await tenantApi.getTenant();
+      const guardado = await tenantApi.guardarTenant({ ...t, fiscal: f });
+      fijarTenant(guardado);
+      setGuardado(true);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  const campo = "field mt-1.5";
+  return (
+    <section className="card p-6">
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-forge-orange/10 text-forge-orange">
+          <IconReceipt className="h-6 w-6" />
+        </span>
+        <div>
+          <h2 className="font-bold text-forge-dark">Datos de facturación</h2>
+          <p className="text-sm text-slate-400">
+            Aparecen en la cabecera y el pie de tus presupuestos y facturas.
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="label">Razón social</label>
+          <input className={campo} value={f.razonSocial} onChange={(e) => set({ razonSocial: e.target.value })} placeholder="FORGEVIA, S.L." />
+        </div>
+        <div>
+          <label className="label">NIF / CIF</label>
+          <input className={campo} value={f.nif} onChange={(e) => set({ nif: e.target.value })} placeholder="B12345678" />
+        </div>
+        <div>
+          <label className="label">IBAN</label>
+          <input className={campo} value={f.iban} onChange={(e) => set({ iban: e.target.value })} placeholder="ES00 0000 0000 0000 0000 0000" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Domicilio fiscal</label>
+          <input className={campo} value={f.direccion} onChange={(e) => set({ direccion: e.target.value })} placeholder="Calle, número, planta…" />
+        </div>
+        <div>
+          <label className="label">Código postal</label>
+          <input className={campo} value={f.cp} onChange={(e) => set({ cp: e.target.value })} placeholder="28010" />
+        </div>
+        <div>
+          <label className="label">Ciudad</label>
+          <input className={campo} value={f.ciudad} onChange={(e) => set({ ciudad: e.target.value })} placeholder="Madrid" />
+        </div>
+        <div>
+          <label className="label">Provincia</label>
+          <input className={campo} value={f.provincia} onChange={(e) => set({ provincia: e.target.value })} placeholder="Madrid" />
+        </div>
+        <div>
+          <label className="label">IVA por defecto (%)</label>
+          <input type="number" className={campo} value={f.ivaDefecto ?? 21} onChange={(e) => set({ ivaDefecto: Number(e.target.value) || 0 })} />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Forma de pago</label>
+          <input className={campo} value={f.formaPago} onChange={(e) => set({ formaPago: e.target.value })} placeholder="Inmediata (Transferencia)" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Texto legal al pie (RGPD)</label>
+          <textarea className={campo} rows={3} value={f.textoLegal} onChange={(e) => set({ textoLegal: e.target.value })} placeholder="Cláusula de protección de datos…" />
+        </div>
+      </div>
+      <button onClick={guardar} disabled={guardando} className="btn-primary mt-4 px-5 py-2.5">
+        {guardando ? <Spinner className="h-5 w-5" /> : guardado ? (<><IconCheck className="h-5 w-5" /> Guardado</>) : "Guardar datos"}
+      </button>
+    </section>
+  );
+}
 
 /** Contacto de la web pública del cliente (lo edita su propio admin). */
 function ContactoWeb() {
@@ -135,6 +241,8 @@ export default function AdminConfiguracion() {
           </li>
         </ul>
       </section>
+
+      <DatosFacturacion />
 
       <ContactoWeb />
 

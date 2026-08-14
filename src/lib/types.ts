@@ -176,6 +176,27 @@ export interface Dosier {
   bloques: BloqueDosier[];
 }
 
+/** Datos fiscales/legales de la empresa (para presupuestos y facturas). */
+export interface DatosFiscales {
+  /** Razón social: "FORGEVIA, S.L." */
+  razonSocial: string;
+  /** CIF/NIF de la empresa. */
+  nif: string;
+  /** Domicilio fiscal (calle y número). */
+  direccion: string;
+  cp: string;
+  ciudad: string;
+  provincia?: string;
+  /** IBAN para transferencias. */
+  iban?: string;
+  /** Forma de pago por defecto: "Inmediata (Transferencia)". */
+  formaPago?: string;
+  /** % de IVA por defecto en presupuestos (por defecto 21). */
+  ivaDefecto?: number;
+  /** Texto legal al pie (RGPD/LOPD). */
+  textoLegal?: string;
+}
+
 export interface Tenant {
   id: string;
   /** Subdominio del cliente: `<slug>`.fichaloop.com */
@@ -197,6 +218,8 @@ export interface Tenant {
   web?: SeccionWeb[];
   /** Dosier corporativo del cliente (undefined = aún sin crear). */
   dosier?: Dosier;
+  /** Datos fiscales/legales para presupuestos y facturas. */
+  fiscal?: DatosFiscales;
 }
 
 export interface Usuario {

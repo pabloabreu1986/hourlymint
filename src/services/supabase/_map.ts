@@ -46,6 +46,7 @@ export const toTenant = (r: any): Tenant => ({
   funciones: r.funciones ?? [],
   web: r.web ?? [],
   dosier: r.dosier ?? undefined,
+  fiscal: r.fiscal ?? undefined,
 });
 export const fromTenant = (t: Partial<Tenant>): any => ({
   ...(t.id !== undefined && { id: t.id }),
@@ -59,6 +60,7 @@ export const fromTenant = (t: Partial<Tenant>): any => ({
   ...(t.funciones !== undefined && { funciones: t.funciones }),
   ...(t.web !== undefined && { web: t.web }),
   ...(t.dosier !== undefined && { dosier: t.dosier ?? null }),
+  ...(t.fiscal !== undefined && { fiscal: t.fiscal ?? null }),
 });
 
 // ── Usuario ──
