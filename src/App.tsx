@@ -81,6 +81,10 @@ import AdminObras from "@/features/admin/AdminObras";
 import AdminTrabajadores from "@/features/admin/AdminTrabajadores";
 import AdminClientes from "@/features/admin/AdminClientes";
 import AdminClienteDetalle from "@/features/admin/AdminClienteDetalle";
+import DashboardFincas from "@/features/admin/DashboardFincas";
+import AdminComunidades from "@/features/admin/AdminComunidades";
+import AdminOportunidades from "@/features/admin/AdminOportunidades";
+import AdminSeguimiento from "@/features/admin/AdminSeguimiento";
 import AdminFacturas from "@/features/admin/AdminFacturas";
 import AdminCatalogo from "@/features/admin/AdminCatalogo";
 import AdminPresupuestos from "@/features/admin/AdminPresupuestos";
@@ -149,6 +153,12 @@ function LoginPublico() {
   if (usuario) return <Navigate to={inicioDe(usuario.rol)} replace />;
   if (!esApex()) return <Login />;
   return <LoginOperador />;
+}
+
+/** Panel de inicio (`/admin`) según el sector del cliente: control de obra
+ * (Dashboard operativo) o administración de fincas (panel CRM). */
+function PanelInicio() {
+  return tenantActual().sector === "fincas" ? <DashboardFincas /> : <Dashboard />;
 }
 
 function Guard({ rol, children }: { rol: Rol | Rol[]; children: ReactNode }) {
@@ -276,11 +286,14 @@ export default function App() {
           </Guard>
         }
       >
-        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin" element={<PanelInicio />} />
         <Route path="/admin/obras" element={<FuncionRoute clave="obras"><AdminObras /></FuncionRoute>} />
         <Route path="/admin/trabajadores" element={<FuncionRoute clave="trabajadores"><AdminTrabajadores /></FuncionRoute>} />
         <Route path="/admin/clientes" element={<FuncionRoute clave="clientes"><AdminClientes /></FuncionRoute>} />
         <Route path="/admin/clientes/:id" element={<FuncionRoute clave="clientes"><AdminClienteDetalle /></FuncionRoute>} />
+        <Route path="/admin/comunidades" element={<FuncionRoute clave="comunidades"><AdminComunidades /></FuncionRoute>} />
+        <Route path="/admin/oportunidades" element={<FuncionRoute clave="oportunidades"><AdminOportunidades /></FuncionRoute>} />
+        <Route path="/admin/seguimiento" element={<FuncionRoute clave="seguimiento"><AdminSeguimiento /></FuncionRoute>} />
         <Route path="/admin/facturas" element={<FuncionRoute clave="facturas"><AdminFacturas /></FuncionRoute>} />
         <Route path="/admin/presupuestos" element={<FuncionRoute clave="presupuestos"><AdminPresupuestos /></FuncionRoute>} />
         <Route path="/admin/presupuestos/:id" element={<FuncionRoute clave="presupuestos"><AdminPresupuestoEditor /></FuncionRoute>} />

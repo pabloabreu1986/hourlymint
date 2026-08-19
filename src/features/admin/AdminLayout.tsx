@@ -38,6 +38,8 @@ import {
   IconShield,
   IconHelp,
   IconBriefcase,
+  IconBuilding,
+  IconPhone,
   IconMenu,
   IconX,
 } from "@/components/icons";
@@ -67,6 +69,9 @@ const NAV_SECCIONES: { titulo: string | null; items: NavItem[] }[] = [
     titulo: "Comercial",
     items: [
       { to: "/admin/clientes", label: "Clientes", icon: IconBriefcase },
+      { to: "/admin/comunidades", label: "Comunidades", icon: IconBuilding },
+      { to: "/admin/oportunidades", label: "Oportunidades", icon: IconTarget },
+      { to: "/admin/seguimiento", label: "Seguimiento", icon: IconPhone },
       { to: "/admin/facturas", label: "Facturas", icon: IconReceipt },
     ],
   },

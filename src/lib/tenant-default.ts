@@ -1,8 +1,8 @@
 // Módulo hoja para que tanto `seed.ts` como `branding.ts` puedan usar el
 // tenant por defecto (y el constructor de tenants nuevos) sin crear un
 // ciclo de imports (branding → db → seed → …).
-import type { Tenant } from "./types";
-import { FUNCIONES_DISPONIBLES, FUNCIONES_FIJAS } from "./funciones";
+import type { SectorTenant, Tenant } from "./types";
+import { FUNCIONES_DISPONIBLES, funcionesPorSector } from "./funciones";
 
 /** Cliente #1 (FORGEVIA). Sus valores son EXACTAMENTE los que la app
  * tenía hardcodeados, para que el aspecto no cambie. Es también la
@@ -24,6 +24,7 @@ export const FORGEVIA_TENANT: Tenant = {
     orange400: "#D08853",
     canvas: "#F4F5F7",
   },
+  sector: "obra",
   // Todas las funciones activas: FORGEVIA es el cliente completo y, además,
   // este objeto es el FALLBACK si la tabla de tenants aún no existe en
   // Supabase; con la lista completa el menú nunca se queda corto.
@@ -59,9 +60,19 @@ export function slugify(texto: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/** Sufijo del nombre completo según el sector/vertical del cliente. */
+export function sufijoSector(sector: SectorTenant): string {
+  return sector === "fincas" ? "Administración de Fincas" : "Control de Obra";
+}
+
 /** Construye un tenant nuevo con la plantilla por defecto, evitando
- * colisiones de slug con los ya ocupados. Compartido por mock y Supabase. */
-export function nuevoTenant(nombreCorto: string, slugsOcupados: string[] = []): Tenant {
+ * colisiones de slug con los ya ocupados. Compartido por mock y Supabase.
+ * El `sector` decide el sufijo del nombre y las funciones preactivadas. */
+export function nuevoTenant(
+  nombreCorto: string,
+  slugsOcupados: string[] = [],
+  sector: SectorTenant = "obra"
+): Tenant {
   const base = nombreCorto.trim() || "Cliente";
   let slug = slugify(base) || "cliente";
   if (slugsOcupados.includes(slug)) slug = `${slug}-${rid().slice(0, 4)}`;
@@ -70,11 +81,12 @@ export function nuevoTenant(nombreCorto: string, slugsOcupados: string[] = []): 
     // resuelve de forma síncrona desde el subdominio (ver host.tenantActivoId).
     id: slug,
     slug,
-    nombre: `${base} · Control de Obra`,
+    nombre: `${base} · ${sufijoSector(sector)}`,
     nombreCorto: base,
     eslogan: "",
     logoUrl: null,
     colores: { ...COLORES_POR_DEFECTO },
-    funciones: [...FUNCIONES_FIJAS],
+    sector,
+    funciones: funcionesPorSector(sector),
   };
 }

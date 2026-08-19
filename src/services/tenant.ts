@@ -5,7 +5,7 @@ import { loadDB, updateDB, delay, uid } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import { resolverTenant } from "@/lib/branding";
 import { nuevoTenant } from "@/lib/tenant-default";
-import type { Dosier, Tenant } from "@/lib/types";
+import type { Dosier, SectorTenant, Tenant } from "@/lib/types";
 import * as sb from "./supabase/tenant";
 
 /** Tenant activo (según subdominio; en local, FORGEVIA). */
@@ -71,11 +71,15 @@ export async function actualizarDosier(dosier: Dosier): Promise<Tenant> {
   return guardarTenant({ ...t, dosier });
 }
 
-/** Crea un cliente nuevo con la plantilla por defecto y lo persiste. */
-export async function crearTenant(nombreCorto: string): Promise<Tenant> {
-  if (isSupabaseEnabled) return sb.crearTenant(nombreCorto);
+/** Crea un cliente nuevo con la plantilla por defecto y lo persiste.
+ * El `sector` decide el nombre y las funciones preactivadas (obra vs fincas). */
+export async function crearTenant(
+  nombreCorto: string,
+  sector: SectorTenant = "obra"
+): Promise<Tenant> {
+  if (isSupabaseEnabled) return sb.crearTenant(nombreCorto, sector);
   const ocupados = loadDB().tenants.map((t) => t.slug);
-  const tenant = nuevoTenant(nombreCorto, ocupados);
+  const tenant = nuevoTenant(nombreCorto, ocupados, sector);
   updateDB((d) => d.tenants.push(tenant));
   return delay(tenant);
 }

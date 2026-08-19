@@ -5,7 +5,7 @@
 import { sb } from "@/lib/supabase";
 import { slugTenant } from "@/lib/host";
 import { FORGEVIA_TENANT, nuevoTenant } from "@/lib/tenant-default";
-import type { Tenant } from "@/lib/types";
+import type { SectorTenant, Tenant } from "@/lib/types";
 import { toTenant, fromTenant, check } from "./_map";
 
 /** Tenant activo, resuelto por subdominio. Apex → cliente por defecto. */
@@ -60,9 +60,12 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
   }
 }
 
-export async function crearTenant(nombreCorto: string): Promise<Tenant> {
+export async function crearTenant(
+  nombreCorto: string,
+  sector: SectorTenant = "obra"
+): Promise<Tenant> {
   const ocupados = (await listTenants()).map((t) => t.slug);
-  const tenant = nuevoTenant(nombreCorto, ocupados);
+  const tenant = nuevoTenant(nombreCorto, ocupados, sector);
   check(await sb().from("tenants").insert(fromTenant(tenant)));
   return tenant;
 }

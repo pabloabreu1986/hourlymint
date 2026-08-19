@@ -3,6 +3,8 @@
 export * as authApi from "./auth";
 export * as usuariosApi from "./usuarios";
 export * as clientesApi from "./clientes";
+export * as oportunidadesApi from "./oportunidades";
+export * as seguimientoApi from "./seguimiento";
 export * as facturasApi from "./facturas";
 export * as catalogoApi from "./catalogo";
 export * as presupuestosApi from "./presupuestos";

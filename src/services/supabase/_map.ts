@@ -4,6 +4,8 @@
 import type {
   Usuario,
   Cliente,
+  Oportunidad,
+  Interaccion,
   Factura,
   Proveedor,
   Articulo,
@@ -43,6 +45,7 @@ export const toTenant = (r: any): Tenant => ({
   logotipo: r.logotipo ?? undefined,
   logoUrl: r.logo_url ?? null,
   colores: r.colores,
+  sector: r.sector ?? "obra",
   funciones: r.funciones ?? [],
   web: r.web ?? [],
   dosier: r.dosier ?? undefined,
@@ -57,6 +60,7 @@ export const fromTenant = (t: Partial<Tenant>): any => ({
   ...(t.logotipo !== undefined && { logotipo: t.logotipo ?? null }),
   ...(t.logoUrl !== undefined && { logo_url: t.logoUrl }),
   ...(t.colores !== undefined && { colores: t.colores }),
+  ...(t.sector !== undefined && { sector: t.sector }),
   ...(t.funciones !== undefined && { funciones: t.funciones }),
   ...(t.web !== undefined && { web: t.web }),
   ...(t.dosier !== undefined && { dosier: t.dosier ?? null }),
@@ -525,6 +529,22 @@ export const toCliente = (r: any): Cliente => ({
   notas: r.notas ?? "",
   activo: r.activo ?? true,
   createdAt: r.created_at,
+  // CRM / tipología (vertical fincas)
+  tipo: r.tipo ?? "particular",
+  estadoComercial: r.estado_comercial ?? undefined,
+  administradorId: r.administrador_id ?? null,
+  responsableId: r.responsable_id ?? null,
+  nombreAdministracion: r.nombre_administracion ?? "",
+  personaContacto: r.persona_contacto ?? "",
+  cargo: r.cargo ?? "",
+  zona: r.zona ?? "",
+  web: r.web ?? "",
+  numComunidades: r.num_comunidades ?? undefined,
+  fechaPrimerContacto: r.fecha_primer_contacto ?? null,
+  fechaUltimoContacto: r.fecha_ultimo_contacto ?? null,
+  proximaAccion: r.proxima_accion ?? "",
+  fechaProximaAccion: r.fecha_proxima_accion ?? null,
+  dossierEnviado: r.dossier_enviado ?? false,
 });
 export const fromCliente = (c: Partial<Cliente>): any => ({
   ...(c.id !== undefined && { id: c.id }),
@@ -543,6 +563,75 @@ export const fromCliente = (c: Partial<Cliente>): any => ({
   ...(c.notas !== undefined && { notas: c.notas }),
   ...(c.activo !== undefined && { activo: c.activo }),
   ...(c.createdAt !== undefined && { created_at: c.createdAt }),
+  ...(c.tipo !== undefined && { tipo: c.tipo }),
+  ...(c.estadoComercial !== undefined && { estado_comercial: c.estadoComercial }),
+  ...(c.administradorId !== undefined && { administrador_id: c.administradorId }),
+  ...(c.responsableId !== undefined && { responsable_id: c.responsableId }),
+  ...(c.nombreAdministracion !== undefined && { nombre_administracion: c.nombreAdministracion }),
+  ...(c.personaContacto !== undefined && { persona_contacto: c.personaContacto }),
+  ...(c.cargo !== undefined && { cargo: c.cargo }),
+  ...(c.zona !== undefined && { zona: c.zona }),
+  ...(c.web !== undefined && { web: c.web }),
+  ...(c.numComunidades !== undefined && { num_comunidades: c.numComunidades }),
+  ...(c.fechaPrimerContacto !== undefined && { fecha_primer_contacto: c.fechaPrimerContacto }),
+  ...(c.fechaUltimoContacto !== undefined && { fecha_ultimo_contacto: c.fechaUltimoContacto }),
+  ...(c.proximaAccion !== undefined && { proxima_accion: c.proximaAccion }),
+  ...(c.fechaProximaAccion !== undefined && { fecha_proxima_accion: c.fechaProximaAccion }),
+  ...(c.dossierEnviado !== undefined && { dossier_enviado: c.dossierEnviado }),
+});
+
+// ── Oportunidad (CRM fincas) ──
+export const toOportunidad = (r: any): Oportunidad => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  clienteId: r.cliente_id,
+  administradorId: r.administrador_id ?? null,
+  titulo: r.titulo ?? "",
+  descripcion: r.descripcion ?? "",
+  estado: r.estado ?? "recibida",
+  fecha: r.fecha,
+  fechaVisita: r.fecha_visita ?? null,
+  presupuestoId: r.presupuesto_id ?? null,
+  obraId: r.obra_id ?? null,
+  importeEstimado: r.importe_estimado != null ? Number(r.importe_estimado) : undefined,
+  createdAt: r.created_at,
+});
+export const fromOportunidad = (o: Partial<Oportunidad>): any => ({
+  ...(o.id !== undefined && { id: o.id }),
+  ...(o.tenantId !== undefined && { tenant_id: o.tenantId }),
+  ...(o.clienteId !== undefined && { cliente_id: o.clienteId }),
+  ...(o.administradorId !== undefined && { administrador_id: o.administradorId }),
+  ...(o.titulo !== undefined && { titulo: o.titulo }),
+  ...(o.descripcion !== undefined && { descripcion: o.descripcion }),
+  ...(o.estado !== undefined && { estado: o.estado }),
+  ...(o.fecha !== undefined && { fecha: o.fecha }),
+  ...(o.fechaVisita !== undefined && { fecha_visita: o.fechaVisita }),
+  ...(o.presupuestoId !== undefined && { presupuesto_id: o.presupuestoId }),
+  ...(o.obraId !== undefined && { obra_id: o.obraId }),
+  ...(o.importeEstimado !== undefined && { importe_estimado: o.importeEstimado }),
+  ...(o.createdAt !== undefined && { created_at: o.createdAt }),
+});
+
+// ── Interacción (seguimiento comercial) ──
+export const toInteraccion = (r: any): Interaccion => ({
+  id: r.id,
+  tenantId: r.tenant_id,
+  clienteId: r.cliente_id,
+  oportunidadId: r.oportunidad_id ?? null,
+  tipo: r.tipo ?? "nota",
+  fecha: r.fecha,
+  resumen: r.resumen ?? "",
+  createdAt: r.created_at,
+});
+export const fromInteraccion = (i: Partial<Interaccion>): any => ({
+  ...(i.id !== undefined && { id: i.id }),
+  ...(i.tenantId !== undefined && { tenant_id: i.tenantId }),
+  ...(i.clienteId !== undefined && { cliente_id: i.clienteId }),
+  ...(i.oportunidadId !== undefined && { oportunidad_id: i.oportunidadId }),
+  ...(i.tipo !== undefined && { tipo: i.tipo }),
+  ...(i.fecha !== undefined && { fecha: i.fecha }),
+  ...(i.resumen !== undefined && { resumen: i.resumen }),
+  ...(i.createdAt !== undefined && { created_at: i.createdAt }),
 });
 
 // ── Factura ──

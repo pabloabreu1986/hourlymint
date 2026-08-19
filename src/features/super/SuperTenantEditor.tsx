@@ -7,7 +7,7 @@ import { slugify } from "@/lib/tenant-default";
 import { generarUsuario } from "@/lib/usuario-handle";
 import { fileToThumbDataURL } from "@/lib/image";
 import { errorDeTamano } from "@/lib/files";
-import type { Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
+import type { SectorTenant, Tenant, TenantColores, Usuario, Rol } from "@/lib/types";
 import { Cargando, EmptyState, Spinner, Avatar, Modal } from "@/components/ui";
 import { confirmar } from "@/components/confirm";
 import { IconChevronLeft, IconCheck, IconTrash, IconCamera, IconPlus } from "@/components/icons";
@@ -270,6 +270,37 @@ export default function SuperTenantEditor() {
             </div>
           ))}
         </div>
+      </Seccion>
+
+      {/* Sector / vertical */}
+      <Seccion titulo="Tipo de empresa (sector)">
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { valor: "obra", label: "Control de obra", desc: "Obras, partes, fichajes" },
+            { valor: "fincas", label: "Administración de fincas", desc: "CRM: administradores y comunidades" },
+          ] as { valor: SectorTenant; label: string; desc: string }[]).map((s) => {
+            const on = (t.sector ?? "obra") === s.valor;
+            return (
+              <button
+                key={s.valor}
+                type="button"
+                onClick={() => set("sector", s.valor)}
+                className={`rounded-xl border p-3 text-left transition ${
+                  on
+                    ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <p className="text-sm font-bold text-slate-800">{s.label}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{s.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-slate-400">
+          Decide el <b>panel de inicio</b> del cliente (control de obra vs. administración de
+          fincas). Activa abajo las funciones que quieras mostrarle.
+        </p>
       </Seccion>
 
       {/* Funciones */}

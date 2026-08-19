@@ -11,6 +11,11 @@ export type Rol = "superadmin" | "directivo" | "admin" | "trabajador";
 
 export type EstadoObra = "en_curso" | "pendiente" | "finalizada";
 
+/** Sector / vertical de negocio de un cliente white-label. Decide el panel
+ * de inicio y el enfoque de la app: "obra" = control de obra (por defecto);
+ * "fincas" = administración de fincas (CRM). Ver vertical-fincas. */
+export type SectorTenant = "obra" | "fincas";
+
 // ─── White-label / multi-tenant ──────────────────────────────
 // Cada cliente (tenant) tiene su marca. Hoy la configuración vive en
 // código (src/lib/branding.ts) y la administra el operador de la
@@ -212,6 +217,9 @@ export interface Tenant {
   /** URL a un logo subido; si es null se usa la marca SVG por defecto */
   logoUrl: string | null;
   colores: TenantColores;
+  /** Sector / vertical del cliente. Decide el panel de inicio (`/admin`), el
+   * wording y qué funciones vienen preactivadas. Ausente = "obra" (legado). */
+  sector?: SectorTenant;
   /** Feature flags: módulos activos para este cliente (uso posterior) */
   funciones: string[];
   /** Mini-web pública del cliente (vacía = sin web, raíz muestra login). */
@@ -269,6 +277,29 @@ export type CanalCaptacion =
   | "repeticion"
   | "otro";
 
+/** Tipo de cliente/contacto (CRM). Obligatorio en la ficha. Segmenta el
+ * CRM sin duplicarlo: una "comunidad" y un "admin_fincas" son Clientes con
+ * distinto `tipo`. Ver vertical-fincas. */
+export type TipoContacto =
+  | "particular"
+  | "empresa"
+  | "admin_fincas"
+  | "comunidad"
+  | "arquitecto"
+  | "inmobiliaria"
+  | "prescriptor";
+
+/** Estado comercial (embudo). Aplica sobre todo a administradores de fincas. */
+export type EstadoComercial =
+  | "prospecto"
+  | "contactado"
+  | "dossier_enviado"
+  | "proveedor_aceptado"
+  | "primera_oportunidad"
+  | "cliente_activo"
+  | "cliente_recurrente"
+  | "descartado";
+
 export interface Cliente {
   id: string;
   tenantId: string;
@@ -292,6 +323,105 @@ export interface Cliente {
   canalDetalle: string;
   notas: string;
   activo: boolean;
+  createdAt: string; // ISO
+
+  // ── CRM / tipología (vertical fincas y comercial en general). Todos
+  //    opcionales: los clientes existentes (sin estos campos) siguen válidos.
+  /** Tipo de cliente/contacto. Ausente = "particular" (legado). */
+  tipo?: TipoContacto;
+  /** Estado comercial en el embudo (sobre todo administradores de fincas). */
+  estadoComercial?: EstadoComercial;
+  /** Para tipo="comunidad": id del Cliente `admin_fincas` que la gestiona. */
+  administradorId?: string | null;
+  /** Responsable comercial asignado (id de Usuario), para filtros/ranking. */
+  responsableId?: string | null;
+
+  // ── Ficha específica de Administrador de fincas ──
+  /** Nombre de la administración (si difiere del nombre de contacto). */
+  nombreAdministracion?: string;
+  /** Persona de contacto en la administración. */
+  personaContacto?: string;
+  /** Cargo de la persona de contacto. */
+  cargo?: string;
+  /** Zona de trabajo (barrios/distritos/localidades). */
+  zona?: string;
+  /** Web de la administración/empresa. */
+  web?: string;
+  /** Nº aproximado de comunidades gestionadas (dato declarado). */
+  numComunidades?: number;
+
+  // ── Seguimiento comercial ──
+  /** Fecha del primer contacto YYYY-MM-DD. */
+  fechaPrimerContacto?: string | null;
+  /** Fecha del último contacto YYYY-MM-DD (se actualiza al registrar interacción). */
+  fechaUltimoContacto?: string | null;
+  /** Próxima acción a realizar (texto libre). */
+  proximaAccion?: string;
+  /** Fecha de la próxima acción YYYY-MM-DD (para el aviso de vencida). */
+  fechaProximaAccion?: string | null;
+  /** ¿Se ha enviado el dossier corporativo? */
+  dossierEnviado?: boolean;
+}
+
+// ─── CRM: oportunidades y seguimiento (vertical Administración de Fincas) ──
+// Encadena ADMINISTRADOR > COMUNIDAD > OPORTUNIDAD > VISITA > PRESUPUESTO >
+// OBRA > FACTURA. La oportunidad nace en una comunidad y se atribuye a su
+// administración para medir el negocio que aporta. Ver vertical-fincas.
+
+export type EstadoOportunidad =
+  | "recibida"
+  | "visita"
+  | "presupuesto_solicitado"
+  | "presupuesto_enviado"
+  | "aceptada"
+  | "rechazada";
+
+export interface Oportunidad {
+  id: string;
+  tenantId: string;
+  /** Comunidad (o cliente) de la que parte la oportunidad. */
+  clienteId: string;
+  /** Administración de fincas que la origina (atribución/ranking); null si
+   * la comunidad no tiene administración asociada. */
+  administradorId: string | null;
+  titulo: string;
+  descripcion: string;
+  estado: EstadoOportunidad;
+  /** Fecha de recepción YYYY-MM-DD. */
+  fecha: string;
+  /** Fecha de la visita técnica YYYY-MM-DD (null = sin visita aún). */
+  fechaVisita: string | null;
+  /** Presupuesto vinculado, una vez elaborado. */
+  presupuestoId: string | null;
+  /** Obra generada si se adjudica. */
+  obraId: string | null;
+  /** Importe estimado del trabajo (€). */
+  importeEstimado?: number;
+  createdAt: string; // ISO
+}
+
+export type TipoInteraccion =
+  | "llamada"
+  | "email"
+  | "whatsapp"
+  | "reunion"
+  | "visita"
+  | "dossier"
+  | "presupuesto"
+  | "nota";
+
+/** Una interacción del historial de seguimiento comercial con un contacto. */
+export interface Interaccion {
+  id: string;
+  tenantId: string;
+  /** Contacto (administrador o comunidad) al que se refiere. */
+  clienteId: string;
+  /** Oportunidad relacionada, si aplica. */
+  oportunidadId: string | null;
+  tipo: TipoInteraccion;
+  /** Cuándo ocurrió (ISO). */
+  fecha: string;
+  resumen: string;
   createdAt: string; // ISO
 }
 
@@ -850,6 +980,8 @@ export interface DBSchema {
   tenants: Tenant[];
   usuarios: Usuario[];
   clientes: Cliente[];
+  oportunidades: Oportunidad[];
+  interacciones: Interaccion[];
   facturas: Factura[];
   proveedores: Proveedor[];
   articulos: Articulo[];

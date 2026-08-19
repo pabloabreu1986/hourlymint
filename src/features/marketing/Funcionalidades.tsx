@@ -33,6 +33,8 @@ import {
   IconUser,
   IconHome,
   IconBriefcase,
+  IconBuilding,
+  IconPhone,
 } from "@/components/icons";
 
 // Página "Funcionalidades": explica cada módulo de fichaloop, primero
@@ -111,6 +113,41 @@ const ADMIN: Grupo[] = [
         titulo: "Facturas a cliente",
         texto:
           "Emite facturas por cliente y obra, con su estado de cobro (emitida, pagada, vencida) reflejado en la rentabilidad. Un presupuesto aceptado se convierte en factura en un clic.",
+      },
+    ],
+  },
+  {
+    area: "Administración de fincas (CRM)",
+    funciones: [
+      {
+        icon: IconBriefcase,
+        titulo: "Administradores de fincas",
+        texto:
+          "Una categoría propia de contacto para administraciones de fincas, con su ficha completa: persona de contacto, cargo, zona de trabajo, web, nº de comunidades y estado comercial (de prospecto a cliente recurrente).",
+      },
+      {
+        icon: IconBuilding,
+        titulo: "Comunidades",
+        texto:
+          "Cada administración agrupa sus comunidades de propietarios. Cada comunidad tiene ficha propia con sus obras, presupuestos, facturas e incidencias, vinculada a quien la gestiona.",
+      },
+      {
+        icon: IconTarget,
+        titulo: "Oportunidades",
+        texto:
+          "El embudo comercial completo: de oportunidad recibida a visita, presupuesto enviado y obra adjudicada. Sabes en todo momento qué administrador origina cada trabajo.",
+      },
+      {
+        icon: IconPhone,
+        titulo: "Seguimiento comercial",
+        texto:
+          "Historial cronológico de llamadas, emails, WhatsApp, visitas y dossiers, con próxima acción y fecha. Aviso automático cuando un seguimiento se queda vencido.",
+      },
+      {
+        icon: IconGrid,
+        titulo: "Panel y ranking",
+        texto:
+          "Un panel dedicado con administradores activos, oportunidades, obras adjudicadas, facturación generada y tasa de conversión. Con el ranking TOP de administradores por el negocio que aportan.",
       },
     ],
   },

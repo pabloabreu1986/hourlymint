@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { tenantApi, plataformaApi } from "@/services";
-import type { Tenant } from "@/lib/types";
+import type { SectorTenant, Tenant } from "@/lib/types";
 import { Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import { IconPlus, IconChevronRight, IconObras } from "@/components/icons";
 
@@ -10,6 +10,7 @@ export default function SuperClientes() {
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [nuevoOpen, setNuevoOpen] = useState(false);
   const [nombre, setNombre] = useState("");
+  const [sector, setSector] = useState<SectorTenant>("obra");
   const [creando, setCreando] = useState(false);
 
   async function cargar() {
@@ -23,7 +24,7 @@ export default function SuperClientes() {
     if (!nombre.trim() || creando) return;
     setCreando(true);
     try {
-      const t = await tenantApi.crearTenant(nombre);
+      const t = await tenantApi.crearTenant(nombre, sector);
       // Publica el subdominio en Vercel (best-effort; el editor permite
       // reintentarlo y ver el estado).
       void plataformaApi.publicarSubdominio(t.slug);
@@ -118,6 +119,34 @@ export default function SuperClientes() {
             />
             <p className="mt-1.5 text-xs text-slate-400">
               Podrás ajustar marca, colores, logo y funciones a continuación.
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600">
+              Tipo de empresa (sector)
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { valor: "obra", label: "Control de obra", desc: "Obras, partes, fichajes" },
+                { valor: "fincas", label: "Administración de fincas", desc: "CRM: administradores y comunidades" },
+              ] as { valor: SectorTenant; label: string; desc: string }[]).map((s) => (
+                <button
+                  key={s.valor}
+                  type="button"
+                  onClick={() => setSector(s.valor)}
+                  className={`rounded-xl border p-3 text-left transition ${
+                    sector === s.valor
+                      ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <p className="text-sm font-bold text-slate-800">{s.label}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">{s.desc}</p>
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-slate-400">
+              Decide el panel de inicio y qué funciones vienen activadas. Se puede cambiar luego.
             </p>
           </div>
           <button

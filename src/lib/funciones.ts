@@ -39,6 +39,9 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "denuncias", label: "Canal de denuncias" },
   // ── Comercial / CRM ──
   { clave: "clientes", label: "Clientes" },
+  { clave: "comunidades", label: "Comunidades" },
+  { clave: "oportunidades", label: "Oportunidades" },
+  { clave: "seguimiento", label: "Seguimiento comercial" },
   { clave: "facturas", label: "Facturas" },
   // ── Presupuestos ──
   { clave: "presupuestos", label: "Presupuestos" },
@@ -57,6 +60,27 @@ export const FUNCIONES_FIJAS = FUNCIONES_DISPONIBLES.filter((f) => f.fija).map(
 const OPCIONALES = new Set(
   FUNCIONES_DISPONIBLES.filter((f) => !f.fija).map((f) => f.clave)
 );
+
+/** Funciones que se preactivan al crear un cliente según su sector/vertical.
+ * El super-admin puede afinar después. "obra" arranca minimal (solo fijas);
+ * "fincas" arranca con la suite CRM de administración de fincas. */
+export function funcionesPorSector(sector: "obra" | "fincas"): string[] {
+  if (sector === "fincas") {
+    return [
+      ...FUNCIONES_FIJAS,
+      "clientes",
+      "comunidades",
+      "oportunidades",
+      "seguimiento",
+      "presupuestos",
+      "catalogo",
+      "facturas",
+      "documentos",
+      "informes",
+    ];
+  }
+  return [...FUNCIONES_FIJAS];
+}
 
 /** Deriva la clave de función a partir de una ruta admin.
  * `/admin` → "dashboard"; `/admin/almacen` → "almacen". */
