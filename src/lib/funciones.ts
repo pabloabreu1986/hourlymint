@@ -28,18 +28,18 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "almacen", label: "Almacén", sectores: ["obra"] },
   { clave: "informes", label: "Informes" },
   { clave: "horas", label: "Horas", sectores: ["obra"] },
-  // ── Suite RRHH (compartida) ──
-  { clave: "ausencias", label: "Ausencias y vacaciones" },
+  // ── Suite RRHH / Talento (gestión de plantilla → solo obra) ──
+  { clave: "ausencias", label: "Ausencias y vacaciones", sectores: ["obra"] },
   { clave: "turnos", label: "Turnos", sectores: ["obra"] },
-  { clave: "gastos", label: "Gastos" },
-  { clave: "nomina", label: "Nómina" },
-  { clave: "documentos", label: "Documentos" },
-  { clave: "evaluaciones", label: "Evaluaciones" },
-  { clave: "metas", label: "Metas y objetivos" },
-  { clave: "onboarding", label: "Onboarding" },
-  { clave: "organigrama", label: "Organigrama" },
-  { clave: "comunicados", label: "Comunicados" },
-  { clave: "denuncias", label: "Canal de denuncias" },
+  { clave: "gastos", label: "Gastos" }, // compartida (gastos comerciales/visitas)
+  { clave: "nomina", label: "Nómina", sectores: ["obra"] },
+  { clave: "documentos", label: "Documentos" }, // compartida
+  { clave: "evaluaciones", label: "Evaluaciones", sectores: ["obra"] },
+  { clave: "metas", label: "Metas y objetivos", sectores: ["obra"] },
+  { clave: "onboarding", label: "Onboarding", sectores: ["obra"] },
+  { clave: "organigrama", label: "Organigrama", sectores: ["obra"] },
+  { clave: "comunicados", label: "Comunicados" }, // compartida
+  { clave: "denuncias", label: "Canal de denuncias" }, // compartida
   // ── Comercial / CRM ──
   { clave: "clientes", label: "Clientes" }, // compartida
   { clave: "comunidades", label: "Comunidades", sectores: ["fincas"] },
@@ -95,6 +95,7 @@ export function funcionesPorSector(sector: "obra" | "fincas"): string[] {
       "catalogo",
       "facturas",
       "documentos",
+      "dosier",
       "informes",
     ];
   }
