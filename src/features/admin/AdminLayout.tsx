@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { notificacionesApi } from "@/services";
 import { tenantActual } from "@/lib/branding";
-import { claveDeRutaAdmin, tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
+import { claveDeRutaAdmin, funcionEnSector, tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/ui";
 import { fechaCompleta, saludo } from "@/lib/format";
@@ -181,9 +181,12 @@ export default function AdminLayout() {
 
   // Filtra el menú por las funciones activas del cliente (tenant) y por los
   // módulos que un directivo le haya habilitado a este usuario admin.
-  const funciones = tenantActual().funciones;
+  const tenant = tenantActual();
+  const funciones = tenant.funciones;
+  const sector = tenant.sector ?? "obra";
   const puedeVer = (to: string) => {
     const clave = claveDeRutaAdmin(to);
+    if (!funcionEnSector(clave, sector)) return false;
     if (!tenantTieneFuncion(funciones, clave)) return false;
     return usuario ? usuarioVeModulo(usuario.rol, usuario.modulos, clave) : true;
   };

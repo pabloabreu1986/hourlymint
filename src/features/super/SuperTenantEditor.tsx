@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { tenantApi, usuariosApi, plataformaApi } from "@/services";
 import { fijarTenant } from "@/lib/branding";
-import { FUNCIONES_DISPONIBLES } from "@/lib/funciones";
+import { funcionesDeSector } from "@/lib/funciones";
 import { slugify } from "@/lib/tenant-default";
 import { generarUsuario } from "@/lib/usuario-handle";
 import { fileToThumbDataURL } from "@/lib/image";
@@ -87,6 +87,14 @@ export default function SuperTenantEditor() {
   const toggleFuncion = (clave: string) => {
     const on = t.funciones.includes(clave);
     set("funciones", on ? t.funciones.filter((f) => f !== clave) : [...t.funciones, clave]);
+  };
+  // Cambia el sector y poda las funciones que solo pertenecen al otro sector
+  // (deja las compartidas y las fijas), para que el menú del cliente quede limpio.
+  const cambiarSector = (nuevo: SectorTenant) => {
+    if ((t.sector ?? "obra") === nuevo) return;
+    const permitidas = new Set(funcionesDeSector(nuevo).map((f) => f.clave));
+    setGuardado(false);
+    setT({ ...t, sector: nuevo, funciones: t.funciones.filter((c) => permitidas.has(c)) });
   };
 
   async function onLogo(file: File | undefined) {
@@ -284,7 +292,7 @@ export default function SuperTenantEditor() {
               <button
                 key={s.valor}
                 type="button"
-                onClick={() => set("sector", s.valor)}
+                onClick={() => cambiarSector(s.valor)}
                 className={`rounded-xl border p-3 text-left transition ${
                   on
                     ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
@@ -306,7 +314,7 @@ export default function SuperTenantEditor() {
       {/* Funciones */}
       <Seccion titulo="Funciones activas">
         <div className="grid gap-2 sm:grid-cols-2">
-          {FUNCIONES_DISPONIBLES.map((f) => {
+          {funcionesDeSector(t.sector ?? "obra").map((f) => {
             const on = f.fija || t.funciones.includes(f.clave);
             return (
               <label

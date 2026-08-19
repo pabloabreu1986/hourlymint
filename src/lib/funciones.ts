@@ -8,26 +8,29 @@ export interface FuncionDef {
   label: string;
   /** No se puede desactivar (siempre presente). */
   fija?: boolean;
+  /** Sectores en los que aplica esta función. `undefined` = compartida
+   * (aparece en todos los sectores). Si se indica, solo aparece en esos. */
+  sectores?: SectorTenant[];
 }
 
 export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
-  // ── Núcleo (siempre activo) ──
+  // ── Núcleo (siempre activo, compartido) ──
   { clave: "dashboard", label: "Dashboard", fija: true },
   { clave: "obras", label: "Obras", fija: true },
   { clave: "trabajadores", label: "Trabajadores", fija: true },
-  // ── Operativa de obra ──
-  { clave: "partes", label: "Partes diarios" },
-  { clave: "fotografias", label: "Fotografías" },
-  { clave: "materiales", label: "Materiales" },
-  { clave: "incidencias", label: "Incidencias" },
-  { clave: "vehiculos", label: "Vehículos" },
-  { clave: "herramientas", label: "Herramientas" },
-  { clave: "almacen", label: "Almacén" },
+  // ── Operativa de obra (solo sector obra) ──
+  { clave: "partes", label: "Partes diarios", sectores: ["obra"] },
+  { clave: "fotografias", label: "Fotografías", sectores: ["obra"] },
+  { clave: "materiales", label: "Materiales", sectores: ["obra"] },
+  { clave: "incidencias", label: "Incidencias", sectores: ["obra"] },
+  { clave: "vehiculos", label: "Vehículos", sectores: ["obra"] },
+  { clave: "herramientas", label: "Herramientas", sectores: ["obra"] },
+  { clave: "almacen", label: "Almacén", sectores: ["obra"] },
   { clave: "informes", label: "Informes" },
-  { clave: "horas", label: "Horas" },
-  // ── Suite RRHH ──
+  { clave: "horas", label: "Horas", sectores: ["obra"] },
+  // ── Suite RRHH (compartida) ──
   { clave: "ausencias", label: "Ausencias y vacaciones" },
-  { clave: "turnos", label: "Turnos" },
+  { clave: "turnos", label: "Turnos", sectores: ["obra"] },
   { clave: "gastos", label: "Gastos" },
   { clave: "nomina", label: "Nómina" },
   { clave: "documentos", label: "Documentos" },
@@ -38,16 +41,16 @@ export const FUNCIONES_DISPONIBLES: FuncionDef[] = [
   { clave: "comunicados", label: "Comunicados" },
   { clave: "denuncias", label: "Canal de denuncias" },
   // ── Comercial / CRM ──
-  { clave: "clientes", label: "Clientes" },
-  { clave: "comunidades", label: "Comunidades" },
-  { clave: "oportunidades", label: "Oportunidades" },
-  { clave: "seguimiento", label: "Seguimiento comercial" },
-  { clave: "facturas", label: "Facturas" },
-  // ── Presupuestos ──
+  { clave: "clientes", label: "Clientes" }, // compartida
+  { clave: "comunidades", label: "Comunidades", sectores: ["fincas"] },
+  { clave: "oportunidades", label: "Oportunidades", sectores: ["fincas"] },
+  { clave: "seguimiento", label: "Seguimiento comercial", sectores: ["fincas"] },
+  { clave: "facturas", label: "Facturas" }, // compartida
+  // ── Presupuestos (compartido) ──
   { clave: "presupuestos", label: "Presupuestos" },
   { clave: "catalogo", label: "Banco de precios" },
   { clave: "compras", label: "Facturas de proveedor" },
-  // ── Marketing ──
+  // ── Marketing (compartido) ──
   { clave: "dosier", label: "Dosier corporativo" },
 ];
 
@@ -60,6 +63,22 @@ export const FUNCIONES_FIJAS = FUNCIONES_DISPONIBLES.filter((f) => f.fija).map(
 const OPCIONALES = new Set(
   FUNCIONES_DISPONIBLES.filter((f) => !f.fija).map((f) => f.clave)
 );
+
+/** Catálogo de funciones que aplican a un sector: las compartidas (sin
+ * `sectores`) más las específicas de ese sector. Lo usa el editor del
+ * super-admin para no mostrar módulos de obra en fincas y viceversa. */
+export function funcionesDeSector(sector: SectorTenant): FuncionDef[] {
+  return FUNCIONES_DISPONIBLES.filter((f) => !f.sectores || f.sectores.includes(sector));
+}
+
+/** ¿La función `clave` aplica a este sector? Las rutas fuera del catálogo
+ * (notificaciones, configuración, perfil) y las funciones compartidas
+ * devuelven true siempre. */
+export function funcionEnSector(clave: string, sector: SectorTenant): boolean {
+  const def = FUNCIONES_DISPONIBLES.find((f) => f.clave === clave);
+  if (!def || !def.sectores) return true;
+  return def.sectores.includes(sector);
+}
 
 /** Funciones que se preactivan al crear un cliente según su sector/vertical.
  * El super-admin puede afinar después. "obra" arranca minimal (solo fijas);
@@ -108,7 +127,7 @@ export function tenantTieneAlguna(funciones: string[], claves: string[]): boolea
 // Además del filtro por cliente (`tenant.funciones`), cada usuario `admin`
 // puede tener un subconjunto de módulos habilitado por un `directivo`.
 
-import type { Rol } from "@/lib/types";
+import type { Rol, SectorTenant } from "@/lib/types";
 
 /** Todas las claves del catálogo (para distinguirlas de rutas sueltas
  * como notificaciones/configuración/perfil, que nunca se restringen). */

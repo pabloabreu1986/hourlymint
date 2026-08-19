@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Cargando } from "@/components/ui";
 import { alertasApi } from "@/services";
 import { tenantActual } from "@/lib/branding";
-import { tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
+import { funcionEnSector, tenantTieneFuncion, usuarioVeModulo } from "@/lib/funciones";
 import { esApex, recordarEspacio } from "@/lib/host";
 import type { Rol } from "@/lib/types";
 import type { ReactNode } from "react";
@@ -188,7 +188,11 @@ function Guard({ rol, children }: { rol: Rol | Rol[]; children: ReactNode }) {
  * o no habilitado para este usuario (permisos por directivo). */
 function FuncionRoute({ clave, children }: { clave: string; children: ReactNode }) {
   const { usuario } = useAuth();
-  if (!tenantTieneFuncion(tenantActual().funciones, clave)) {
+  const tenant = tenantActual();
+  if (!funcionEnSector(clave, tenant.sector ?? "obra")) {
+    return <Navigate to="/admin" replace />;
+  }
+  if (!tenantTieneFuncion(tenant.funciones, clave)) {
     return <Navigate to="/admin" replace />;
   }
   if (usuario && !usuarioVeModulo(usuario.rol, usuario.modulos, clave)) {
