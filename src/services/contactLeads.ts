@@ -12,7 +12,9 @@ export interface ContactoInput {
   telefono: string;
   /** Debe ser true: es la casilla de consentimiento para llamar. */
   consentimiento: boolean;
-  /** Campaña / UTM / referrer desde el que llegó el lead. */
+  /** Campaña de la que llegó (enlace ?c=<id>), si la hay. */
+  campaignId?: string;
+  /** UTM / referrer desde el que llegó el lead (atribución de respaldo). */
   origen?: string;
 }
 
@@ -25,6 +27,7 @@ export async function enviarContacto(input: ContactoInput): Promise<void> {
     telefono: input.telefono,
     consentimiento: input.consentimiento,
     consentimientoAt: new Date().toISOString(),
+    campaignId: input.campaignId || undefined,
     origen: input.origen || undefined,
     atendido: false,
     createdAt: new Date().toISOString(),

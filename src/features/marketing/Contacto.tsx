@@ -31,9 +31,16 @@ function detectarOrigen(): string | undefined {
   return undefined;
 }
 
+/** Id de la campaña del enlace del anuncio (?c=<id>), si viene. */
+function detectarCampana(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return new URLSearchParams(window.location.search).get("c") || undefined;
+}
+
 export default function Contacto() {
   useTitulo("Contacto · fichaloop");
   const origen = useMemo(detectarOrigen, []);
+  const campaignId = useMemo(detectarCampana, []);
 
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -59,6 +66,7 @@ export default function Contacto() {
         nombre: nombre.trim(),
         telefono: telefono.trim(),
         consentimiento,
+        campaignId,
         origen,
       });
       setEnviado(true);

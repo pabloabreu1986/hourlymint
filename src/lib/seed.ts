@@ -55,6 +55,7 @@ export function seedDB(): DBSchema {
 
   return {
     tenants: [forgevia],
+    campanas: [],
     contactLeads: [],
     usuarios: [superadmin, admin],
     clientes: [],

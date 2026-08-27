@@ -974,6 +974,32 @@ export interface Denuncia {
   fecha: string; // ISO
 }
 
+export type PlataformaCampana =
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "google"
+  | "linkedin"
+  | "youtube"
+  | "otra";
+
+/**
+ * Campaña de captación que el super-admin crea desde su consola. Cada
+ * campaña tiene un enlace propio (fichaloop.com/contact?c=<id>) que se
+ * pone como destino del anuncio; los leads que llegan por ese enlace
+ * quedan atribuidos a la campaña.
+ */
+export interface Campana {
+  id: string;
+  nombre: string;
+  plataforma: PlataformaCampana;
+  /** Presupuesto diario invertido, en euros. */
+  presupuestoDia: number;
+  /** Si está corriendo ahora mismo (para atribuir gasto y filtrar). */
+  activa: boolean;
+  createdAt: string; // ISO
+}
+
 /**
  * Lead captado desde la web de captación de la plataforma
  * (fichaloop.com/contact), típicamente tráfico de anuncios en redes
@@ -987,6 +1013,8 @@ export interface ContactLead {
   consentimiento: boolean;
   /** Momento en que otorgó el consentimiento (prueba RGPD). ISO. */
   consentimientoAt: string;
+  /** Campaña de la que llegó (enlace ?c=<id>), si la hay. */
+  campaignId?: string;
   /** De dónde llegó: campaña/UTM o referrer (para atribuir el anuncio). */
   origen?: string;
   /** El super-admin lo marca cuando ya ha contactado a la persona. */
@@ -998,6 +1026,8 @@ export interface DBSchema {
   /** Clientes de la plataforma (white-label). El operador (super-admin)
    * los gestiona desde su panel. Hoy en mock; mañana en la BD. */
   tenants: Tenant[];
+  /** Campañas de captación de la plataforma (super-admin). */
+  campanas: Campana[];
   /** Leads de captación de la plataforma (fichaloop.com/contact). */
   contactLeads: ContactLead[];
   usuarios: Usuario[];
