@@ -12,6 +12,7 @@ import {
   IconPlus,
   IconClipboard,
   IconTrash,
+  IconChevronDown,
 } from "@/components/icons";
 
 const PLATAFORMAS: { valor: PlataformaCampana; label: string }[] = [
@@ -50,6 +51,15 @@ export default function SuperLeads() {
   const [campanas, setCampanas] = useState<Campana[] | null>(null);
   const [leads, setLeads] = useState<ContactLead[] | null>(null);
   const [nuevoOpen, setNuevoOpen] = useState(false);
+  const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
+
+  function alternarAbierta(id: string) {
+    setAbiertas((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }
 
   async function cargar() {
     await campanasApi.asegurarGeneral();
@@ -64,21 +74,25 @@ export default function SuperLeads() {
     cargar();
   }, []);
 
-  const leadsPorCampana = useMemo(() => {
-    const m = new Map<string, number>();
-    (leads ?? []).forEach((l) => {
-      // Los leads sin campaña (tráfico directo o previos) cuentan en la General.
-      const cid = l.campaignId || campanasApi.CAMPANA_GENERAL_ID;
-      m.set(cid, (m.get(cid) ?? 0) + 1);
-    });
-    return m;
-  }, [leads]);
-
   const campanaPorId = useMemo(() => {
     const m = new Map<string, Campana>();
     (campanas ?? []).forEach((c) => m.set(c.id, c));
     return m;
   }, [campanas]);
+
+  // Agrupa los leads bajo su campaña. Los de tráfico directo, los previos
+  // sin campaña y los huérfanos (campaña borrada) caen en la General.
+  const leadsPorCampana = useMemo(() => {
+    const general = campanasApi.CAMPANA_GENERAL_ID;
+    const m = new Map<string, ContactLead[]>();
+    (leads ?? []).forEach((l) => {
+      const cid = l.campaignId && campanaPorId.has(l.campaignId) ? l.campaignId : general;
+      const arr = m.get(cid);
+      if (arr) arr.push(l);
+      else m.set(cid, [l]);
+    });
+    return m;
+  }, [leads, campanaPorId]);
 
   async function copiarLink(c: Campana) {
     const url = linkCampana(c.id);
@@ -98,7 +112,7 @@ export default function SuperLeads() {
   }
 
   async function borrarCampana(c: Campana) {
-    const n = leadsPorCampana.get(c.id) ?? 0;
+    const n = leadsPorCampana.get(c.id)?.length ?? 0;
     const ok = await confirmar({
       titulo: `¿Eliminar "${c.nombre}"?`,
       mensaje:
@@ -124,123 +138,13 @@ export default function SuperLeads() {
   const pendientes = leads.filter((l) => !l.atendido).length;
 
   return (
-    <div className="space-y-8">
-      {/* ── Campañas ── */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900">Campañas</h1>
-            <p className="text-sm text-slate-500">
-              {campanas.length} {campanas.length === 1 ? "campaña" : "campañas"} · cada una con su
-              enlace para el anuncio
-            </p>
-          </div>
-          <button
-            onClick={() => setNuevoOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
-          >
-            <IconPlus className="h-4 w-4" /> Nueva campaña
-          </button>
-        </div>
-
-        {campanas.length === 0 ? (
-          <EmptyState
-            icon={<IconMegaphone className="h-12 w-12" />}
-            titulo="Sin campañas todavía"
-            texto="Crea una campaña para obtener el enlace que pondrás en tu anuncio."
-          />
-        ) : (
-          <div className="space-y-3">
-            {campanas.map((c) => {
-              const n = leadsPorCampana.get(c.id) ?? 0;
-              const gasto = c.presupuestoDia * diasActiva(c.createdAt);
-              const costeLead = n > 0 && c.presupuestoDia > 0 ? gasto / n : null;
-              const esGeneral = c.id === campanasApi.CAMPANA_GENERAL_ID;
-              const caducada = c.fechaFin ? c.fechaFin < hoyISO() : false;
-              return (
-                <div
-                  key={c.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="max-w-full truncate font-bold text-slate-900">{c.nombre}</p>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                          {labelPlataforma(c.plataforma)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                            c.activa
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {c.activa ? "Activa" : "Pausada"}
-                        </span>
-                        {caducada && (
-                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
-                            Fin superado
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-slate-400">
-                        {formatEuro(c.presupuestoDia)}/día · {n}
-                        {c.objetivoLeads ? `/${c.objetivoLeads}` : ""}{" "}
-                        {n === 1 && !c.objetivoLeads ? "lead" : "leads"}
-                        {costeLead != null && <> · ~{formatEuro(costeLead)}/lead</>}
-                        {c.fechaFin && <> · hasta {fechaCompleta(c.fechaFin)}</>}
-                      </p>
-                      {c.notaInterna && (
-                        <p className="mt-1 text-xs italic text-slate-400">{c.notaInterna}</p>
-                      )}
-                    </div>
-                    {!esGeneral && (
-                      <button
-                        onClick={() => borrarCampana(c)}
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
-                        aria-label="Eliminar campaña"
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Enlace del anuncio */}
-                  <div className="mt-3 flex items-center gap-2">
-                    <code className="min-w-0 flex-1 truncate rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
-                      {linkCampana(c.id)}
-                    </code>
-                    <button
-                      onClick={() => copiarLink(c)}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
-                    >
-                      <IconClipboard className="h-4 w-4" /> Copiar
-                    </button>
-                    <button
-                      onClick={() => alternarActiva(c)}
-                      className={`shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition ${
-                        c.activa
-                          ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      }`}
-                    >
-                      {c.activa ? "Pausar" : "Activar"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ── Leads ── */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-extrabold text-slate-900">Leads</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Campañas</h1>
           <p className="text-sm text-slate-500">
-            {leads.length} {leads.length === 1 ? "lead" : "leads"} de fichaloop.com/contact
+            {campanas.length} {campanas.length === 1 ? "campaña" : "campañas"} · {leads.length}{" "}
+            {leads.length === 1 ? "lead" : "leads"}
             {pendientes > 0 && (
               <>
                 {" · "}
@@ -249,76 +153,141 @@ export default function SuperLeads() {
             )}
           </p>
         </div>
+        <button
+          onClick={() => setNuevoOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
+        >
+          <IconPlus className="h-4 w-4" /> Nueva campaña
+        </button>
+      </div>
 
-        {leads.length === 0 ? (
-          <EmptyState
-            icon={<IconMegaphone className="h-12 w-12" />}
-            titulo="Sin leads todavía"
-            texto="Los contactos del formulario de fichaloop.com/contact aparecerán aquí."
-          />
-        ) : (
-          <div className="space-y-3">
-            {leads.map((l) => {
-              const cid = l.campaignId || campanasApi.CAMPANA_GENERAL_ID;
-              const camp = campanaPorId.get(cid);
-              const etiqueta = camp?.nombre ?? l.origen;
-              return (
+      {campanas.length === 0 ? (
+        <EmptyState
+          icon={<IconMegaphone className="h-12 w-12" />}
+          titulo="Sin campañas todavía"
+          texto="Crea una campaña para obtener el enlace que pondrás en tu anuncio."
+        />
+      ) : (
+        <div className="space-y-3">
+          {campanas.map((c) => {
+            const misLeads = leadsPorCampana.get(c.id) ?? [];
+            const n = misLeads.length;
+            const pend = misLeads.filter((l) => !l.atendido).length;
+            const gasto = c.presupuestoDia * diasActiva(c.createdAt);
+            const costeLead = n > 0 && c.presupuestoDia > 0 ? gasto / n : null;
+            const esGeneral = c.id === campanasApi.CAMPANA_GENERAL_ID;
+            const caducada = c.fechaFin ? c.fechaFin < hoyISO() : false;
+            const abierta = abiertas.has(c.id);
+            return (
+              <div
+                key={c.id}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                {/* Cabecera (clic para desplegar los leads de la campaña) */}
                 <div
-                  key={l.id}
-                  className={`rounded-2xl border bg-white p-4 shadow-sm transition ${
-                    l.atendido ? "border-slate-200 opacity-60" : "border-slate-200"
-                  }`}
+                  className="flex cursor-pointer items-start justify-between gap-3 p-4"
+                  onClick={() => alternarAbierta(c.id)}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p
-                          className={`font-bold text-slate-900 ${
-                            l.atendido ? "line-through decoration-slate-300" : ""
-                          }`}
-                        >
-                          {l.nombre}
-                        </p>
-                        {etiqueta && (
-                          <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700">
-                            {etiqueta}
-                          </span>
-                        )}
-                        {!l.consentimiento && (
-                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
-                            Sin consentimiento
-                          </span>
-                        )}
-                      </div>
-                      <a
-                        href={`tel:${l.telefono.replace(/\s+/g, "")}`}
-                        className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:underline"
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="max-w-full truncate font-bold text-slate-900">{c.nombre}</p>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                        {labelPlataforma(c.plataforma)}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          c.activa ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                        }`}
                       >
-                        <IconPhone className="h-4 w-4" /> {l.telefono}
-                      </a>
-                      <p className="mt-1 text-xs text-slate-400" title={fechaHora(l.createdAt)}>
-                        {hace(l.createdAt)}
-                      </p>
+                        {c.activa ? "Activa" : "Pausada"}
+                      </span>
+                      {caducada && (
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                          Fin superado
+                        </span>
+                      )}
+                      {pend > 0 && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                          {pend} sin atender
+                        </span>
+                      )}
                     </div>
-
-                    <button
-                      onClick={() => alternarAtendido(l)}
-                      className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
-                        l.atendido
-                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          : "bg-slate-900 text-white hover:bg-slate-800"
+                    <p className="mt-1 text-xs text-slate-400">
+                      {formatEuro(c.presupuestoDia)}/día · {n}
+                      {c.objetivoLeads ? `/${c.objetivoLeads}` : ""}{" "}
+                      {n === 1 && !c.objetivoLeads ? "lead" : "leads"}
+                      {costeLead != null && <> · ~{formatEuro(costeLead)}/lead</>}
+                      {c.fechaFin && <> · hasta {fechaCompleta(c.fechaFin)}</>}
+                    </p>
+                    {c.notaInterna && (
+                      <p className="mt-1 text-xs italic text-slate-400">{c.notaInterna}</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {!esGeneral && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          borrarCampana(c);
+                        }}
+                        className="grid h-8 w-8 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
+                        aria-label="Eliminar campaña"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </button>
+                    )}
+                    <IconChevronDown
+                      className={`h-5 w-5 text-slate-400 transition-transform ${
+                        abierta ? "rotate-180" : ""
                       }`}
-                    >
-                      <IconCheck className="h-4 w-4" />
-                      {l.atendido ? "Atendido" : "Marcar atendido"}
-                    </button>
+                    />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+
+                {/* Enlace del anuncio */}
+                <div className="flex items-center gap-2 px-4 pb-4">
+                  <code className="min-w-0 flex-1 truncate rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
+                    {linkCampana(c.id)}
+                  </code>
+                  <button
+                    onClick={() => copiarLink(c)}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
+                  >
+                    <IconClipboard className="h-4 w-4" /> Copiar
+                  </button>
+                  <button
+                    onClick={() => alternarActiva(c)}
+                    className={`shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                      c.activa
+                        ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    }`}
+                  >
+                    {c.activa ? "Pausar" : "Activar"}
+                  </button>
+                </div>
+
+                {/* Leads de la campaña (desplegable) */}
+                {abierta && (
+                  <div className="border-t border-slate-100 bg-slate-50/60 p-4">
+                    {n === 0 ? (
+                      <p className="py-2 text-center text-sm text-slate-400">
+                        Aún no hay leads de esta campaña.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {misLeads.map((l) => (
+                          <LeadRow key={l.id} lead={l} onToggle={alternarAtendido} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <NuevaCampanaModal
         open={nuevoOpen}
@@ -329,6 +298,62 @@ export default function SuperLeads() {
           setNuevoOpen(false);
         }}
       />
+    </div>
+  );
+}
+
+/** Fila de un lead dentro de la tarjeta de su campaña. */
+function LeadRow({
+  lead,
+  onToggle,
+}: {
+  lead: ContactLead;
+  onToggle: (l: ContactLead) => void;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 transition ${
+        lead.atendido ? "border-slate-100 bg-white/60 opacity-70" : "border-slate-200 bg-white"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className={`font-semibold text-slate-900 ${
+                lead.atendido ? "line-through decoration-slate-300" : ""
+              }`}
+            >
+              {lead.nombre}
+            </p>
+            {!lead.consentimiento && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                Sin consentimiento
+              </span>
+            )}
+          </div>
+          <a
+            href={`tel:${lead.telefono.replace(/\s+/g, "")}`}
+            className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:underline"
+          >
+            <IconPhone className="h-4 w-4" /> {lead.telefono}
+          </a>
+          <p className="mt-0.5 text-xs text-slate-400" title={fechaHora(lead.createdAt)}>
+            {hace(lead.createdAt)}
+          </p>
+        </div>
+        <button
+          onClick={() => onToggle(lead)}
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
+            lead.atendido
+              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              : "bg-slate-900 text-white hover:bg-slate-800"
+          }`}
+        >
+          <IconCheck className="h-4 w-4" />
+          {lead.atendido ? "Atendido" : "Marcar atendido"}
+        </button>
+      </div>
     </div>
   );
 }
