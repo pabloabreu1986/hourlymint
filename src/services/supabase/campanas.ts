@@ -54,7 +54,7 @@ export async function listCampanas(): Promise<Campana[]> {
 
 export async function crearCampana(input: CampanaInput): Promise<Campana> {
   const campana = {
-    id: uid("camp"),
+    id: input.id || uid("camp"),
     nombre: input.nombre,
     plataforma: input.plataforma,
     presupuesto_dia: input.presupuestoDia,

@@ -165,7 +165,7 @@ export default function SuperLeads() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-bold text-slate-900">{c.nombre}</p>
+                        <p className="max-w-full truncate font-bold text-slate-900">{c.nombre}</p>
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
                           {labelPlataforma(c.plataforma)}
                         </span>
@@ -322,6 +322,7 @@ export default function SuperLeads() {
 
       <NuevaCampanaModal
         open={nuevoOpen}
+        idsUsados={campanas.map((c) => c.id)}
         onClose={() => setNuevoOpen(false)}
         onCreada={(c) => {
           setCampanas((prev) => (prev ? [c, ...prev] : [c]));
@@ -334,14 +335,18 @@ export default function SuperLeads() {
 
 function NuevaCampanaModal({
   open,
+  idsUsados,
   onClose,
   onCreada,
 }: {
   open: boolean;
+  idsUsados: string[];
   onClose: () => void;
   onCreada: (c: Campana) => void;
 }) {
   const [nombre, setNombre] = useState("");
+  const [id, setId] = useState("");
+  const [idTocado, setIdTocado] = useState(false);
   const [plataforma, setPlataforma] = useState<PlataformaCampana>("instagram");
   const [presupuesto, setPresupuesto] = useState("");
   const [fechaFin, setFechaFin] = useState("");
@@ -350,11 +355,38 @@ function NuevaCampanaModal({
   const [activa, setActiva] = useState(true);
   const [creando, setCreando] = useState(false);
 
+  // Mientras no toques el id a mano, se sugiere a partir del nombre.
+  const idFinal = campanasApi.normalizarIdCampana(idTocado ? id : nombre);
+  const idLibre = campanasApi.idCampanaLibre(idFinal, idsUsados);
+  const idOcupado = idFinal.length > 0 && !idLibre;
+
+  function cambiarNombre(v: string) {
+    setNombre(v);
+    if (!idTocado) setId(campanasApi.normalizarIdCampana(v));
+  }
+  function cambiarId(v: string) {
+    setIdTocado(true);
+    setId(campanasApi.normalizarIdCampana(v));
+  }
+
+  function resetear() {
+    setNombre("");
+    setId("");
+    setIdTocado(false);
+    setPresupuesto("");
+    setPlataforma("instagram");
+    setFechaFin("");
+    setObjetivo("");
+    setNota("");
+    setActiva(true);
+  }
+
   async function crear() {
-    if (!nombre.trim() || creando) return;
+    if (!nombre.trim() || !idLibre || creando) return;
     setCreando(true);
     try {
       const c = await campanasApi.crearCampana({
+        id: idFinal,
         nombre: nombre.trim(),
         plataforma,
         presupuestoDia: Math.max(0, Number(presupuesto) || 0),
@@ -363,15 +395,11 @@ function NuevaCampanaModal({
         objetivoLeads: objetivo ? Math.max(0, Math.round(Number(objetivo))) : undefined,
         notaInterna: nota.trim() || undefined,
       });
-      // Reset para la próxima apertura.
-      setNombre("");
-      setPresupuesto("");
-      setPlataforma("instagram");
-      setFechaFin("");
-      setObjetivo("");
-      setNota("");
-      setActiva(true);
+      resetear();
       onCreada(c);
+    } catch (e) {
+      // p. ej. id duplicado en carrera con otra sesión.
+      toast.error(e instanceof Error ? e.message : "No se pudo crear la campaña");
     } finally {
       setCreando(false);
     }
@@ -387,11 +415,49 @@ function NuevaCampanaModal({
           <input
             autoFocus
             value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            onChange={(e) => cambiarNombre(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && crear()}
             placeholder="p. ej. Reels agosto · oferta"
             className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-600">
+            Id del enlace
+          </label>
+          <div
+            className={`flex items-center rounded-xl border bg-white pl-3 pr-2 ${
+              idOcupado
+                ? "border-red-300 ring-2 ring-red-100"
+                : "border-slate-200 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200"
+            }`}
+          >
+            <span className="shrink-0 select-none text-sm text-slate-400">/contact?c=</span>
+            <input
+              value={idFinal}
+              onChange={(e) => cambiarId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && crear()}
+              placeholder="verano-reels"
+              spellCheck={false}
+              autoCapitalize="none"
+              className="w-full bg-transparent px-1 py-3 text-slate-900 outline-none"
+            />
+            {idFinal.length > 0 && (
+              <span
+                className={`shrink-0 text-sm font-semibold ${
+                  idLibre ? "text-emerald-600" : "text-red-500"
+                }`}
+              >
+                {idLibre ? "✓ libre" : "ocupado"}
+              </span>
+            )}
+          </div>
+          <p className="mt-1.5 text-xs text-slate-400">
+            {idOcupado
+              ? "Ya hay una campaña con ese id. Elige otro."
+              : "Corto y sin espacios. Es lo que pondrás en el enlace del anuncio."}
+          </p>
         </div>
 
         <div>
@@ -486,7 +552,7 @@ function NuevaCampanaModal({
 
         <button
           onClick={crear}
-          disabled={!nombre.trim() || creando}
+          disabled={!nombre.trim() || !idLibre || creando}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 font-bold text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {creando ? <Spinner className="h-5 w-5" /> : "Crear campaña y generar enlace"}

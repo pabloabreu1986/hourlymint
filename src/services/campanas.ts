@@ -24,6 +24,8 @@ export function campanaGeneral(): Campana {
 }
 
 export interface CampanaInput {
+  /** Id (identificador del enlace ?c=<id>). Si se omite, se genera uno. */
+  id?: string;
   nombre: string;
   plataforma: PlataformaCampana;
   presupuestoDia: number;
@@ -31,6 +33,23 @@ export interface CampanaInput {
   fechaFin?: string;
   objetivoLeads?: number;
   notaInterna?: string;
+}
+
+/** Normaliza un id de enlace: minúsculas, guiones, solo [a-z0-9-]. */
+export function normalizarIdCampana(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // quita acentos
+    .replace(/[^a-z0-9]+/g, "-") // no válido → guion
+    .replace(/^-+|-+$/g, "") // sin guiones sueltos en los extremos
+    .slice(0, 40);
+}
+
+/** ¿Está libre este id? (no reservado ni ya usado). */
+export function idCampanaLibre(id: string, usados: string[]): boolean {
+  if (!id || id === CAMPANA_GENERAL_ID) return false;
+  return !usados.includes(id);
 }
 
 /** Garantiza que existe la campaña "General" (idempotente). */
@@ -56,7 +75,7 @@ export async function listCampanas(): Promise<Campana[]> {
 export async function crearCampana(input: CampanaInput): Promise<Campana> {
   if (isSupabaseEnabled) return sb.crearCampana(input);
   const campana: Campana = {
-    id: uid("camp"),
+    id: input.id || uid("camp"),
     nombre: input.nombre,
     plataforma: input.plataforma,
     presupuestoDia: input.presupuestoDia,
