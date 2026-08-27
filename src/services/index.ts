@@ -22,6 +22,7 @@ export * as dashboardApi from "./dashboard";
 export * as tenantApi from "./tenant";
 export * as leadsApi from "./leads";
 export * as webLeadsApi from "./webLeads";
+export * as contactLeadsApi from "./contactLeads";
 export * as plataformaApi from "./plataforma";
 // Suite RRHH
 export * as ausenciasApi from "./ausencias";

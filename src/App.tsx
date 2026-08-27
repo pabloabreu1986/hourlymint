@@ -43,6 +43,7 @@ function lazyConRecarga(fn: () => Promise<{ default: React.ComponentType }>) {
 const Landing = lazyConRecarga(() => import("@/features/marketing/Landing"));
 const Terminos = lazyConRecarga(() => import("@/features/marketing/Terminos"));
 const Funcionalidades = lazyConRecarga(() => import("@/features/marketing/Funcionalidades"));
+const Contacto = lazyConRecarga(() => import("@/features/marketing/Contacto"));
 // Mini-web pública de cada cliente (en su subdominio).
 const WebCliente = lazyConRecarga(() => import("@/features/web/WebCliente"));
 // Vista previa del dosier a pantalla completa (imprimible a PDF).
@@ -116,6 +117,7 @@ import AdminDenuncias from "@/features/admin/AdminDenuncias";
 // Super-admin (consola de plataforma)
 import SuperLayout from "@/features/super/SuperLayout";
 import SuperClientes from "@/features/super/SuperClientes";
+import SuperLeads from "@/features/super/SuperLeads";
 import SuperTenantEditor from "@/features/super/SuperTenantEditor";
 
 const INTERVALO_REVISION_FICHAJES = 5 * 60 * 1000; // 5 min
@@ -233,6 +235,17 @@ export default function App() {
           </Suspense>
         }
       />
+      {/* Formulario público de captación de leads (anuncios de redes
+          sociales). fichaloop.com/contact — /contacto es alias. */}
+      <Route
+        path="/contact"
+        element={
+          <Suspense fallback={<Cargando />}>
+            <Contacto />
+          </Suspense>
+        }
+      />
+      <Route path="/contacto" element={<Navigate to="/contact" replace />} />
 
       {/* Vista previa del dosier a pantalla completa (fuera del layout
           admin para imprimirse limpia). Solo el admin de la empresa. */}
@@ -340,6 +353,7 @@ export default function App() {
         }
       >
         <Route path="/super" element={<SuperClientes />} />
+        <Route path="/super/leads" element={<SuperLeads />} />
         <Route path="/super/clientes/:id" element={<SuperTenantEditor />} />
       </Route>
 

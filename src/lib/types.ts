@@ -974,10 +974,32 @@ export interface Denuncia {
   fecha: string; // ISO
 }
 
+/**
+ * Lead captado desde la web de captación de la plataforma
+ * (fichaloop.com/contact), típicamente tráfico de anuncios en redes
+ * sociales. Solo lo consulta el super-admin desde su consola.
+ */
+export interface ContactLead {
+  id: string;
+  nombre: string;
+  telefono: string;
+  /** El interesado marcó la casilla que autoriza la llamada comercial. */
+  consentimiento: boolean;
+  /** Momento en que otorgó el consentimiento (prueba RGPD). ISO. */
+  consentimientoAt: string;
+  /** De dónde llegó: campaña/UTM o referrer (para atribuir el anuncio). */
+  origen?: string;
+  /** El super-admin lo marca cuando ya ha contactado a la persona. */
+  atendido: boolean;
+  createdAt: string; // ISO
+}
+
 export interface DBSchema {
   /** Clientes de la plataforma (white-label). El operador (super-admin)
    * los gestiona desde su panel. Hoy en mock; mañana en la BD. */
   tenants: Tenant[];
+  /** Leads de captación de la plataforma (fichaloop.com/contact). */
+  contactLeads: ContactLead[];
   usuarios: Usuario[];
   clientes: Cliente[];
   oportunidades: Oportunidad[];
