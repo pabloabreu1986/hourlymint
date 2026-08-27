@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { contactLeadsApi } from "@/services";
+import { contactLeadsApi, campanasApi } from "@/services";
 import { useTitulo } from "@/lib/useTitulo";
 import logoLight from "@/assets/fichaloop_black.png";
 
@@ -31,10 +31,12 @@ function detectarOrigen(): string | undefined {
   return undefined;
 }
 
-/** Id de la campaña del enlace del anuncio (?c=<id>), si viene. */
-function detectarCampana(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  return new URLSearchParams(window.location.search).get("c") || undefined;
+/** Id de la campaña del enlace del anuncio (?c=<id>). Sin parámetro, el
+ * lead se atribuye a la campaña "General" (tráfico directo). */
+function detectarCampana(): string {
+  if (typeof window === "undefined") return campanasApi.CAMPANA_GENERAL_ID;
+  const c = new URLSearchParams(window.location.search).get("c");
+  return c || campanasApi.CAMPANA_GENERAL_ID;
 }
 
 export default function Contacto() {

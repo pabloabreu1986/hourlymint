@@ -1,17 +1,46 @@
 // Campañas de captación de la plataforma. El super-admin las crea desde
 // su consola; cada una tiene un enlace propio (?c=<id>) para los anuncios.
-// En producción se guardan en Supabase (tabla `campanas`); en mock, en
-// localStorage.
+// La campaña "General" (id fijo) recoge el tráfico directo de /contact sin
+// ?c=. En producción se guardan en Supabase (tabla `campanas`); en mock,
+// en localStorage.
 import { loadDB, updateDB, delay, uid } from "@/lib/db";
 import { isSupabaseEnabled } from "@/lib/supabase";
 import type { Campana, PlataformaCampana } from "@/lib/types";
 import * as sb from "./supabase/campanas";
+
+/** Id reservado de la campaña por defecto (tráfico directo de /contact). */
+export const CAMPANA_GENERAL_ID = "general";
+
+/** Campaña "General" por defecto, para tráfico directo sin ?c=. */
+export function campanaGeneral(): Campana {
+  return {
+    id: CAMPANA_GENERAL_ID,
+    nombre: "General (tráfico directo)",
+    plataforma: "otra",
+    presupuestoDia: 0,
+    activa: true,
+    createdAt: "2000-01-01T00:00:00.000Z", // fija: siempre al final del orden
+  };
+}
 
 export interface CampanaInput {
   nombre: string;
   plataforma: PlataformaCampana;
   presupuestoDia: number;
   activa: boolean;
+  fechaFin?: string;
+  objetivoLeads?: number;
+  notaInterna?: string;
+}
+
+/** Garantiza que existe la campaña "General" (idempotente). */
+export async function asegurarGeneral(): Promise<void> {
+  if (isSupabaseEnabled) return sb.asegurarGeneral();
+  updateDB((db) => {
+    if (!db.campanas.some((c) => c.id === CAMPANA_GENERAL_ID)) {
+      db.campanas.push(campanaGeneral());
+    }
+  });
 }
 
 /** Lista las campañas, de la más reciente a la más antigua. */
@@ -32,6 +61,9 @@ export async function crearCampana(input: CampanaInput): Promise<Campana> {
     plataforma: input.plataforma,
     presupuestoDia: input.presupuestoDia,
     activa: input.activa,
+    fechaFin: input.fechaFin || undefined,
+    objetivoLeads: input.objetivoLeads,
+    notaInterna: input.notaInterna || undefined,
     createdAt: new Date().toISOString(),
   };
   updateDB((db) => {

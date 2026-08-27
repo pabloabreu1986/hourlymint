@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { campanasApi, contactLeadsApi } from "@/services";
 import type { Campana, ContactLead, PlataformaCampana } from "@/lib/types";
-import { fechaHora, hace, formatEuro } from "@/lib/format";
+import { fechaHora, hace, formatEuro, fechaCompleta } from "@/lib/format";
 import { confirmar } from "@/components/confirm";
 import { Cargando, EmptyState, Modal, Spinner } from "@/components/ui";
 import {
@@ -28,10 +28,11 @@ function labelPlataforma(p: PlataformaCampana): string {
   return PLATAFORMAS.find((x) => x.valor === p)?.label ?? p;
 }
 
-/** Enlace del anuncio para una campaña (destino que se pega en la red). */
+/** Enlace del anuncio para una campaña (destino que se pega en la red).
+ * La General es el /contact a secas (tráfico directo sin ?c=). */
 function linkCampana(id: string): string {
   const base = typeof window !== "undefined" ? window.location.origin : "https://fichaloop.com";
-  return `${base}/contact?c=${id}`;
+  return id === campanasApi.CAMPANA_GENERAL_ID ? `${base}/contact` : `${base}/contact?c=${id}`;
 }
 
 /** Días transcurridos desde que se creó la campaña (mínimo 1). */
@@ -40,12 +41,18 @@ function diasActiva(iso: string): number {
   return Math.max(1, Math.ceil(ms / 86_400_000));
 }
 
+/** Fecha de hoy en formato YYYY-MM-DD (para comparar con fechaFin). */
+function hoyISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function SuperLeads() {
   const [campanas, setCampanas] = useState<Campana[] | null>(null);
   const [leads, setLeads] = useState<ContactLead[] | null>(null);
   const [nuevoOpen, setNuevoOpen] = useState(false);
 
   async function cargar() {
+    await campanasApi.asegurarGeneral();
     const [cs, ls] = await Promise.all([
       campanasApi.listCampanas(),
       contactLeadsApi.listContactLeads(),
@@ -60,7 +67,9 @@ export default function SuperLeads() {
   const leadsPorCampana = useMemo(() => {
     const m = new Map<string, number>();
     (leads ?? []).forEach((l) => {
-      if (l.campaignId) m.set(l.campaignId, (m.get(l.campaignId) ?? 0) + 1);
+      // Los leads sin campaña (tráfico directo o previos) cuentan en la General.
+      const cid = l.campaignId || campanasApi.CAMPANA_GENERAL_ID;
+      m.set(cid, (m.get(cid) ?? 0) + 1);
     });
     return m;
   }, [leads]);
@@ -145,7 +154,9 @@ export default function SuperLeads() {
             {campanas.map((c) => {
               const n = leadsPorCampana.get(c.id) ?? 0;
               const gasto = c.presupuestoDia * diasActiva(c.createdAt);
-              const costeLead = n > 0 ? gasto / n : null;
+              const costeLead = n > 0 && c.presupuestoDia > 0 ? gasto / n : null;
+              const esGeneral = c.id === campanasApi.CAMPANA_GENERAL_ID;
+              const caducada = c.fechaFin ? c.fechaFin < hoyISO() : false;
               return (
                 <div
                   key={c.id}
@@ -167,19 +178,32 @@ export default function SuperLeads() {
                         >
                           {c.activa ? "Activa" : "Pausada"}
                         </span>
+                        {caducada && (
+                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                            Fin superado
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-slate-400">
-                        {formatEuro(c.presupuestoDia)}/día · {n} {n === 1 ? "lead" : "leads"}
+                        {formatEuro(c.presupuestoDia)}/día · {n}
+                        {c.objetivoLeads ? `/${c.objetivoLeads}` : ""}{" "}
+                        {n === 1 && !c.objetivoLeads ? "lead" : "leads"}
                         {costeLead != null && <> · ~{formatEuro(costeLead)}/lead</>}
+                        {c.fechaFin && <> · hasta {fechaCompleta(c.fechaFin)}</>}
                       </p>
+                      {c.notaInterna && (
+                        <p className="mt-1 text-xs italic text-slate-400">{c.notaInterna}</p>
+                      )}
                     </div>
-                    <button
-                      onClick={() => borrarCampana(c)}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
-                      aria-label="Eliminar campaña"
-                    >
-                      <IconTrash className="h-4 w-4" />
-                    </button>
+                    {!esGeneral && (
+                      <button
+                        onClick={() => borrarCampana(c)}
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"
+                        aria-label="Eliminar campaña"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Enlace del anuncio */}
@@ -235,7 +259,8 @@ export default function SuperLeads() {
         ) : (
           <div className="space-y-3">
             {leads.map((l) => {
-              const camp = l.campaignId ? campanaPorId.get(l.campaignId) : undefined;
+              const cid = l.campaignId || campanasApi.CAMPANA_GENERAL_ID;
+              const camp = campanaPorId.get(cid);
               const etiqueta = camp?.nombre ?? l.origen;
               return (
                 <div
@@ -319,6 +344,9 @@ function NuevaCampanaModal({
   const [nombre, setNombre] = useState("");
   const [plataforma, setPlataforma] = useState<PlataformaCampana>("instagram");
   const [presupuesto, setPresupuesto] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [objetivo, setObjetivo] = useState("");
+  const [nota, setNota] = useState("");
   const [activa, setActiva] = useState(true);
   const [creando, setCreando] = useState(false);
 
@@ -331,11 +359,17 @@ function NuevaCampanaModal({
         plataforma,
         presupuestoDia: Math.max(0, Number(presupuesto) || 0),
         activa,
+        fechaFin: fechaFin || undefined,
+        objetivoLeads: objetivo ? Math.max(0, Math.round(Number(objetivo))) : undefined,
+        notaInterna: nota.trim() || undefined,
       });
       // Reset para la próxima apertura.
       setNombre("");
       setPresupuesto("");
       setPlataforma("instagram");
+      setFechaFin("");
+      setObjetivo("");
+      setNota("");
       setActiva(true);
       onCreada(c);
     } finally {
@@ -397,6 +431,47 @@ function NuevaCampanaModal({
           <p className="mt-1.5 text-xs text-slate-400">
             Sirve para estimar el coste por lead. Puedes dejarlo en blanco.
           </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600">
+              Fecha de fin <span className="font-normal text-slate-400">(opcional)</span>
+            </label>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600">
+              Objetivo de leads <span className="font-normal text-slate-400">(opcional)</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={objetivo}
+              onChange={(e) => setObjetivo(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && crear()}
+              placeholder="p. ej. 50"
+              className="w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-600">
+            Nota interna <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <textarea
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            placeholder="Solo la ves tú. Público objetivo, creatividad, etc."
+            className="min-h-[64px] w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+          />
         </div>
 
         <label className="flex cursor-pointer items-center gap-3">

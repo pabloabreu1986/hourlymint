@@ -997,6 +997,12 @@ export interface Campana {
   presupuestoDia: number;
   /** Si está corriendo ahora mismo (para atribuir gasto y filtrar). */
   activa: boolean;
+  /** Fecha de fin prevista (YYYY-MM-DD), opcional. */
+  fechaFin?: string;
+  /** Nº de leads objetivo de la campaña, opcional. */
+  objetivoLeads?: number;
+  /** Nota interna del super-admin (no se muestra en la web), opcional. */
+  notaInterna?: string;
   createdAt: string; // ISO
 }
 
